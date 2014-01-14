@@ -1,0 +1,27 @@
+# Temporary Mac OS X files
+.DS_Store
+.LSOverride
+
+# Temporary Vim files
+*~
+
+# Sublime Text files
+*.sublime-project
+*.sublime-workspace
+
+# Build files
+*.o
+*.d
+*.axf
+*.crf
+*.dep
+*.bak
+*.lnp
+*.htm
+*.map
+*.plg
+*.sct
+*.tra
+*.uvgui*
+*.__i
+*.lst
