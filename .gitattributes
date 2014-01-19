@@ -1,0 +1,2 @@
+# Allow Git to automatically convert text file line endings to LF on checkin and to the host OS's format on checkout.
+* text=auto
