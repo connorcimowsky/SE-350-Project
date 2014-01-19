@@ -436,6 +436,31 @@
               <FileType>1</FileType>
               <FilePath>.\src\main_svc.c</FilePath>
             </File>
+            <File>
+              <FileName>node.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\node.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\list.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>queue.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\queue.h</FilePath>
+            </File>
+            <File>
+              <FileName>queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\queue.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -894,6 +919,31 @@
               <FileName>main_svc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\main_svc.c</FilePath>
+            </File>
+            <File>
+              <FileName>node.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\node.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\list.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>queue.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\queue.h</FilePath>
+            </File>
+            <File>
+              <FileName>queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\queue.c</FilePath>
             </File>
           </Files>
         </Group>
