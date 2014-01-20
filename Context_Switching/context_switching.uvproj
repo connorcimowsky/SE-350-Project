@@ -407,9 +407,19 @@
               <FilePath>.\src\system_LPC17xx.c</FilePath>
             </File>
             <File>
+              <FileName>uart_polling.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\uart_polling.h</FilePath>
+            </File>
+            <File>
               <FileName>uart_polling.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\uart_polling.c</FilePath>
+            </File>
+            <File>
+              <FileName>printf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\printf.h</FilePath>
             </File>
             <File>
               <FileName>printf.c</FileName>
@@ -432,14 +442,29 @@
               <FilePath>.\src\HAL.c</FilePath>
             </File>
             <File>
+              <FileName>k_rtx_init.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_rtx_init.h</FilePath>
+            </File>
+            <File>
               <FileName>k_rtx_init.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\k_rtx_init.c</FilePath>
             </File>
             <File>
+              <FileName>k_memory.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_memory.h</FilePath>
+            </File>
+            <File>
               <FileName>k_memory.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\k_memory.c</FilePath>
+            </File>
+            <File>
+              <FileName>k_process.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_process.h</FilePath>
             </File>
             <File>
               <FileName>k_process.c</FileName>
@@ -455,6 +480,31 @@
               <FileName>usr_proc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\usr_proc.c</FilePath>
+            </File>
+            <File>
+              <FileName>node.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\node.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\list.h</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>queue.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\queue.h</FilePath>
+            </File>
+            <File>
+              <FileName>queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\queue.c</FilePath>
             </File>
           </Files>
         </Group>
