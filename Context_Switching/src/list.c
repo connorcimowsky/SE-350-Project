@@ -1,18 +1,8 @@
-#include <stdlib.h>
-
+#include "k_rtx.h"
 #ifdef DEBUG_0
 #include "printf.h"
 #endif
 #include "list.h"
-
-list_t *new_list(void)
-{
-    // TODO(ConnorCimowsky): Use request_memory_block instead of malloc.
-    list_t *list = (list_t *)malloc(sizeof(list_t));
-    list->first = NULL;
-    
-    return list;
-}
 
 int insert_node(list_t *list, node_t *node)
 {
