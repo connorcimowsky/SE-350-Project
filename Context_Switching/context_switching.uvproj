@@ -442,6 +442,16 @@
               <FilePath>.\src\HAL.c</FilePath>
             </File>
             <File>
+              <FileName>rtx.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\rtx.h</FilePath>
+            </File>
+            <File>
+              <FileName>k_rtx.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_rtx.h</FilePath>
+            </File>
+            <File>
               <FileName>k_rtx_init.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\src\k_rtx_init.h</FilePath>
