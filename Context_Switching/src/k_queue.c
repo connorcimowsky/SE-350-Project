@@ -3,19 +3,19 @@
 #ifdef DEBUG_0
 #include "printf.h"
 #endif
-#include "queue.h"
+#include "k_queue.h"
 
-queue_t *new_queue(void)
+k_queue_t *new_queue(void)
 {
     // TODO(ConnorCimowsky): Use request_memory_block instead of malloc.
-    queue_t *queue = (queue_t *)malloc(sizeof(queue_t));
+    k_queue_t *queue = (k_queue_t *)malloc(sizeof(k_queue_t));
     queue->first = NULL;
     queue->last = NULL;
     
     return queue;
 }
 
-int enqueue_node(queue_t *queue, node_t *node)
+int enqueue_node(k_queue_t *queue, k_node_t *node)
 {
     if (queue == NULL || node == NULL) {
 				#ifdef DEBUG_0
@@ -37,9 +37,9 @@ int enqueue_node(queue_t *queue, node_t *node)
     return 0;
 }
 
-node_t *dequeue_node(queue_t *queue)
+k_node_t *dequeue_node(k_queue_t *queue)
 {
-    node_t *first = NULL;
+    k_node_t *first = NULL;
     
     if (is_queue_empty(queue)) {
 				#ifdef DEBUG_0
@@ -60,7 +60,7 @@ node_t *dequeue_node(queue_t *queue)
     return first;
 }
 
-int is_queue_empty(queue_t *queue) {
+int is_queue_empty(k_queue_t *queue) {
     if (queue == NULL) {
 				#ifdef DEBUG_0
 				printf("Attempted to check if a NULL queue was empty.\n");

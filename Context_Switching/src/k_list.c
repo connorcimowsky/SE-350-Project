@@ -2,9 +2,9 @@
 #ifdef DEBUG_0
 #include "printf.h"
 #endif
-#include "list.h"
+#include "k_list.h"
 
-int insert_node(list_t *list, node_t *node)
+int insert_node(k_list_t *list, k_node_t *node)
 {
     if (list == NULL || node == NULL) {
 				#ifdef DEBUG_0
@@ -19,9 +19,9 @@ int insert_node(list_t *list, node_t *node)
     return 0;
 }
 
-node_t *get_node(list_t *list)
+k_node_t *get_node(k_list_t *list)
 {
-    node_t *first = NULL;
+    k_node_t *first = NULL;
     
     if (is_list_empty(list)) {
 				#ifdef DEBUG_0
@@ -36,7 +36,7 @@ node_t *get_node(list_t *list)
     return first;
 }
 
-int is_list_empty(list_t *list) {
+int is_list_empty(k_list_t *list) {
     if (list == NULL) {
 				#ifdef DEBUG_0
 				printf("Attempted to check if a NULL list was empty.\n");
