@@ -14,6 +14,9 @@ queue_t *new_queue(void)
 int enqueue_node(queue_t *queue, node_t *node)
 {
     if (queue == NULL || node == NULL) {
+				#ifdef DEBUG_0
+				printf("Node insertion error.\n");
+				#endif
         return 1;
     }
     
@@ -35,6 +38,9 @@ node_t *dequeue_node(queue_t *queue)
     node_t *first = NULL;
     
     if (is_queue_empty(queue)) {
+				#ifdef DEBUG_0
+				printf("Attempted to dequeue a node from an empty queue.\n");
+				#endif
         return NULL;
     }
     
@@ -52,6 +58,9 @@ node_t *dequeue_node(queue_t *queue)
 
 int is_queue_empty(queue_t *queue) {
     if (queue == NULL) {
+				#ifdef DEBUG_0
+				printf("Attempted to check if a NULL queue was empty.\n");
+				#endif
         return -1;
     } else {
         return (queue->first == NULL);
