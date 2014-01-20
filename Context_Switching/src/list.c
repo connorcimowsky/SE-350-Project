@@ -1,5 +1,8 @@
 #include <stdlib.h>
+
+#ifdef DEBUG_0
 #include "printf.h"
+#endif
 #include "list.h"
 
 list_t *new_list(void)
