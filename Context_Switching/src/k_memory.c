@@ -6,12 +6,13 @@
  */
 
 #include "k_memory.h"
-#include "k_rtx.h"
 #include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
 #endif /* ! DEBUG_0 */
+
+extern int k_release_processor(void);
 
 /* ----- Global Variables ----- */
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
@@ -130,10 +131,22 @@ U32 *alloc_stack(U32 size_b)
 }
 
 void *k_request_memory_block(void) {
+    // TODO(connor): Ask about atomic operations.
+    k_node_t *memory_block = NULL;
 #ifdef DEBUG_0 
 	printf("k_request_memory_block: entering...\n");
 #endif /* ! DEBUG_0 */
-	return (void *) NULL;
+    while (is_list_empty(mem_heap)) {
+#ifdef DEBUG_0
+        printf("k_request_memory_block: no available blocks, releasing processor\n");
+#endif
+        // TODO(connor): Set process state to blocked.
+        k_release_processor();
+    }
+
+    memory_block = get_node(mem_heap);
+
+	return (void *) memory_block;
 }
 
 int k_release_memory_block(void *p_mem_blk) {
