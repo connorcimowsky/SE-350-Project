@@ -17,6 +17,7 @@
 #include <system_LPC17xx.h>
 #include "uart_polling.h"
 #include "k_process.h"
+#include "k_queue.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
@@ -25,6 +26,7 @@
 /* ----- Global Variables ----- */
 PCB **gp_pcbs;                  /* array of pcbs */
 PCB *gp_current_process = NULL; /* always point to the current RUN process */
+k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 
 /* process initialization table */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
@@ -51,7 +53,7 @@ void process_init()
 	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
 		int j;
 		(gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
-		(gp_pcbs[i])->m_state = NEW;
+		(gp_pcbs[i])->m_state = READY;
 		
 		sp = alloc_stack((g_proc_table[i]).m_stack_size);
 		*(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
@@ -100,12 +102,12 @@ int process_switch(PCB *p_pcb_old)
 	
 	state = gp_current_process->m_state;
 
-	if (state == NEW) {
-		if (gp_current_process != p_pcb_old && p_pcb_old->m_state != NEW) {
-			p_pcb_old->m_state = RDY;
+	if (state == READY) {
+		if (gp_current_process != p_pcb_old && p_pcb_old->m_state != READY) {
+			p_pcb_old->m_state = READY;
 			p_pcb_old->mp_sp = (U32 *) __get_MSP();
 		}
-		gp_current_process->m_state = RUN;
+		gp_current_process->m_state = EXECUTING;
 		__set_MSP((U32) gp_current_process->mp_sp);
 		__rte();  // pop exception stack frame from the stack for a new processes
 	} 
@@ -113,10 +115,10 @@ int process_switch(PCB *p_pcb_old)
 	/* The following will only execute if the if block above is FALSE */
 
 	if (gp_current_process != p_pcb_old) {
-		if (state == RDY){ 		
-			p_pcb_old->m_state = RDY; 
+		if (state == READY){ 		
+			p_pcb_old->m_state = READY; 
 			p_pcb_old->mp_sp = (U32 *) __get_MSP(); // save the old process's sp
-			gp_current_process->m_state = RUN;
+			gp_current_process->m_state = EXECUTING;
 			__set_MSP((U32) gp_current_process->mp_sp); //switch to the new proc's stack    
 		} else {
 			gp_current_process = p_pcb_old; // revert back to the old proc on error
