@@ -18,7 +18,7 @@ extern int k_release_processor(void);
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
                /* The first stack starts at the RAM high address */
 	       /* stack grows down. Fully decremental stack */
-k_list_t *mem_heap;
+k_list_t *gp_heap;
 
 /**
  * @brief: Initialize RAM as follows:
@@ -82,8 +82,8 @@ void memory_init(void)
 	// printf("", );
 	#endif
 	
-	mem_heap = (k_list_t *)p_end;
-	mem_heap->first = NULL;
+	gp_heap = (k_list_t *)p_end;
+	gp_heap->first = NULL;
 	p_end += sizeof(k_list_t);
 	
 	for (i = 0; i < NUM_BLOCKS; i++) {
@@ -94,15 +94,15 @@ void memory_init(void)
 		} else {
 			node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
 		}
-		insert_node(mem_heap, (k_node_t *)node);
+		insert_node(gp_heap, (k_node_t *)node);
 		p_end += sizeof(k_node_t) + BLOCK_SIZE;
 	}
 	
 #ifdef DEBUG_0
-	iterator = mem_heap->first;
+	iterator = gp_heap->first;
     printf("pointer size: %d\n", sizeof(k_node_t));
 	while (iterator != NULL) {
-		printf("node address: %d\n", (int)iterator);
+		printf("node address: 0x%x\n", iterator);
 		iterator = iterator->next;
 	}
 #endif
@@ -133,34 +133,40 @@ U32 *alloc_stack(U32 size_b)
 void *k_request_memory_block(void) {
     // TODO(connor): Ask about atomic operations.
     k_node_t *memory_block = NULL;
-    while (is_list_empty(mem_heap)) {
+    while (is_list_empty(gp_heap)) {
+    
 #ifdef DEBUG_0
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
+    
         // TODO(connor): Set process state to blocked.
         k_release_processor();
     }
 
-    // TODO: Figure out why this is not giving us the correct block address.
-    memory_block = get_node(mem_heap) + sizeof(k_node_t);
+    memory_block = get_node(gp_heap);
+    memory_block += 1;
     
 #ifdef DEBUG_0
-        printf("k_request_memory_block: block address: %d\n", (int)memory_block);
+        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
 
 	return (void *) memory_block;
 }
 
 int k_release_memory_block(void *p_mem_blk) {
-    k_node_t *block_ptr;
+    k_node_t *block_ptr = p_mem_blk;
+    block_ptr -= 1;
+    
 #ifdef DEBUG_0
-        printf("k_release_memory_block: block address: %d\n", (int)p_mem_blk);
+        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
 #endif
-    block_ptr = (k_node_t *)((int)p_mem_blk - sizeof(k_node_t));
+    
     if (p_mem_blk == NULL ) {
+        
 #ifdef DEBUG_0
         printf("k_release_memory_block: could not release block @ 0x%x\n", p_mem_blk);
 #endif
+        
         return RTX_ERR;
     }
     
@@ -168,7 +174,7 @@ int k_release_memory_block(void *p_mem_blk) {
     // TODO: Add ability to check for duplicate blocks in the list.
     // TODO: Check if the pointer is contained in the heap.
     
-    if (insert_node(mem_heap, block_ptr) == RTX_ERR) {
+    if (insert_node(gp_heap, block_ptr) == RTX_ERR) {
         return RTX_ERR;
     }
     
