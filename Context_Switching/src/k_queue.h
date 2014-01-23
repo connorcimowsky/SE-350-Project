@@ -8,8 +8,6 @@ typedef struct k_queue_t {
     k_node_t *last;
 } k_queue_t;
 
-k_queue_t *new_queue(void);
-
 int enqueue_node(k_queue_t *queue, k_node_t *node);
 
 k_node_t *dequeue_node(k_queue_t *queue);
