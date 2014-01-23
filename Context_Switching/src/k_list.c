@@ -10,13 +10,13 @@ int insert_node(k_list_t *list, k_node_t *node)
 				#ifdef DEBUG_0
 				printf("Node insertion error.\n");
 				#endif
-        return 1;
+        return RTX_ERR;
     }
     
     node->next = list->first;
     list->first = node;
     
-    return 0;
+    return RTX_OK;
 }
 
 k_node_t *get_node(k_list_t *list)
@@ -41,7 +41,7 @@ int is_list_empty(k_list_t *list) {
 				#ifdef DEBUG_0
 				printf("Attempted to check if a NULL list was empty.\n");
 				#endif
-        return -1;
+        return RTX_ERR;
     } else {
         return (list->first == NULL);
     }
