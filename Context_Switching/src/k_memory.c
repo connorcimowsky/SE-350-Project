@@ -53,8 +53,8 @@ void memory_init(void)
 	int i;
 	k_node_t *iterator = NULL;
 	
-	/* 8 bytes padding */
-	p_end += 32;
+	/* 4 bytes padding */
+	p_end += 4;
 
 	/* allocate memory for pcb pointers   */
 	gp_pcbs = (PCB **)p_end;
@@ -68,7 +68,8 @@ void memory_init(void)
 	printf("gp_pcbs[0] = 0x%x \n", gp_pcbs[0]);
 	printf("gp_pcbs[1] = 0x%x \n", gp_pcbs[1]);
 #endif
-	/* allocate memory for stacks */
+
+	/* prepare for alloc_stack() to allocate memory for stacks */
 	
 	gp_stack = (U32 *)RAM_END_ADDR;
 	if ((U32)gp_stack & 0x04) { /* 8 bytes alignment */
