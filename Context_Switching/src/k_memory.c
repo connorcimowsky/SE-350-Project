@@ -6,18 +6,19 @@
  */
 
 #include "k_memory.h"
-#include "k_rtx.h"
 #include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
 #endif /* ! DEBUG_0 */
 
+extern int k_release_processor(void);
+
 /* ----- Global Variables ----- */
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
                /* The first stack starts at the RAM high address */
 	       /* stack grows down. Fully decremental stack */
-k_list_t *mem_heap;
+k_list_t *gp_heap;
 
 /**
  * @brief: Initialize RAM as follows:
@@ -81,8 +82,8 @@ void memory_init(void)
 	// printf("", );
 	#endif
 	
-	mem_heap = (k_list_t *)p_end;
-	mem_heap->first = NULL;
+	gp_heap = (k_list_t *)p_end;
+	gp_heap->first = NULL;
 	p_end += sizeof(k_list_t);
 	
 	for (i = 0; i < NUM_BLOCKS; i++) {
@@ -91,20 +92,20 @@ void memory_init(void)
 			// last block
 			node->next = NULL;
 		} else {
-			node->next = (k_node_t *)(p_end + sizeof(k_node_t));
+			node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
 		}
-		insert_node(mem_heap, (k_node_t *)node);
-		// TODO(connor): Add the proper amount to p_end to account for block size.
-		p_end += sizeof(k_node_t);
+		insert_node(gp_heap, (k_node_t *)node);
+		p_end += sizeof(k_node_t) + BLOCK_SIZE;
 	}
 	
-	#ifdef DEBUG_0
-	iterator = mem_heap->first;
+#ifdef DEBUG_0
+	iterator = gp_heap->first;
+    printf("pointer size: %d\n", sizeof(k_node_t));
 	while (iterator != NULL) {
-		printf("node address: %d\n", (int)iterator);
+		printf("node address: 0x%x\n", iterator);
 		iterator = iterator->next;
 	}
-	#endif
+#endif
 }
 
 /**
@@ -130,15 +131,54 @@ U32 *alloc_stack(U32 size_b)
 }
 
 void *k_request_memory_block(void) {
-#ifdef DEBUG_0 
-	printf("k_request_memory_block: entering...\n");
-#endif /* ! DEBUG_0 */
-	return (void *) NULL;
+    // TODO(connor): Ask about atomic operations.
+    k_node_t *memory_block = NULL;
+    while (is_list_empty(gp_heap)) {
+    
+#ifdef DEBUG_0
+        printf("k_request_memory_block: no available blocks, releasing processor\n");
+#endif
+    
+        // TODO(connor): Set process state to blocked.
+        k_release_processor();
+    }
+
+    memory_block = get_node(gp_heap);
+    memory_block += 1;
+    
+#ifdef DEBUG_0
+        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
+#endif
+
+	return (void *) memory_block;
 }
 
 int k_release_memory_block(void *p_mem_blk) {
-#ifdef DEBUG_0 
-	printf("k_release_memory_block: releasing block @ 0x%x\n", p_mem_blk);
-#endif /* ! DEBUG_0 */
+    k_node_t *block_ptr = p_mem_blk;
+    block_ptr -= 1;
+    
+#ifdef DEBUG_0
+        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
+#endif
+    
+    if (p_mem_blk == NULL ) {
+        
+#ifdef DEBUG_0
+        printf("k_release_memory_block: could not release block @ 0x%x\n", p_mem_blk);
+#endif
+        
+        return RTX_ERR;
+    }
+    
+    // TODO: Make sure the pointer is block-aligned.
+    // TODO: Add ability to check for duplicate blocks in the list.
+    // TODO: Check if the pointer is contained in the heap.
+    
+    if (insert_node(gp_heap, block_ptr) == RTX_ERR) {
+        return RTX_ERR;
+    }
+    
+    // TODO: If a process is blocked on memory, let it know that a memory resource is now available.
+    
 	return RTX_OK;
 }
