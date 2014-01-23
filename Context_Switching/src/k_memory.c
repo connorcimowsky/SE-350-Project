@@ -91,15 +91,15 @@ void memory_init(void)
 			// last block
 			node->next = NULL;
 		} else {
-			node->next = (k_node_t *)(p_end + sizeof(k_node_t));
+			node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
 		}
 		insert_node(mem_heap, (k_node_t *)node);
-		// TODO(connor): Add the proper amount to p_end to account for block size.
-		p_end += sizeof(k_node_t);
+		p_end += sizeof(k_node_t) + BLOCK_SIZE;
 	}
 	
 	#ifdef DEBUG_0
 	iterator = mem_heap->first;
+    printf("pointer size: %d\n", sizeof(k_node_t));
 	while (iterator != NULL) {
 		printf("node address: %d\n", (int)iterator);
 		iterator = iterator->next;
