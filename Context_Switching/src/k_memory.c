@@ -6,6 +6,8 @@
  */
 
 #include "k_memory.h"
+#include "k_rtx.h"
+#include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
@@ -15,23 +17,24 @@
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
                /* The first stack starts at the RAM high address */
 	       /* stack grows down. Fully decremental stack */
+k_list_t *mem_heap;
 
 /**
  * @brief: Initialize RAM as follows:
 
 0x10008000+---------------------------+ High Address
-          |    Proc 1 STACK           |
-          |---------------------------|
-          |    Proc 2 STACK           |
+          |    Proc 1 STACK           |  |
+          |---------------------------|  |
+          |    Proc 2 STACK           |  v
           |---------------------------|<--- gp_stack
           |                           |
           |        HEAP               |
           |                           |
           |---------------------------|
           |        PCB 2              |
-          |---------------------------|
-          |        PCB 1              |
-          |---------------------------|
+          |---------------------------|  ^
+          |        PCB 1              |  |
+          |---------------------------|  |
           |        PCB pointers       |
           |---------------------------|<--- gp_pcbs
           |        Padding            |
@@ -48,7 +51,8 @@ void memory_init(void)
 {
 	U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
 	int i;
-  
+	k_node_t *iterator = NULL;
+	
 	/* 8 bytes padding */
 	p_end += 32;
 
@@ -72,7 +76,34 @@ void memory_init(void)
 	}
   
 	/* allocate memory for heap, not implemented yet*/
-  
+	#ifdef DEBUG_0  
+	// printf("", );
+	#endif
+	
+	mem_heap = (k_list_t *)p_end;
+	mem_heap->first = NULL;
+	p_end += sizeof(k_list_t);
+	
+	for (i = 0; i < NUM_BLOCKS; i++) {
+		k_node_t *node = (k_node_t *)p_end;
+		if (i == (NUM_BLOCKS - 1)) {
+			// last block
+			node->next = NULL;
+		} else {
+			node->next = (k_node_t *)(p_end + sizeof(k_node_t));
+		}
+		insert_node(mem_heap, (k_node_t *)node);
+		// TODO(connor): Add the proper amount to p_end to account for block size.
+		p_end += sizeof(k_node_t);
+	}
+	
+	#ifdef DEBUG_0
+	iterator = mem_heap->first;
+	while (iterator != NULL) {
+		printf("node address: %d\n", (int)iterator);
+		iterator = iterator->next;
+	}
+	#endif
 }
 
 /**
