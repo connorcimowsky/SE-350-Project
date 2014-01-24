@@ -33,12 +33,6 @@ k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
 extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
-/* Ready Queue Node Declaration */
-typedef struct k_ready_queue_node_t {
-    struct k_ready_queue_node_t *next;
-    PCB *pcb;
-} k_ready_queue_node_t;
-
 /**
  * @biref: initialize all processes in the system
  * NOTE: We assume there are only two user processes in the system in this example.
@@ -62,6 +56,7 @@ void process_init()
 		k_ready_queue_node_t *node;
         
         g_proc_table[i].m_pid = g_test_procs[i].m_pid;
+        g_proc_table[i].m_priority = g_test_procs[i].m_priority;
 		g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
 		g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
@@ -75,6 +70,7 @@ void process_init()
 	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
 		int j;
 		(gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
+        (gp_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
 		(gp_pcbs[i])->m_state = READY;
 		
 		sp = alloc_stack((g_proc_table[i]).m_stack_size);
@@ -88,26 +84,25 @@ void process_init()
 }
 
 /*@brief: scheduler, pick the pid of the next to run process
- *@return: PCB pointer of the next to run process
+ *@return: pointer to the next node containing the PCB pointer of the next to run process
  *         NULL if error happens
  *POST: if gp_current_process was NULL, then it gets set to pcbs[0].
  *      No other effect on other global variables.
  */
 
-PCB *scheduler(void)
+k_ready_queue_node_t *scheduler(void)
 {
-	if (gp_current_process == NULL) {
-		gp_current_process = gp_pcbs[0]; 
-		return gp_pcbs[0];
-	}
-
-	if ( gp_current_process == gp_pcbs[0] ) {
-		return gp_pcbs[1];
-	} else if ( gp_current_process == gp_pcbs[1] ) {
-		return gp_pcbs[0];
-	} else {
-		return NULL;
-	}
+    int i;
+    k_ready_queue_node_t *node = NULL;
+    
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        if (!is_queue_empty(gp_ready_queue[i])) {
+            node = (k_ready_queue_node_t *)dequeue_node(gp_ready_queue[i]);
+            break;
+        }
+    }
+    
+    return node;
 }
 
 /*@brief: switch out old pcb (p_pcb_old), run the new pcb (gp_current_process)
@@ -157,17 +152,43 @@ int process_switch(PCB *p_pcb_old)
 int k_release_processor(void)
 {
 	PCB *p_pcb_old = NULL;
+    k_ready_queue_node_t *next_ready_queue_node = NULL;
 	
 	p_pcb_old = gp_current_process;
-	gp_current_process = scheduler();
+    next_ready_queue_node = scheduler();
+    
+    if (next_ready_queue_node != NULL) {
+        gp_current_process = next_ready_queue_node->pcb;
+    } else {
+        gp_current_process = NULL;
+    }
+    
+    k_release_memory_block(next_ready_queue_node);
 	
 	if ( gp_current_process == NULL  ) {
+        // We want to resume execution of the process without adding it back to the
+        // ready queue, i.e. 'pretend k_release_processor() was never called.
+        
+        // This handles the case of the null process (priority 4) and other error cases.
+        
 		gp_current_process = p_pcb_old; // revert back to the old process
 		return RTX_ERR;
 	}
-        if ( p_pcb_old == NULL ) {
+    
+    if ( p_pcb_old == NULL ) {
 		p_pcb_old = gp_current_process;
-	}
+	} else {
+        PRIORITY_E old_priority;
+        k_ready_queue_node_t *node = NULL;
+
+        node = (k_ready_queue_node_t *)k_request_memory_block();
+        node->pcb = p_pcb_old;
+        
+        old_priority = p_pcb_old->m_priority;
+        
+        enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node);
+    }
+    
 	process_switch(p_pcb_old);
 	return RTX_OK;
 }

@@ -16,10 +16,15 @@
 
 #define INITIAL_xPSR 0x01000000        /* user process initial xPSR value */
 
+typedef struct k_ready_queue_node_t {
+    struct k_ready_queue_node_t *next;
+    PCB *pcb;
+} k_ready_queue_node_t;
+
 /* ----- Functions ----- */
 
 void process_init(void);               /* initialize all procs in the system */
-PCB *scheduler(void);                  /* pick the pid of the next to run process */
+k_ready_queue_node_t *scheduler(void); /* pick the pid of the next to run process */
 int k_release_process(void);           /* kernel release_process function */
 
 extern U32 *alloc_stack(U32 size_b);   /* allocate stack for a process */
