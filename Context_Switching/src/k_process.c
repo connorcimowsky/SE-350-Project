@@ -16,6 +16,7 @@
 #include <LPC17xx.h>
 #include <system_LPC17xx.h>
 #include "uart_polling.h"
+#include "k_memory.h"
 #include "k_process.h"
 #include "k_queue.h"
 
@@ -28,9 +29,15 @@ PCB **gp_pcbs;                  /* array of pcbs */
 PCB *gp_current_process = NULL; /* always point to the current RUN process */
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 
-/* process initialization table */
+/* Process Initialization Table */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
 extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
+
+/* Ready Queue Node Declaration */
+typedef struct k_ready_queue_node_t {
+    struct k_ready_queue_node_t *next;
+    PCB *pcb;
+} k_ready_queue_node_t;
 
 /**
  * @biref: initialize all processes in the system
@@ -40,13 +47,28 @@ void process_init()
 {
 	int i;
 	U32 *sp;
+    
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        // TODO: Ask about how this should be allocated.
+        gp_ready_queue[i] = (k_queue_t *)k_request_memory_block();
+        gp_ready_queue[i]->first = NULL;
+        gp_ready_queue[i]->last = NULL;
+    }
   
         /* fill out the initialization table */
 	set_test_procs();
 	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-		g_proc_table[i].m_pid = g_test_procs[i].m_pid;
+        k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
+		k_ready_queue_node_t *node;
+        
+        g_proc_table[i].m_pid = g_test_procs[i].m_pid;
 		g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
 		g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
+        
+        node = (k_ready_queue_node_t *)k_request_memory_block();
+        node->pcb = gp_pcbs[i];
+        
+        enqueue_node(queue, (k_node_t *)node);
 	}
   
 	/* initilize exception stack frame (i.e. initial context) for each process */
