@@ -65,3 +65,22 @@ int is_queue_empty(k_queue_t *queue) {
         return (queue->first == NULL);
     }
 }
+
+#ifdef DEBUG_0
+int print_queue(k_queue_t *queue) {
+    k_node_t *iter = NULL;
+    if (queue == NULL) {
+        return RTX_ERR;
+    }
+    
+    iter = queue->first;
+    printf("queue: 0x%x\n\tfirst:0x%x\n\tlast:0x%x\n", queue, queue->first, queue->last);
+    printf("nodes:\n");
+    while (iter != NULL) {
+        printf("\t0x%x, next: 0x%x\n", iter, iter->next);
+        iter = iter->next;
+    }
+    
+    return RTX_OK;
+}
+#endif
