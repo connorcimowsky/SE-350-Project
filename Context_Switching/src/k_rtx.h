@@ -38,7 +38,8 @@ typedef enum {
 
 /* Process States */
 typedef enum {
-    READY = 0,
+    NEW = 0,
+    READY,
     BLOCKED_ON_RESOURCE,
     WAITING_FOR_MESSAGE,
     EXECUTING,

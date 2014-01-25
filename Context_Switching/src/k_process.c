@@ -71,7 +71,7 @@ void process_init()
 		int j;
 		(gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
         (gp_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
-		(gp_pcbs[i])->m_state = READY;
+		(gp_pcbs[i])->m_state = NEW;
 		
 		sp = alloc_stack((g_proc_table[i]).m_stack_size);
 		*(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
@@ -115,34 +115,42 @@ k_ready_queue_node_t *scheduler(void)
  */
 int process_switch(PCB *p_pcb_old) 
 {
-	PROC_STATE_E state;
-	
-	state = gp_current_process->m_state;
-
-	if (state == READY) {
-		if (gp_current_process != p_pcb_old && p_pcb_old->m_state != READY) {
-			p_pcb_old->m_state = READY;
-			p_pcb_old->mp_sp = (U32 *) __get_MSP();
-		}
-		gp_current_process->m_state = EXECUTING;
-		__set_MSP((U32) gp_current_process->mp_sp);
-		__rte();  // pop exception stack frame from the stack for a new processes
-	} 
-	
-	/* The following will only execute if the if block above is FALSE */
-
-	if (gp_current_process != p_pcb_old) {
-		if (state == READY){ 		
-			p_pcb_old->m_state = READY; 
-			p_pcb_old->mp_sp = (U32 *) __get_MSP(); // save the old process's sp
-			gp_current_process->m_state = EXECUTING;
-			__set_MSP((U32) gp_current_process->mp_sp); //switch to the new proc's stack    
-		} else {
-			gp_current_process = p_pcb_old; // revert back to the old proc on error
+	PROC_STATE_E new_state = gp_current_process->m_state;
+    
+    switch (new_state) {
+        case NEW:
+            
+            if (p_pcb_old != gp_current_process && p_pcb_old->m_state != NEW) {
+                p_pcb_old->m_state = READY;
+                p_pcb_old->mp_sp = (U32 *)__get_MSP();
+            }
+            
+            gp_current_process->m_state = EXECUTING;
+            
+            __set_MSP((U32)gp_current_process->mp_sp);
+            __rte(); // pop exception stack frame from the stack for a new processes
+            
+            break;
+            
+        case READY:
+            
+            if (p_pcb_old != gp_current_process) {
+                p_pcb_old->m_state = READY; 
+                p_pcb_old->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
+                
+                gp_current_process->m_state = EXECUTING;
+                
+                __set_MSP((U32)gp_current_process->mp_sp); //switch to the new proc's stack
+            }
+            
+            break;
+            
+        default:
+            gp_current_process = p_pcb_old; // revert back to the old proc on error
 			return RTX_ERR;
-		} 
-	}
-	return RTX_OK;
+    }
+    
+    return RTX_OK;
 }
 /**
  * @brief release_processor(). 
