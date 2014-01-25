@@ -39,8 +39,8 @@ extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
  */
 void process_init() 
 {
-	int i;
-	U32 *sp;
+    int i;
+    U32 *sp;
     
     for (i = 0; i < NUM_PRIORITIES; i++) {
         // TODO: Ask about how this should be allocated.
@@ -50,37 +50,37 @@ void process_init()
     }
   
         /* fill out the initialization table */
-	set_test_procs();
-	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+    set_test_procs();
+    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
-		k_ready_queue_node_t *node;
+        k_ready_queue_node_t *node;
         
         g_proc_table[i].m_pid = g_test_procs[i].m_pid;
         g_proc_table[i].m_priority = g_test_procs[i].m_priority;
-		g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
-		g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
+        g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
+        g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
         node = (k_ready_queue_node_t *)k_request_memory_block();
         node->pcb = gp_pcbs[i];
         
         enqueue_node(queue, (k_node_t *)node);
-	}
+    }
   
-	/* initilize exception stack frame (i.e. initial context) for each process */
-	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-		int j;
-		(gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
+    /* initilize exception stack frame (i.e. initial context) for each process */
+    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+        int j;
+        (gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
         (gp_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
-		(gp_pcbs[i])->m_state = NEW;
-		
-		sp = alloc_stack((g_proc_table[i]).m_stack_size);
-		*(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
-		*(--sp)  = (U32)((g_proc_table[i]).mpf_start_pc); // PC contains the entry point of the process
-		for ( j = 0; j < 6; j++ ) { // R0-R3, R12 are cleared with 0
-			*(--sp) = 0x0;
-		}
-		(gp_pcbs[i])->mp_sp = sp;
-	}
+        (gp_pcbs[i])->m_state = NEW;
+        
+        sp = alloc_stack((g_proc_table[i]).m_stack_size);
+        *(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
+        *(--sp)  = (U32)((g_proc_table[i]).mpf_start_pc); // PC contains the entry point of the process
+        for ( j = 0; j < 6; j++ ) { // R0-R3, R12 are cleared with 0
+            *(--sp) = 0x0;
+        }
+        (gp_pcbs[i])->mp_sp = sp;
+    }
 }
 
 /*@brief: scheduler, pick the pid of the next to run process
@@ -115,7 +115,7 @@ k_ready_queue_node_t *scheduler(void)
  */
 int process_switch(PCB *p_pcb_old) 
 {
-	PROC_STATE_E new_state = gp_current_process->m_state;
+    PROC_STATE_E new_state = gp_current_process->m_state;
     
     switch (new_state) {
         case NEW:
@@ -147,7 +147,7 @@ int process_switch(PCB *p_pcb_old)
             
         default:
             gp_current_process = p_pcb_old; // revert back to the old proc on error
-			return RTX_ERR;
+            return RTX_ERR;
     }
     
     return RTX_OK;
@@ -159,10 +159,10 @@ int process_switch(PCB *p_pcb_old)
  */
 int k_release_processor(void)
 {
-	PCB *p_pcb_old = NULL;
+    PCB *p_pcb_old = NULL;
     k_ready_queue_node_t *next_ready_queue_node = NULL;
-	
-	p_pcb_old = gp_current_process;
+    
+    p_pcb_old = gp_current_process;
     next_ready_queue_node = scheduler();
     
     if (next_ready_queue_node != NULL) {
@@ -172,20 +172,20 @@ int k_release_processor(void)
     }
     
     k_release_memory_block(next_ready_queue_node);
-	
-	if ( gp_current_process == NULL  ) {
+    
+    if ( gp_current_process == NULL  ) {
         // We want to resume execution of the process without adding it back to the
         // ready queue, i.e. 'pretend k_release_processor() was never called.
         
         // This handles the case of the null process (priority 4) and other error cases.
         
-		gp_current_process = p_pcb_old; // revert back to the old process
-		return RTX_ERR;
-	}
+        gp_current_process = p_pcb_old; // revert back to the old process
+        return RTX_ERR;
+    }
     
     if ( p_pcb_old == NULL ) {
-		p_pcb_old = gp_current_process;
-	} else {
+        p_pcb_old = gp_current_process;
+    } else {
         PRIORITY_E old_priority;
         k_ready_queue_node_t *node = NULL;
 
@@ -197,6 +197,6 @@ int k_release_processor(void)
         enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node);
     }
     
-	process_switch(p_pcb_old);
-	return RTX_OK;
+    process_switch(p_pcb_old);
+    return RTX_OK;
 }
