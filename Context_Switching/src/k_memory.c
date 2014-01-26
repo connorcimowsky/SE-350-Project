@@ -6,13 +6,12 @@
  */
 
 #include "k_memory.h"
+#include "k_process.h"
 #include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
 #endif /* ! DEBUG_0 */
-
-extern int k_release_processor(void);
 
 /* ----- Global Variables ----- */
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
@@ -130,7 +129,7 @@ void *k_request_memory_block(void) {
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        // TODO(connor): Set process state to blocked.
+        k_enqueue_blocked_process();
         k_release_processor();
     }
 

@@ -28,6 +28,7 @@
 PCB **gp_pcbs;                  /* array of pcbs */
 PCB *gp_current_process = NULL; /* always point to the current RUN process */
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_queue;
 
 /* Process Initialization Table */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
@@ -42,14 +43,20 @@ void process_init()
     int i;
     U32 *sp;
     
+    /* create ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         // TODO: Ask about how this should be allocated.
         gp_ready_queue[i] = (k_queue_t *)k_request_memory_block();
         gp_ready_queue[i]->first = NULL;
         gp_ready_queue[i]->last = NULL;
     }
+    
+    /* create blocked queue */
+    gp_blocked_queue = (k_queue_t *)k_request_memory_block();
+    gp_blocked_queue->first = NULL;
+    gp_blocked_queue->last = NULL;
   
-        /* fill out the initialization table */
+    /* fill out the initialization table */
     set_test_procs();
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
@@ -199,4 +206,20 @@ int k_release_processor(void)
     
     process_switch(p_pcb_old);
     return RTX_OK;
+}
+
+int k_enqueue_blocked_process(void)
+{
+    k_ready_queue_node_t *node = NULL;
+    
+    if (gp_current_process == NULL) {
+        return RTX_ERR;
+    }
+    
+    gp_current_process->m_state = BLOCKED_ON_RESOURCE;
+    
+    node = (k_ready_queue_node_t *)k_request_memory_block();
+    node->pcb = gp_current_process;
+    
+    return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
 }
