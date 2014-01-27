@@ -14,9 +14,9 @@
 #endif /* ! DEBUG_0 */
 
 /* ----- Global Variables ----- */
-U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
-               /* The first stack starts at the RAM high address */
-	       /* stack grows down. Fully decremental stack */
+U32 *gp_stack;  /* The last allocated stack low address. 8 bytes aligned */
+                /* The first stack starts at the RAM high address */
+                /* stack grows down. Fully decremental stack */
 k_list_t *gp_heap;
 
 /**
@@ -49,22 +49,22 @@ k_list_t *gp_heap;
 
 void memory_init(void)
 {
-	U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
-	int i;
-	k_node_t *iterator = NULL;
-	
-	/* 4 bytes padding */
-	p_end += 4;
+    U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
+    int i;
+    k_node_t *iterator = NULL;
+    
+    /* 4 bytes padding */
+    p_end += 4;
 
-	/* allocate memory for pcb node pointers   */
-	gp_pcb_nodes = (k_pcb_node_t **)p_end;
-	p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
+    /* allocate memory for pcb node pointers   */
+    gp_pcb_nodes = (k_pcb_node_t **)p_end;
+    p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
   
     /* allocate memory for pcb nodes */
-	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-		gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
+    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+        gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
         p_end += sizeof(k_pcb_node_t); 
-	}
+    }
     
     /* allocate memory for pcbs */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
@@ -72,36 +72,36 @@ void memory_init(void)
         p_end += sizeof(PCB);
     }
 
-	/* prepare for alloc_stack() to allocate memory for stacks */
-	
-	gp_stack = (U32 *)RAM_END_ADDR;
-	if ((U32)gp_stack & 0x04) { /* 8 bytes alignment */
-		--gp_stack; 
-	}
-	
-	gp_heap = (k_list_t *)p_end;
-	gp_heap->first = NULL;
-	p_end += sizeof(k_list_t);
-	
-	for (i = 0; i < NUM_BLOCKS; i++) {
-		k_node_t *node = (k_node_t *)p_end;
-		if (i == (NUM_BLOCKS - 1)) {
-			// last block
-			node->next = NULL;
-		} else {
-			node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
-		}
-		insert_node(gp_heap, (k_node_t *)node);
-		p_end += sizeof(k_node_t) + BLOCK_SIZE;
-	}
-	
+    /* prepare for alloc_stack() to allocate memory for stacks */
+    
+    gp_stack = (U32 *)RAM_END_ADDR;
+    if ((U32)gp_stack & 0x04) { /* 8 bytes alignment */
+        --gp_stack; 
+    }
+    
+    gp_heap = (k_list_t *)p_end;
+    gp_heap->first = NULL;
+    p_end += sizeof(k_list_t);
+    
+    for (i = 0; i < NUM_BLOCKS; i++) {
+        k_node_t *node = (k_node_t *)p_end;
+        if (i == (NUM_BLOCKS - 1)) {
+            // last block
+            node->next = NULL;
+        } else {
+            node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
+        }
+        insert_node(gp_heap, (k_node_t *)node);
+        p_end += sizeof(k_node_t) + BLOCK_SIZE;
+    }
+    
 #ifdef DEBUG_0
-	iterator = gp_heap->first;
+    iterator = gp_heap->first;
     printf("Memory blocks:\n");
-	while (iterator != NULL) {
-		printf("\tnode: 0x%x\n", iterator);
-		iterator = iterator->next;
-	}
+    while (iterator != NULL) {
+        printf("\tnode: 0x%x\n", iterator);
+        iterator = iterator->next;
+    }
 #endif
 }
 
@@ -114,17 +114,17 @@ void memory_init(void)
 
 U32 *alloc_stack(U32 size_b) 
 {
-	U32 *sp;
-	sp = gp_stack; /* gp_stack is always 8 bytes aligned */
-	
-	/* update gp_stack */
-	gp_stack = (U32 *)((U8 *)sp - size_b);
-	
-	/* 8 bytes alignement adjustment to exception stack frame */
-	if ((U32)gp_stack & 0x04) {
-		--gp_stack; 
-	}
-	return sp;
+    U32 *sp;
+    sp = gp_stack; /* gp_stack is always 8 bytes aligned */
+    
+    /* update gp_stack */
+    gp_stack = (U32 *)((U8 *)sp - size_b);
+    
+    /* 8 bytes alignement adjustment to exception stack frame */
+    if ((U32)gp_stack & 0x04) {
+        --gp_stack; 
+    }
+    return sp;
 }
 
 void *k_request_memory_block(void) {
@@ -147,7 +147,7 @@ void *k_request_memory_block(void) {
         // printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
 
-	return (void *) memory_block;
+    return (void *) memory_block;
 }
 
 int k_release_memory_block(void *p_mem_blk) {
@@ -181,5 +181,5 @@ int k_release_memory_block(void *p_mem_blk) {
         return k_enqueue_ready_node(blocked_node);
     }
         
-	return RTX_OK;
+    return RTX_OK;
 }
