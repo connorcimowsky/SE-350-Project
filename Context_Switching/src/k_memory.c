@@ -129,8 +129,8 @@ U32 *alloc_stack(U32 size_b)
     return sp;
 }
 
-void *k_request_memory_block(void) {
-    // TODO(connor): Ask about atomic operations.
+void *k_request_memory_block(void)
+{
     k_node_t *memory_block = NULL;
     while (is_list_empty(gp_heap)) {
     
@@ -138,8 +138,9 @@ void *k_request_memory_block(void) {
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        k_enqueue_blocked_process(gp_current_process);
-        k_release_processor();
+        if (k_enqueue_blocked_process(gp_current_process)) {
+            k_release_processor();
+        }
     }
 
     memory_block = get_node(gp_heap);
@@ -148,14 +149,13 @@ void *k_request_memory_block(void) {
 #ifdef DEBUG_0
         // printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
-
-    return (void *) memory_block;
+    
+    return (void *)memory_block;
 }
 
-int k_release_memory_block(void *p_mem_blk) {
-    k_node_t *block_ptr = p_mem_blk;
-    k_pcb_node_t* blocked_node = NULL;
-    block_ptr -= 1;
+int k_release_memory_block(void *p_mem_blk)
+{
+    k_node_t *block_ptr = NULL;
     
 #ifdef DEBUG_0
         // printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
@@ -170,6 +170,9 @@ int k_release_memory_block(void *p_mem_blk) {
         return RTX_ERR;
     }
     
+    block_ptr = p_mem_blk;
+    block_ptr -= 1;
+    
     // TODO: Make sure the pointer is block-aligned.
     // TODO: Add ability to check for duplicate blocks in the list.
     // TODO: Check if the pointer is contained in the heap.
@@ -178,10 +181,12 @@ int k_release_memory_block(void *p_mem_blk) {
         return RTX_ERR;
     }
     
-    blocked_node = k_dequeue_blocked_process();
-    if (blocked_node != NULL) {
-        return k_enqueue_ready_process(blocked_node);
+    if (!is_queue_empty(gp_blocked_queue)) {
+        k_pcb_node_t* p_blocked_pcb_node = k_dequeue_blocked_process();
+        if (k_enqueue_ready_process(p_blocked_pcb_node)) {
+            k_release_processor();
+        }
     }
-        
+    
     return RTX_OK;
 }

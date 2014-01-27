@@ -154,20 +154,18 @@ k_pcb_node_t *k_dequeue_ready_process(void)
 
 int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
 {
-    k_pcb_node_t *node = gp_current_process;
-    
-    if (node == NULL) {
+    if (p_pcb_node == NULL) {
         return RTX_ERR;
     }
     
-    node->pcb->m_state = BLOCKED_ON_RESOURCE;
-        
-    if (!is_queue_empty(gp_blocked_queue) && queue_contains_node(gp_blocked_queue, (k_node_t *)node)) {
+    p_pcb_node->pcb->m_state = BLOCKED_ON_RESOURCE;
+    
+    if (!is_queue_empty(gp_blocked_queue) && queue_contains_node(gp_blocked_queue, (k_node_t *)p_pcb_node)) {
         // the node is already in the blocked queue, bail
         return RTX_OK;
     }
     
-    return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
+    return (enqueue_node(gp_blocked_queue, (k_node_t *)p_pcb_node));
 }
 
 k_pcb_node_t* k_dequeue_blocked_process(void)
