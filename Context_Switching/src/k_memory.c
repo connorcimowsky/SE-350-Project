@@ -1,10 +1,3 @@
-/**
- * @file:   k_memory.c
- * @brief:  kernel memory managment routines
- * @author: Yiqing Huang
- * @date:   2014/01/17
- */
-
 #include "k_memory.h"
 #include "k_process.h"
 
@@ -12,9 +5,11 @@
 #include "printf.h"
 #endif
 
-/* Global Variables */
+
+/* global variables */
 k_list_t *gp_heap;
 U32 *gp_stack;
+
 
 /**
  * @brief: Initialize RAM as follows:
@@ -43,6 +38,7 @@ U32 *gp_stack;
 0x10000000+---------------------------+ Low Address
 
 */
+
 
 void memory_init(void)
 {
@@ -117,13 +113,6 @@ void memory_init(void)
     }
 #endif
 }
-
-/**
- * @brief: allocate stack for a process, align to 8 bytes boundary
- * @param: size, stack size in bytes
- * @return: The top of the stack (i.e. high address)
- * POST:  gp_stack is updated.
- */
 
 U32 *alloc_stack(U32 size_b) 
 {
