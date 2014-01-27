@@ -127,8 +127,10 @@ int process_switch(PCB *p_pcb_old)
     switch (new_state) {
         case NEW:
             
-            if (p_pcb_old != gp_current_process && p_pcb_old->m_state != NEW) {
-                p_pcb_old->m_state = READY;
+            if (p_pcb_old != NULL) {
+                if (p_pcb_old->m_state != BLOCKED_ON_RESOURCE) {
+                    k_enqueue_ready_process(p_pcb_old);
+                }
                 p_pcb_old->mp_sp = (U32 *)__get_MSP();
             }
             
@@ -141,8 +143,10 @@ int process_switch(PCB *p_pcb_old)
             
         case READY:
             
-            if (p_pcb_old != gp_current_process) {
-                p_pcb_old->m_state = READY; 
+            if (p_pcb_old != NULL) {
+                if (p_pcb_old->m_state != BLOCKED_ON_RESOURCE) {
+                    k_enqueue_ready_process(p_pcb_old);
+                }
                 p_pcb_old->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
                 
                 gp_current_process->m_state = EXECUTING;
@@ -180,7 +184,7 @@ int k_release_processor(void)
     
     k_release_memory_block(next_ready_queue_node);
     
-    if ( gp_current_process == NULL  ) {
+    if ( gp_current_process == NULL ) {
         // We want to resume execution of the process without adding it back to the
         // ready queue, i.e. 'pretend k_release_processor() was never called.
         
@@ -188,20 +192,6 @@ int k_release_processor(void)
         
         gp_current_process = p_pcb_old; // revert back to the old process
         return RTX_ERR;
-    }
-    
-    if ( p_pcb_old == NULL ) {
-        p_pcb_old = gp_current_process;
-    } else {
-        PRIORITY_E old_priority;
-        k_ready_queue_node_t *node = NULL;
-
-        node = (k_ready_queue_node_t *)k_request_memory_block();
-        node->pcb = p_pcb_old;
-        
-        old_priority = p_pcb_old->m_priority;
-        
-        enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node);
     }
     
     process_switch(p_pcb_old);
@@ -222,4 +212,23 @@ int k_enqueue_blocked_process(void)
     node->pcb = gp_current_process;
     
     return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
+}
+
+int k_enqueue_ready_process(PCB* p_pcb_old)
+{
+    k_ready_queue_node_t *node = NULL;
+    PRIORITY_E old_priority;
+    
+    if (p_pcb_old == NULL) {
+        return RTX_ERR;
+    }
+    
+    p_pcb_old->m_state = READY;
+    
+    node = (k_ready_queue_node_t *)k_request_memory_block();
+    node->pcb = p_pcb_old;
+        
+    old_priority = p_pcb_old->m_priority;
+        
+    return (enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node));
 }
