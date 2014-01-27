@@ -66,7 +66,7 @@ extern U32 *gp_stack;                               /* current top of (decrement
 
 extern PROC_INIT g_proc_table[NUM_TEST_PROCS];      /* process initialization table */
 extern k_pcb_node_t **gp_pcb_nodes;                 /* array of nodes pointing to PCBs */
-extern PCB *gp_current_process;                     /* the process whose state is EXECUTING */
+extern k_pcb_node_t *gp_current_process;            /* the process whose state is EXECUTING */
 extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];   /* array of priority queues, one for each priority */
 extern k_queue_t *gp_blocked_queue;                 /* queue for processes that are BLOCKED_ON_RESOURCE */
 

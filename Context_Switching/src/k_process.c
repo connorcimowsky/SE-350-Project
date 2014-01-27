@@ -26,7 +26,7 @@
 /* Global Variables */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
 k_pcb_node_t **gp_pcb_nodes = NULL;
-PCB *gp_current_process = NULL;
+k_pcb_node_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_queue = NULL;
 
@@ -112,44 +112,44 @@ k_pcb_node_t *scheduler(void)
  *POST: if gp_current_process was NULL, then it gets set to pcbs[0].
  *      No other effect on other global variables.
  */
-int process_switch(PCB *p_pcb_old) 
+int process_switch(k_pcb_node_t *p_pcb_node_old) 
 {
-    PROC_STATE_E new_state = gp_current_process->m_state;
+    PROC_STATE_E new_state = gp_current_process->pcb->m_state;
     
     switch (new_state) {
         case NEW:
             
-            if (p_pcb_old != NULL) {
-                if (p_pcb_old->m_state != BLOCKED_ON_RESOURCE) {
-                    k_enqueue_ready_process(p_pcb_old);
+            if (p_pcb_node_old != NULL && p_pcb_node_old->pcb != NULL) {
+                if (p_pcb_node_old->pcb->m_state != BLOCKED_ON_RESOURCE) {
+                    k_enqueue_ready_node(p_pcb_node_old);
                 }
-                p_pcb_old->mp_sp = (U32 *)__get_MSP();
+                p_pcb_node_old->pcb->mp_sp = (U32 *)__get_MSP();
             }
             
-            gp_current_process->m_state = EXECUTING;
+            gp_current_process->pcb->m_state = EXECUTING;
             
-            __set_MSP((U32)gp_current_process->mp_sp);
+            __set_MSP((U32)gp_current_process->pcb->mp_sp);
             __rte(); // pop exception stack frame from the stack for a new processes
             
             break;
             
         case READY:
             
-            if (p_pcb_old != NULL) {
-                if (p_pcb_old->m_state != BLOCKED_ON_RESOURCE) {
-                    k_enqueue_ready_process(p_pcb_old);
+            if (p_pcb_node_old != NULL && p_pcb_node_old->pcb != NULL) {
+                if (p_pcb_node_old->pcb->m_state != BLOCKED_ON_RESOURCE) {
+                    k_enqueue_ready_node(p_pcb_node_old);
                 }
-                p_pcb_old->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
+                p_pcb_node_old->pcb->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
                 
-                gp_current_process->m_state = EXECUTING;
+                gp_current_process->pcb->m_state = EXECUTING;
                 
-                __set_MSP((U32)gp_current_process->mp_sp); //switch to the new proc's stack
+                __set_MSP((U32)gp_current_process->pcb->mp_sp); //switch to the new proc's stack
             }
             
             break;
             
         default:
-            gp_current_process = p_pcb_old; // revert back to the old proc on error
+            gp_current_process = p_pcb_node_old; // revert back to the old proc on error
             return RTX_ERR;
     }
     
@@ -162,14 +162,14 @@ int process_switch(PCB *p_pcb_old)
  */
 int k_release_processor(void)
 {
-    PCB *p_pcb_old = NULL;
+    k_pcb_node_t *p_pcb_node_old = NULL;
     k_pcb_node_t *next_ready_queue_node = NULL;
     
-    p_pcb_old = gp_current_process;
+    p_pcb_node_old = gp_current_process;
     next_ready_queue_node = scheduler();
     
     if (next_ready_queue_node != NULL) {
-        gp_current_process = next_ready_queue_node->pcb;
+        gp_current_process = next_ready_queue_node;
     } else {
         gp_current_process = NULL;
     }
@@ -180,26 +180,24 @@ int k_release_processor(void)
         
         // This handles the case of the null process (priority 4) and other error cases.
         
-        gp_current_process = p_pcb_old; // revert back to the old process
+        gp_current_process = p_pcb_node_old; // revert back to the old process
         return RTX_ERR;
     }
     
-    process_switch(p_pcb_old);
+    process_switch(p_pcb_node_old);
     return RTX_OK;
 }
 
 int k_enqueue_blocked_process(void)
 {
-    k_pcb_node_t *node = NULL;
+    k_pcb_node_t *node = gp_current_process;
     
-    if (gp_current_process == NULL) {
+    if (node == NULL) {
         return RTX_ERR;
     }
     
-    gp_current_process->m_state = BLOCKED_ON_RESOURCE;
-    
-    node = gp_pcb_nodes[gp_current_process->m_pid - 1];
-    
+    node->pcb->m_state = BLOCKED_ON_RESOURCE;
+        
     if (!is_queue_empty(gp_blocked_queue) && queue_contains_node(gp_blocked_queue, (k_node_t *)node)) {
         // the node is already in the blocked queue, bail
         return RTX_OK;
