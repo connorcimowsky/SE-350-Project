@@ -7,17 +7,14 @@
 
 #include "k_memory.h"
 #include "k_process.h"
-#include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
-#endif /* ! DEBUG_0 */
+#endif
 
-/* ----- Global Variables ----- */
-U32 *gp_stack;  /* The last allocated stack low address. 8 bytes aligned */
-                /* The first stack starts at the RAM high address */
-                /* stack grows down. Fully decremental stack */
+/* Global Variables */
 k_list_t *gp_heap;
+U32 *gp_stack;
 
 /**
  * @brief: Initialize RAM as follows:

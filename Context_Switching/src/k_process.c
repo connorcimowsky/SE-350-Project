@@ -14,25 +14,21 @@
  */
 
 #include <LPC17xx.h>
-#include <system_LPC17xx.h>
-#include "uart_polling.h"
-#include "k_memory.h"
+
 #include "k_process.h"
-#include "k_queue.h"
+#include "k_memory.h"
+#include "usr_proc.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
-#endif /* DEBUG_0 */
+#endif
 
-/* ----- Global Variables ----- */
-k_pcb_node_t **gp_pcb_nodes;                  /* array of pcb nodes */
-PCB *gp_current_process = NULL; /* always point to the current RUN process */
-k_queue_t *gp_ready_queue[NUM_PRIORITIES];
-k_queue_t *gp_blocked_queue;
-
-/* Process Initialization Table */
+/* Global Variables */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
-extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
+k_pcb_node_t **gp_pcb_nodes = NULL;
+PCB *gp_current_process = NULL;
+k_queue_t *gp_ready_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_queue = NULL;
 
 /**
  * @biref: initialize all processes in the system

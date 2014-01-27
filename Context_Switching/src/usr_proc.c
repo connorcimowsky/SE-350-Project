@@ -12,9 +12,8 @@
 
 #ifdef DEBUG_0
 #include "printf.h"
-#endif /* DEBUG_0 */
+#endif
 
-/* initialization table item */
 PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
 void set_test_procs() {
