@@ -25,7 +25,7 @@
 #endif /* DEBUG_0 */
 
 /* ----- Global Variables ----- */
-PCB **gp_pcbs;                  /* array of pcbs */
+k_pcb_node_t **gp_pcb_nodes;                  /* array of pcb nodes */
 PCB *gp_current_process = NULL; /* always point to the current RUN process */
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_queue;
@@ -60,25 +60,21 @@ void process_init()
     set_test_procs();
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
-        k_pcb_node_t *node;
         
         g_proc_table[i].m_pid = g_test_procs[i].m_pid;
         g_proc_table[i].m_priority = g_test_procs[i].m_priority;
         g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
         g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
-        node = (k_pcb_node_t *)k_request_memory_block();
-        node->pcb = gp_pcbs[i];
-        
-        enqueue_node(queue, (k_node_t *)node);
+        enqueue_node(queue, (k_node_t *)gp_pcb_nodes[i]);
     }
   
     /* initilize exception stack frame (i.e. initial context) for each process */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         int j;
-        (gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
-        (gp_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
-        (gp_pcbs[i])->m_state = NEW;
+        (gp_pcb_nodes[i])->pcb->m_pid = (g_proc_table[i]).m_pid;
+        (gp_pcb_nodes[i])->pcb->m_priority = (g_proc_table[i]).m_priority;
+        (gp_pcb_nodes[i])->pcb->m_state = NEW;
         
         sp = alloc_stack((g_proc_table[i]).m_stack_size);
         *(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
@@ -86,7 +82,7 @@ void process_init()
         for ( j = 0; j < 6; j++ ) { // R0-R3, R12 are cleared with 0
             *(--sp) = 0x0;
         }
-        (gp_pcbs[i])->mp_sp = sp;
+        (gp_pcb_nodes[i])->pcb->mp_sp = sp;
     }
 }
 

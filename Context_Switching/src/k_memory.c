@@ -36,7 +36,7 @@ k_list_t *gp_heap;
           |        PCB 1              |  |
           |---------------------------|  |
           |        PCB pointers       |
-          |---------------------------|<--- gp_pcbs
+          |---------------------------|<--- gp_pcb_nodes
           |        Padding            |
           |---------------------------|  
           |Image$$RW_IRAM1$$ZI$$Limit |
@@ -56,14 +56,21 @@ void memory_init(void)
 	/* 4 bytes padding */
 	p_end += 4;
 
-	/* allocate memory for pcb pointers   */
-	gp_pcbs = (PCB **)p_end;
-	p_end += NUM_TEST_PROCS * sizeof(PCB *);
+	/* allocate memory for pcb node pointers   */
+	gp_pcb_nodes = (k_pcb_node_t **)p_end;
+	p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
   
+    /* allocate memory for pcb nodes */
 	for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-		gp_pcbs[i] = (PCB *)p_end;
-		p_end += sizeof(PCB); 
+		gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
+        p_end += sizeof(k_pcb_node_t); 
 	}
+    
+    /* allocate memory for pcbs */
+    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+        gp_pcb_nodes[i]->pcb = (PCB *)p_end;
+        p_end += sizeof(PCB);
+    }
 
 	/* prepare for alloc_stack() to allocate memory for stacks */
 	

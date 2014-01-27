@@ -18,7 +18,7 @@
 /* ----- Variables ----- */
 /* This symbol is defined in the scatter file (see RVCT Linker User Guide) */  
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit; 
-extern PCB **gp_pcbs;
+extern k_pcb_node_t **gp_pcb_nodes;
 extern PROC_INIT g_proc_table[NUM_TEST_PROCS];
 
 /* ----- Functions ------ */
