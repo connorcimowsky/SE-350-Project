@@ -145,6 +145,7 @@ void *k_request_memory_block(void) {
 
 int k_release_memory_block(void *p_mem_blk) {
     k_node_t *block_ptr = p_mem_blk;
+    k_ready_queue_node_t* blocked_node = NULL;
     block_ptr -= 1;
     
 #ifdef DEBUG_0
@@ -168,7 +169,10 @@ int k_release_memory_block(void *p_mem_blk) {
         return RTX_ERR;
     }
     
-    // TODO: If a process is blocked on memory, let it know that a memory resource is now available.
-    
+    blocked_node = k_dequeue_blocked_process();
+    if (blocked_node != NULL) {
+        return k_enqueue_ready_node(blocked_node);
+    }
+        
 	return RTX_OK;
 }

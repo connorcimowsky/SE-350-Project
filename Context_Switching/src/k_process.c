@@ -214,20 +214,36 @@ int k_enqueue_blocked_process(void)
     return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
 }
 
-int k_enqueue_ready_process(PCB* p_pcb_old)
+k_ready_queue_node_t* k_dequeue_blocked_process(void)
 {
-    k_ready_queue_node_t *node = NULL;
-    PRIORITY_E old_priority;
-    
-    if (p_pcb_old == NULL) {
-        return RTX_ERR;
+    if (is_queue_empty(gp_blocked_queue)) {
+        return NULL;
     }
     
+    return ((k_ready_queue_node_t *)dequeue_node(gp_blocked_queue));
+}
+
+int k_enqueue_ready_process(PCB* p_pcb_old)
+{
+    k_ready_queue_node_t *node = (k_ready_queue_node_t *)k_request_memory_block();
+    node->pcb = p_pcb_old;
+    node->next = NULL;
+    
+    return k_enqueue_ready_node(node);
+}
+
+int k_enqueue_ready_node(k_ready_queue_node_t* node)
+{
+    PCB* p_pcb_old;
+    PRIORITY_E old_priority;
+
+    if (node == NULL || node->pcb == NULL) {
+        return RTX_ERR;
+    }
+
+    p_pcb_old = node->pcb;
     p_pcb_old->m_state = READY;
     
-    node = (k_ready_queue_node_t *)k_request_memory_block();
-    node->pcb = p_pcb_old;
-        
     old_priority = p_pcb_old->m_priority;
         
     return (enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node));
