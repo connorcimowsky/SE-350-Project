@@ -149,7 +149,7 @@ void *k_request_memory_block(void) {
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        k_enqueue_blocked_process();
+        k_enqueue_blocked_process(gp_current_process);
         k_release_processor();
     }
 
@@ -191,7 +191,7 @@ int k_release_memory_block(void *p_mem_blk) {
     
     blocked_node = k_dequeue_blocked_process();
     if (blocked_node != NULL) {
-        return k_enqueue_ready_node(blocked_node);
+        return k_enqueue_ready_process(blocked_node);
     }
         
     return RTX_OK;
