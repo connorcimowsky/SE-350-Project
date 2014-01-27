@@ -12,6 +12,10 @@ int enqueue_node(k_queue_t *queue, k_node_t *node);
 
 k_node_t *dequeue_node(k_queue_t *queue);
 
+int remove_node_from_queue(k_queue_t *queue, k_node_t *node);
+
+int queue_contains_node(k_queue_t *queue, k_node_t *node);
+
 int is_queue_empty(k_queue_t *queue);
 
 #ifdef DEBUG_0

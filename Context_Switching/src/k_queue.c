@@ -53,6 +53,75 @@ k_node_t *dequeue_node(k_queue_t *queue)
     return first;
 }
 
+int remove_node_from_queue(k_queue_t *queue, k_node_t *node)
+{
+    k_node_t *current_iter = NULL;
+    k_node_t *previous_iter = NULL;
+    
+    if (is_queue_empty(queue)) {
+    
+#ifdef DEBUG_0
+        printf("Attempted to remove a node from an empty queue.\n");
+#endif
+    
+        return RTX_ERR;
+    }
+    
+    if (node == queue->first) {
+        if (queue->first == queue->last) {
+            queue->first = NULL;
+            queue->last = NULL;
+        } else {
+            queue->first = queue->first->next;
+        }
+        
+        return RTX_OK;
+    }
+    
+    current_iter = queue->first->next;
+    previous_iter = queue->first;
+    while (current_iter != NULL && previous_iter != NULL) {
+        if (node == current_iter) {
+            if (current_iter == queue->last) {
+                queue->last = previous_iter;
+            }
+            previous_iter->next = current_iter->next;
+            return RTX_OK;
+        }
+        previous_iter = current_iter;
+        current_iter = current_iter->next;
+    }
+    
+#ifdef DEBUG_0
+        printf("Node not found.\n");
+#endif
+    
+    return RTX_ERR;
+}
+
+int queue_contains_node(k_queue_t *queue, k_node_t *node)
+{
+    k_node_t *iter = NULL;
+    
+    if (is_queue_empty(queue)) {
+    
+#ifdef DEBUG_0
+        printf("Attempted to check node membership for an empty queue.\n");
+#endif
+    
+        return RTX_ERR;
+    }
+    
+    iter = queue->first;
+    while (iter != NULL) {
+        if (iter == node) {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
 int is_queue_empty(k_queue_t *queue) {
     if (queue == NULL) {
     
