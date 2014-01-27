@@ -68,7 +68,23 @@ void memory_init(void)
         gp_pcb_nodes[i]->pcb = (PCB *)p_end;
         p_end += sizeof(PCB);
     }
-
+    
+    /* create ready queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        gp_ready_queue[i] = (k_queue_t *)p_end;
+        gp_ready_queue[i]->first = NULL;
+        gp_ready_queue[i]->last = NULL;
+        
+        p_end += sizeof(k_queue_t);
+    }
+    
+    /* create blocked queue */
+    gp_blocked_queue = (k_queue_t *)p_end;
+    gp_blocked_queue->first = NULL;
+    gp_blocked_queue->last = NULL;
+    
+    p_end += sizeof(k_queue_t);
+    
     /* prepare for alloc_stack() to allocate memory for stacks */
     
     gp_stack = (U32 *)RAM_END_ADDR;

@@ -16,7 +16,6 @@
 #include <LPC17xx.h>
 
 #include "k_process.h"
-#include "k_memory.h"
 #include "usr_proc.h"
 
 #ifdef DEBUG_0
@@ -39,19 +38,6 @@ void process_init()
     int i;
     U32 *sp;
     
-    /* create ready queue */
-    for (i = 0; i < NUM_PRIORITIES; i++) {
-        // TODO: Ask about how this should be allocated.
-        gp_ready_queue[i] = (k_queue_t *)k_request_memory_block();
-        gp_ready_queue[i]->first = NULL;
-        gp_ready_queue[i]->last = NULL;
-    }
-    
-    /* create blocked queue */
-    gp_blocked_queue = (k_queue_t *)k_request_memory_block();
-    gp_blocked_queue->first = NULL;
-    gp_blocked_queue->last = NULL;
-  
     /* fill out the initialization table */
     set_test_procs();
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
