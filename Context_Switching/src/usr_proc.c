@@ -57,17 +57,10 @@ void proc1(void)
  */
 void proc2(void)
 {
-	int i = 0;
-	int ret_val = 20;
-	while ( 1) {
-		if ( i != 0 && i%5 == 0 ) {
-			uart0_put_string("\n\r");
-			ret_val = release_processor();
-#ifdef DEBUG_0
-			printf("proc2: ret_val=%d\n", ret_val);
-#endif /* DEBUG_0 */
-		}
-		uart0_put_char('0' + i%10);
-		i++;
-	}
+	while(1) {
+        void* block = request_memory_block();
+        if (block) {
+            printf("YES!\n");
+        }
+    }
 }

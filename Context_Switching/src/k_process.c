@@ -60,14 +60,14 @@ void process_init()
     set_test_procs();
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
-        k_ready_queue_node_t *node;
+        k_pcb_node_t *node;
         
         g_proc_table[i].m_pid = g_test_procs[i].m_pid;
         g_proc_table[i].m_priority = g_test_procs[i].m_priority;
         g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
         g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
-        node = (k_ready_queue_node_t *)k_request_memory_block();
+        node = (k_pcb_node_t *)k_request_memory_block();
         node->pcb = gp_pcbs[i];
         
         enqueue_node(queue, (k_node_t *)node);
@@ -97,14 +97,14 @@ void process_init()
  *      No other effect on other global variables.
  */
 
-k_ready_queue_node_t *scheduler(void)
+k_pcb_node_t *scheduler(void)
 {
     int i;
-    k_ready_queue_node_t *node = NULL;
+    k_pcb_node_t *node = NULL;
     
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_ready_queue[i])) {
-            node = (k_ready_queue_node_t *)dequeue_node(gp_ready_queue[i]);
+            node = (k_pcb_node_t *)dequeue_node(gp_ready_queue[i]);
             break;
         }
     }
@@ -171,7 +171,7 @@ int process_switch(PCB *p_pcb_old)
 int k_release_processor(void)
 {
     PCB *p_pcb_old = NULL;
-    k_ready_queue_node_t *next_ready_queue_node = NULL;
+    k_pcb_node_t *next_ready_queue_node = NULL;
     
     p_pcb_old = gp_current_process;
     next_ready_queue_node = scheduler();
@@ -200,7 +200,7 @@ int k_release_processor(void)
 
 int k_enqueue_blocked_process(void)
 {
-    k_ready_queue_node_t *node = NULL;
+    k_pcb_node_t *node = NULL;
     
     if (gp_current_process == NULL) {
         return RTX_ERR;
@@ -208,31 +208,31 @@ int k_enqueue_blocked_process(void)
     
     gp_current_process->m_state = BLOCKED_ON_RESOURCE;
     
-    node = (k_ready_queue_node_t *)k_request_memory_block();
+    node = (k_pcb_node_t *)k_request_memory_block();
     node->pcb = gp_current_process;
     
     return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
 }
 
-k_ready_queue_node_t* k_dequeue_blocked_process(void)
+k_pcb_node_t* k_dequeue_blocked_process(void)
 {
     if (is_queue_empty(gp_blocked_queue)) {
         return NULL;
     }
     
-    return ((k_ready_queue_node_t *)dequeue_node(gp_blocked_queue));
+    return ((k_pcb_node_t *)dequeue_node(gp_blocked_queue));
 }
 
 int k_enqueue_ready_process(PCB* p_pcb_old)
 {
-    k_ready_queue_node_t *node = (k_ready_queue_node_t *)k_request_memory_block();
+    k_pcb_node_t *node = (k_pcb_node_t *)k_request_memory_block();
     node->pcb = p_pcb_old;
     node->next = NULL;
     
     return k_enqueue_ready_node(node);
 }
 
-int k_enqueue_ready_node(k_ready_queue_node_t* node)
+int k_enqueue_ready_node(k_pcb_node_t* node)
 {
     PCB* p_pcb_old;
     PRIORITY_E old_priority;

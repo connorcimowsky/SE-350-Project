@@ -145,7 +145,7 @@ void *k_request_memory_block(void) {
 
 int k_release_memory_block(void *p_mem_blk) {
     k_node_t *block_ptr = p_mem_blk;
-    k_ready_queue_node_t* blocked_node = NULL;
+    k_pcb_node_t* blocked_node = NULL;
     block_ptr -= 1;
     
 #ifdef DEBUG_0

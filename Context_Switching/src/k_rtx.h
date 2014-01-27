@@ -69,4 +69,10 @@ typedef struct proc_init
 	void (*mpf_start_pc) ();/* entry point of the process */    
 } PROC_INIT;
 
+/* PCB-containing node */
+typedef struct k_pcb_node_t {
+    struct k_pcb_node_t *next;
+    PCB *pcb;
+} k_pcb_node_t;
+
 #endif // ! K_RTX_H_
