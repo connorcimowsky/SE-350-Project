@@ -117,6 +117,7 @@ int queue_contains_node(k_queue_t *queue, k_node_t *node)
         if (iter == node) {
             return 1;
         }
+        iter = iter->next;
     }
     
     return 0;
