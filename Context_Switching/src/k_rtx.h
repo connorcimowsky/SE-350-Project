@@ -8,13 +8,7 @@
 #ifndef K_RTX_H_
 #define K_RTX_H_
 
-/*----- Definitations -----*/
-
-#define RTX_ERR -1
-#define RTX_OK  0
-
-#define NULL 0
-#define NUM_TEST_PROCS 2
+#include "rtx.h"
 
 #ifdef DEBUG_0
 #define USR_SZ_STACK 0x200         /* user proc stack size 512B   */
@@ -23,18 +17,6 @@
 #endif /* DEBUG_0 */
 
 /*----- Types -----*/
-typedef unsigned char U8;
-typedef unsigned int U32;
-
-/* Process Priority. The bigger the number is, the lower the priority is*/
-typedef enum {
-    HIGHEST = 0,
-    HIGH,
-    MEDIUM,
-    LOW,
-    LOWEST,
-    NUM_PRIORITIES
-} PRIORITY_E;
 
 /* Process States */
 typedef enum {
@@ -59,15 +41,6 @@ typedef struct pcb
     PRIORITY_E m_priority; /* process priority */
 	PROC_STATE_E m_state;   /* state of the process */      
 } PCB;
-
-/* initialization table item */
-typedef struct proc_init
-{	
-	int m_pid;	        /* process id */ 
-	PRIORITY_E m_priority;         /* initial priority, not used in this example. */ 
-	int m_stack_size;       /* size of stack in words */
-	void (*mpf_start_pc) ();/* entry point of the process */    
-} PROC_INIT;
 
 /* PCB-containing node */
 typedef struct k_pcb_node_t {
