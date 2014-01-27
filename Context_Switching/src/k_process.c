@@ -178,8 +178,6 @@ int k_release_processor(void)
         gp_current_process = NULL;
     }
     
-    k_release_memory_block(next_ready_queue_node);
-    
     if ( gp_current_process == NULL ) {
         // We want to resume execution of the process without adding it back to the
         // ready queue, i.e. 'pretend k_release_processor() was never called.
@@ -204,8 +202,12 @@ int k_enqueue_blocked_process(void)
     
     gp_current_process->m_state = BLOCKED_ON_RESOURCE;
     
-    node = (k_pcb_node_t *)k_request_memory_block();
-    node->pcb = gp_current_process;
+    node = gp_pcb_nodes[gp_current_process->m_pid - 1];
+    
+    if (!is_queue_empty(gp_blocked_queue) && queue_contains_node(gp_blocked_queue, (k_node_t *)node)) {
+        // the node is already in the blocked queue, bail
+        return RTX_OK;
+    }
     
     return (enqueue_node(gp_blocked_queue, (k_node_t *)node));
 }
@@ -221,26 +223,21 @@ k_pcb_node_t* k_dequeue_blocked_process(void)
 
 int k_enqueue_ready_process(PCB* p_pcb_old)
 {
-    k_pcb_node_t *node = (k_pcb_node_t *)k_request_memory_block();
-    node->pcb = p_pcb_old;
-    node->next = NULL;
+    k_pcb_node_t *node = gp_pcb_nodes[p_pcb_old->m_pid - 1];
     
     return k_enqueue_ready_node(node);
 }
 
 int k_enqueue_ready_node(k_pcb_node_t* node)
 {
-    PCB* p_pcb_old;
-    PRIORITY_E old_priority;
-
+    PRIORITY_E priority;
+    
     if (node == NULL || node->pcb == NULL) {
         return RTX_ERR;
     }
 
-    p_pcb_old = node->pcb;
-    p_pcb_old->m_state = READY;
+    node->pcb->m_state = READY;
+    priority = node->pcb->m_priority;
     
-    old_priority = p_pcb_old->m_priority;
-        
-    return (enqueue_node(gp_ready_queue[old_priority], (k_node_t *)node));
+    return (enqueue_node(gp_ready_queue[priority], (k_node_t *)node));
 }
