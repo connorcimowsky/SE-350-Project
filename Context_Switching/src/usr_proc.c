@@ -20,6 +20,7 @@ void set_test_procs(void) {
   
 	g_test_procs[0].mpf_start_pc = &proc1;
 	g_test_procs[1].mpf_start_pc = &proc2;
+	g_test_procs[2].mpf_start_pc = &proc3;
 }
 
 void proc1(void)
@@ -54,4 +55,11 @@ void proc2(void)
 		uart0_put_char('0' + i%10);
 		i++;
 	}
+}
+
+void proc3(void)
+{
+    while(1) {
+        request_memory_block();
+    }
 }
