@@ -6,13 +6,12 @@
  */
 
 #include "k_memory.h"
+#include "k_process.h"
 #include "k_list.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
 #endif /* ! DEBUG_0 */
-
-extern int k_release_processor(void);
 
 /* ----- Global Variables ----- */
 U32 *gp_stack; /* The last allocated stack low address. 8 bytes aligned */
@@ -65,10 +64,6 @@ void memory_init(void)
 		gp_pcbs[i] = (PCB *)p_end;
 		p_end += sizeof(PCB); 
 	}
-#ifdef DEBUG_0  
-	printf("gp_pcbs[0] = 0x%x \n", gp_pcbs[0]);
-	printf("gp_pcbs[1] = 0x%x \n", gp_pcbs[1]);
-#endif
 
 	/* prepare for alloc_stack() to allocate memory for stacks */
 	
@@ -76,11 +71,6 @@ void memory_init(void)
 	if ((U32)gp_stack & 0x04) { /* 8 bytes alignment */
 		--gp_stack; 
 	}
-  
-	/* allocate memory for heap, not implemented yet*/
-	#ifdef DEBUG_0  
-	// printf("", );
-	#endif
 	
 	gp_heap = (k_list_t *)p_end;
 	gp_heap->first = NULL;
@@ -100,9 +90,9 @@ void memory_init(void)
 	
 #ifdef DEBUG_0
 	iterator = gp_heap->first;
-    printf("pointer size: %d\n", sizeof(k_node_t));
+    printf("Memory blocks:\n");
 	while (iterator != NULL) {
-		printf("node address: 0x%x\n", iterator);
+		printf("\tnode: 0x%x\n", iterator);
 		iterator = iterator->next;
 	}
 #endif
@@ -139,7 +129,7 @@ void *k_request_memory_block(void) {
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        // TODO(connor): Set process state to blocked.
+        k_enqueue_blocked_process();
         k_release_processor();
     }
 
@@ -147,7 +137,7 @@ void *k_request_memory_block(void) {
     memory_block += 1;
     
 #ifdef DEBUG_0
-        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
+        // printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
 
 	return (void *) memory_block;
@@ -158,7 +148,7 @@ int k_release_memory_block(void *p_mem_blk) {
     block_ptr -= 1;
     
 #ifdef DEBUG_0
-        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
+        // printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
 #endif
     
     if (p_mem_blk == NULL ) {
