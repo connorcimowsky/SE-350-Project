@@ -512,6 +512,11 @@
           <GroupName>User Code</GroupName>
           <Files>
             <File>
+              <FileName>usr_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\usr_proc.h</FilePath>
+            </File>
+            <File>
               <FileName>usr_proc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\usr_proc.c</FilePath>
@@ -1025,6 +1030,11 @@
         <Group>
           <GroupName>User Code</GroupName>
           <Files>
+            <File>
+              <FileName>usr_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\usr_proc.h</FilePath>
+            </File>
             <File>
               <FileName>usr_proc.c</FileName>
               <FileType>1</FileType>

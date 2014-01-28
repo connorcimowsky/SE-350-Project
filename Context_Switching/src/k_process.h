@@ -1,36 +1,34 @@
-/**
- * @file:   k_process.h
- * @brief:  process management hearder file
- * @author: Yiqing Huang
- * @author: Thomas Reidemeister
- * @date:   2014/01/17
- * NOTE: Assuming there are only two user processes in the system
- */
-
-#ifndef K_PROCESS_H_
-#define K_PROCESS_H_
+#ifndef K_PROCESS_H
+#define K_PROCESS_H
 
 #include "k_rtx.h"
 
-/* ----- Definitions ----- */
 
-#define INITIAL_xPSR 0x01000000        /* user process initial xPSR value */
+/* external functions */
+extern U32 *alloc_stack(U32 size_b);
+extern void __rte(void);
 
-typedef struct k_ready_queue_node_t {
-    struct k_ready_queue_node_t *next;
-    PCB *pcb;
-} k_ready_queue_node_t;
 
-/* ----- Functions ----- */
+/* populate the process initialization table and set up the initial context of each process */
+void process_init(void);
 
-void process_init(void);                         /* initialize all procs in the system */
-k_ready_queue_node_t *scheduler(void);           /* pick the pid of the next to run process */
-int k_release_processor(void);                   /* kernel release_process function */
-int k_enqueue_blocked_process(void);             /* set state of current process to BLOCKED_ON_RESOURCE and add it to the blocked queue */
-int k_enqueue_ready_process(PCB* p_pcb_old);     /* set state of current process to READY and add it to the ready queue */
+/* invoke the scheduler and switch to the next process */
+int k_release_processor(void);
 
-extern U32 *alloc_stack(U32 size_b);   /* allocate stack for a process */
-extern void __rte(void);               /* pop exception stack frame */
-extern void set_test_procs(void);      /* test process initial set up */
+/* perform a context switch from p_pcb_node_old to p_pcb_node_new */
+int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new);
 
-#endif /* ! K_PROCESS_H_ */
+/* set the state of p_pcb_node to READY and enqueue it in the ready queue */
+int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node);
+
+/* dequeue the highest-priority process from the ready queue */
+k_pcb_node_t *k_dequeue_ready_process(void);
+
+/* set the state of p_pcb_node to BLOCKED_ON_RESOURCE and enqueue it in the blocked queue */
+int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node);
+
+/* dequeue the next available process from the blocked queue */
+k_pcb_node_t *k_dequeue_blocked_process(void);
+
+
+#endif /* K_PROCESS_H */

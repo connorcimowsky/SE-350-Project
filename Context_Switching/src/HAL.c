@@ -5,7 +5,7 @@
  *       The code borrowed some ideas from ARM RL-RTX source code
  */
  
-/* pop off exception stack frame from the stack */
+/* pop the exception stack frame and return to thread mode */
 __asm void __rte(void)
 {
   PRESERVE8            ; 8 bytes alignement of the stack

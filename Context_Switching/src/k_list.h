@@ -11,6 +11,8 @@ int insert_node(k_list_t *list, k_node_t *node);
 
 k_node_t *get_node(k_list_t *list);
 
+int list_contains_node(k_list_t *list, k_node_t *node);
+
 int is_list_empty(k_list_t *list);
 
 #endif

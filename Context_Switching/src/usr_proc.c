@@ -1,23 +1,16 @@
-/**
- * @file:   usr_proc.c
- * @brief:  Two user processes: proc1 and proc2
- * @author: Yiqing Huang
- * @date:   2014/01/17
- * NOTE: Each process is in an infinite loop. Processes never terminate.
- */
-
-#include "rtx.h"
-#include "uart_polling.h"
 #include "usr_proc.h"
+#include "uart_polling.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
-#endif /* DEBUG_0 */
+#endif
 
-/* initialization table item */
+
+/* global variables */
 PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
-void set_test_procs() {
+
+void set_test_procs(void) {
 	int i;
 	for( i = 0; i < NUM_TEST_PROCS; i++ ) {
 		g_test_procs[i].m_pid=(U32)(i+1);
@@ -27,13 +20,9 @@ void set_test_procs() {
   
 	g_test_procs[0].mpf_start_pc = &proc1;
 	g_test_procs[1].mpf_start_pc = &proc2;
+	g_test_procs[2].mpf_start_pc = &proc3;
 }
 
-
-/**
- * @brief: a process that prints five uppercase letters
- *         and then yields the cpu.
- */
 void proc1(void)
 {
 	int i = 0;
@@ -51,10 +40,6 @@ void proc1(void)
 	}
 }
 
-/**
- * @brief: a process that prints five numbers
- *         and then yields the cpu.
- */
 void proc2(void)
 {
 	int i = 0;
@@ -70,4 +55,11 @@ void proc2(void)
 		uart0_put_char('0' + i%10);
 		i++;
 	}
+}
+
+void proc3(void)
+{
+    while(1) {
+        request_memory_block();
+    }
 }
