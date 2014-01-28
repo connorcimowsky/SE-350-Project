@@ -138,7 +138,7 @@ void *k_request_memory_block(void)
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        if (k_enqueue_blocked_process(gp_current_process)) {
+        if (k_enqueue_blocked_process(gp_current_process) == RTX_OK) {
             k_release_processor();
         }
     }
@@ -183,7 +183,7 @@ int k_release_memory_block(void *p_mem_blk)
     
     if (!is_queue_empty(gp_blocked_queue)) {
         k_pcb_node_t* p_blocked_pcb_node = k_dequeue_blocked_process();
-        if (k_enqueue_ready_process(p_blocked_pcb_node)) {
+        if (k_enqueue_ready_process(p_blocked_pcb_node) == RTX_OK) {
             k_release_processor();
         }
     }
