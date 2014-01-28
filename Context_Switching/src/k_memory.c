@@ -8,6 +8,8 @@
 
 /* global variables */
 k_list_t *gp_heap;
+U32 *gp_heap_begin_addr;
+U32 *gp_heap_end_addr;
 U32 *gp_stack;
 
 
@@ -42,7 +44,7 @@ U32 *gp_stack;
 
 void memory_init(void)
 {
-    U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
+    U32 *p_end = (U32 *)&Image$$RW_IRAM1$$ZI$$Limit;
     int i;
     k_node_t *iterator = NULL;
     
@@ -92,6 +94,8 @@ void memory_init(void)
     gp_heap->first = NULL;
     p_end += sizeof(k_list_t);
     
+    gp_heap_begin_addr = p_end;
+    
     for (i = 0; i < NUM_BLOCKS; i++) {
         k_node_t *node = (k_node_t *)p_end;
         if (i == (NUM_BLOCKS - 1)) {
@@ -103,6 +107,8 @@ void memory_init(void)
         insert_node(gp_heap, (k_node_t *)node);
         p_end += sizeof(k_node_t) + BLOCK_SIZE;
     }
+    
+    gp_heap_end_addr = p_end;
     
 #ifdef DEBUG_0
     iterator = gp_heap->first;
@@ -164,7 +170,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (p_mem_blk == NULL ) {
         
 #ifdef DEBUG_0
-        printf("k_release_memory_block: could not release block @ 0x%x\n", p_mem_blk);
+        printf("k_release_memory_block: cannot release NULL\n");
 #endif
         
         return RTX_ERR;
@@ -173,9 +179,35 @@ int k_release_memory_block(void *p_mem_blk)
     block_ptr = p_mem_blk;
     block_ptr -= 1;
     
-    // TODO: Make sure the pointer is block-aligned.
-    // TODO: Add ability to check for duplicate blocks in the list.
-    // TODO: Check if the pointer is contained in the heap.
+    // make sure the pointer is not out of bounds
+    if ((U32 *)block_ptr < gp_heap_begin_addr || (U32 *)block_ptr > gp_heap_end_addr) {
+        
+#ifdef DEBUG_0
+        printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
+#endif
+        
+        return RTX_ERR;
+    }
+    
+    // make sure the pointer is block-aligned
+    if ((gp_heap_end_addr - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
+        
+#ifdef DEBUG_0
+        printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
+#endif
+        
+        return RTX_ERR;
+    }
+    
+    // make sure we aren't trying to release a duplicate block
+    if (list_contains_node(gp_heap, block_ptr)) {
+        
+#ifdef DEBUG_0
+        printf("k_release_memory_block: 0x%x has already been returned to the heap\n", p_mem_blk);
+#endif
+        
+        return RTX_ERR;
+    }
     
     if (insert_node(gp_heap, block_ptr) == RTX_ERR) {
         return RTX_ERR;
