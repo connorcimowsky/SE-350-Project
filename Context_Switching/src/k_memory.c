@@ -49,7 +49,7 @@ void memory_init(void)
     k_node_t *iterator = NULL;
     
     /* 4 bytes padding */
-    p_end += 4;
+    p_end += 1;
 
     /* allocate memory for pcb node pointers   */
     gp_pcb_nodes = (k_pcb_node_t **)p_end;
