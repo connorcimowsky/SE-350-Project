@@ -93,7 +93,7 @@ void memory_init(void)
     }
     
     gp_heap = (k_list_t *)p_end;
-    gp_heap->first = NULL;
+    gp_heap->mp_first = NULL;
     p_end += sizeof(k_list_t);
     
     gp_heap_begin_addr = p_end;
@@ -113,7 +113,7 @@ void memory_init(void)
     gp_heap_end_addr = p_end;
     
 #ifdef DEBUG_0
-    iterator = gp_heap->first;
+    iterator = gp_heap->mp_first;
     printf("Memory blocks:\n");
     while (iterator != NULL) {
         printf("\tnode: 0x%x\n", iterator);
