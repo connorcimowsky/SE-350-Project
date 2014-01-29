@@ -29,18 +29,18 @@ typedef enum {
 
 /* process initialization table item */
 typedef struct proc_init
-{	
+{
     /* process id */
-	int m_pid;
+    int m_pid;
 
     /* priority */
-	PRIORITY_E m_priority;
+    PRIORITY_E m_priority;
     
     /* size of stack in words */
-	int m_stack_size;
+    int m_stack_size;
     
     /* entry point of the process */
-	void (*mpf_start_pc) ();
+    void (*mpf_start_pc) ();
 } PROC_INIT;
 
 

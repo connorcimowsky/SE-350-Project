@@ -9,7 +9,7 @@
 int insert_node(k_list_t *p_list, k_node_t *p_node)
 {
     if (p_list == NULL || p_node == NULL) {
-				
+        
 #ifdef DEBUG_0
         printf("Node insertion error.\n");
 #endif

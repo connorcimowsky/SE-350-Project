@@ -11,16 +11,16 @@
 
 int main(void) 
 {
-	/* CMSIS system initialization */
-	SystemInit();
+    /* CMSIS system initialization */
+    SystemInit();
     
 #ifdef DEBUG_0
-	init_printf(NULL, putc);
+    init_printf(NULL, putc);
 #endif
     
-	/* initialize the RTX */
-	rtx_init();  
+    /* initialize the RTX */
+    rtx_init();  
     
-	/* we should never reach this */
-	return RTX_ERR;  
+    /* we should never reach this */
+    return RTX_ERR;  
 }
