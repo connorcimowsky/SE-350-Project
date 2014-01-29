@@ -37,9 +37,9 @@ void process_init(void)
     /* initilize exception stack frame (i.e. initial context) for each process */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
         int j;
-        (gp_pcb_nodes[i])->pcb->m_pid = (g_proc_table[i]).m_pid;
-        (gp_pcb_nodes[i])->pcb->m_priority = (g_proc_table[i]).m_priority;
-        (gp_pcb_nodes[i])->pcb->m_state = NEW;
+        (gp_pcb_nodes[i])->mp_pcb->m_pid = (g_proc_table[i]).m_pid;
+        (gp_pcb_nodes[i])->mp_pcb->m_priority = (g_proc_table[i]).m_priority;
+        (gp_pcb_nodes[i])->mp_pcb->m_state = NEW;
         
         sp = alloc_stack((g_proc_table[i]).m_stack_size);
         *(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
@@ -47,7 +47,7 @@ void process_init(void)
         for ( j = 0; j < 6; j++ ) { // R0-R3, R12 are cleared with 0
             *(--sp) = 0x0;
         }
-        (gp_pcb_nodes[i])->pcb->mp_sp = sp;
+        (gp_pcb_nodes[i])->mp_pcb->mp_sp = sp;
     }
 }
 
@@ -100,23 +100,23 @@ int k_set_process_priority(int pid, int priority)
     
     p_pcb_node = gp_pcb_nodes[pid - 1];
     
-    if (p_pcb_node->pcb->m_priority == priority) {
+    if (p_pcb_node->mp_pcb->m_priority == priority) {
         // don't do anything
         return RTX_OK;
     }
     
-    switch(p_pcb_node->pcb->m_state) {
+    switch(p_pcb_node->mp_pcb->m_state) {
         case READY:
-            if (remove_node_from_queue(gp_ready_queue[p_pcb_node->pcb->m_priority], (k_node_t *)p_pcb_node)) {
-                p_pcb_node->pcb->m_priority = (PRIORITY_E)priority;
+            if (remove_node_from_queue(gp_ready_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
+                p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
                 if (k_enqueue_ready_process(p_pcb_node) == RTX_ERR) {
                     return RTX_ERR;
                 }
             }
             break;
         case BLOCKED_ON_RESOURCE:
-            if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->pcb->m_priority], (k_node_t *)p_pcb_node)) {
-                p_pcb_node->pcb->m_priority = (PRIORITY_E)priority;
+            if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
+                p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
                 if (k_enqueue_blocked_process(p_pcb_node) == RTX_ERR) {
                     return RTX_ERR;
                 }
@@ -136,41 +136,41 @@ int k_get_process_priority(int pid)
         return RTX_ERR;
     }
     
-    return (int)gp_pcb_nodes[pid - 1]->pcb->m_priority;
+    return (int)gp_pcb_nodes[pid - 1]->mp_pcb->m_priority;
 }
 
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
 {
-    PROC_STATE_E new_state = p_pcb_node_new->pcb->m_state;
+    PROC_STATE_E new_state = p_pcb_node_new->mp_pcb->m_state;
     
     switch (new_state) {
         case NEW:
             
-            if (p_pcb_node_old != NULL && p_pcb_node_old->pcb != NULL) {
-                if (p_pcb_node_old->pcb->m_state != BLOCKED_ON_RESOURCE) {
+            if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
+                if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
                     k_enqueue_ready_process(p_pcb_node_old);
                 }
-                p_pcb_node_old->pcb->mp_sp = (U32 *)__get_MSP();
+                p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP();
             }
             
-            p_pcb_node_new->pcb->m_state = EXECUTING;
+            p_pcb_node_new->mp_pcb->m_state = EXECUTING;
             
-            __set_MSP((U32)p_pcb_node_new->pcb->mp_sp);
+            __set_MSP((U32)p_pcb_node_new->mp_pcb->mp_sp);
             __rte(); // pop exception stack frame from the stack for a new processes
             
             break;
             
         case READY:
             
-            if (p_pcb_node_old != NULL && p_pcb_node_old->pcb != NULL) {
-                if (p_pcb_node_old->pcb->m_state != BLOCKED_ON_RESOURCE) {
+            if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
+                if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
                     k_enqueue_ready_process(p_pcb_node_old);
                 }
-                p_pcb_node_old->pcb->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
+                p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
                 
-                p_pcb_node_new->pcb->m_state = EXECUTING;
+                p_pcb_node_new->mp_pcb->m_state = EXECUTING;
                 
-                __set_MSP((U32)p_pcb_node_new->pcb->mp_sp); //switch to the new proc's stack
+                __set_MSP((U32)p_pcb_node_new->mp_pcb->mp_sp); //switch to the new proc's stack
             }
             
             break;
@@ -187,12 +187,12 @@ int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node)
 {
     PRIORITY_E priority;
     
-    if (p_pcb_node == NULL || p_pcb_node->pcb == NULL) {
+    if (p_pcb_node == NULL || p_pcb_node->mp_pcb == NULL) {
         return RTX_ERR;
     }
 
-    p_pcb_node->pcb->m_state = READY;
-    priority = p_pcb_node->pcb->m_priority;
+    p_pcb_node->mp_pcb->m_state = READY;
+    priority = p_pcb_node->mp_pcb->m_priority;
     
     return (enqueue_node(gp_ready_queue[priority], (k_node_t *)p_pcb_node));
 }
@@ -220,9 +220,9 @@ int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
         return RTX_ERR;
     }
     
-    p_pcb_node->pcb->m_state = BLOCKED_ON_RESOURCE;
+    p_pcb_node->mp_pcb->m_state = BLOCKED_ON_RESOURCE;
     
-    p_blocked_queue = gp_blocked_queue[p_pcb_node->pcb->m_priority];
+    p_blocked_queue = gp_blocked_queue[p_pcb_node->mp_pcb->m_priority];
     
     if (!is_queue_empty(p_blocked_queue) && queue_contains_node(p_blocked_queue, (k_node_t *)p_pcb_node)) {
         // the node is already in the blocked queue, so don't enqueue it again

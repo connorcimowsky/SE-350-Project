@@ -51,8 +51,8 @@ typedef struct k_pcb_t
 
 /* pcb node */
 typedef struct k_pcb_node_t {
-    struct k_pcb_node_t *next;
-    k_pcb_t *pcb;
+    struct k_pcb_node_t *mp_next;
+    k_pcb_t *mp_pcb;
 } k_pcb_node_t;
 
 

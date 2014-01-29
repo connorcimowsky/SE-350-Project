@@ -63,7 +63,7 @@ void memory_init(void)
     
     /* allocate memory for pcbs */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-        gp_pcb_nodes[i]->pcb = (k_pcb_t *)p_end;
+        gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
         p_end += sizeof(k_pcb_t);
     }
     
@@ -220,7 +220,7 @@ int k_release_memory_block(void *p_mem_blk)
     
     if (p_blocked_pcb_node != NULL) {
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTX_OK) {
-            if (p_blocked_pcb_node->pcb->m_priority > gp_current_process->pcb->m_priority) {
+            if (p_blocked_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
                 // only preempt the calling process if the newly-unblocked process has a higher priority
                 k_release_processor();
             }
