@@ -3,23 +3,28 @@
 
 #include "k_node.h"
 
+
 typedef struct k_queue_t {
-    k_node_t *first;
-    k_node_t *last;
+    k_node_t *mp_first;
+    k_node_t *mp_last;
 } k_queue_t;
 
-int enqueue_node(k_queue_t *queue, k_node_t *node);
 
-k_node_t *dequeue_node(k_queue_t *queue);
+int enqueue_node(k_queue_t *p_queue, k_node_t *p_node);
 
-int remove_node_from_queue(k_queue_t *queue, k_node_t *node);
+k_node_t *dequeue_node(k_queue_t *p_queue);
 
-int queue_contains_node(k_queue_t *queue, k_node_t *node);
+int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node);
 
-int is_queue_empty(k_queue_t *queue);
+int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node);
+
+int is_queue_empty(k_queue_t *p_queue);
 
 #ifdef DEBUG_0
-int print_queue(k_queue_t *queue);
-#endif
 
-#endif
+int print_queue(k_queue_t *p_queue);
+
+#endif /* DEBUG_0 */
+
+
+#endif /* K_QUEUE_H */

@@ -70,8 +70,8 @@ void memory_init(void)
     /* create ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         gp_ready_queue[i] = (k_queue_t *)p_end;
-        gp_ready_queue[i]->first = NULL;
-        gp_ready_queue[i]->last = NULL;
+        gp_ready_queue[i]->mp_first = NULL;
+        gp_ready_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }
@@ -79,8 +79,8 @@ void memory_init(void)
     /* create blocked queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         gp_blocked_queue[i] = (k_queue_t *)p_end;
-        gp_blocked_queue[i]->first = NULL;
-        gp_blocked_queue[i]->last = NULL;
+        gp_blocked_queue[i]->mp_first = NULL;
+        gp_blocked_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }
