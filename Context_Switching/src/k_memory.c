@@ -63,8 +63,8 @@ void memory_init(void)
     
     /* allocate memory for pcbs */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-        gp_pcb_nodes[i]->pcb = (PCB *)p_end;
-        p_end += sizeof(PCB);
+        gp_pcb_nodes[i]->pcb = (k_pcb_t *)p_end;
+        p_end += sizeof(k_pcb_t);
     }
     
     /* create ready queue */
