@@ -442,24 +442,24 @@
               <FilePath>.\src\HAL.c</FilePath>
             </File>
             <File>
-              <FileName>rtx.h</FileName>
+              <FileName>rtos.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\rtx.h</FilePath>
+              <FilePath>.\src\rtos.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx.h</FileName>
+              <FileName>k_rtos.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_rtx.h</FilePath>
+              <FilePath>.\src\k_rtos.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx_init.h</FileName>
+              <FileName>k_rtos_init.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_rtx_init.h</FilePath>
+              <FilePath>.\src\k_rtos_init.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx_init.c</FileName>
+              <FileName>k_rtos_init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_rtx_init.c</FilePath>
+              <FilePath>.\src\k_rtos_init.c</FilePath>
             </File>
             <File>
               <FileName>k_node.h</FileName>
@@ -961,24 +961,24 @@
               <FilePath>.\src\HAL.c</FilePath>
             </File>
             <File>
-              <FileName>rtx.h</FileName>
+              <FileName>rtos.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\rtx.h</FilePath>
+              <FilePath>.\src\rtos.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx.h</FileName>
+              <FileName>k_rtos.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_rtx.h</FilePath>
+              <FilePath>.\src\k_rtos.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx_init.h</FileName>
+              <FileName>k_rtos_init.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_rtx_init.h</FilePath>
+              <FilePath>.\src\k_rtos_init.h</FilePath>
             </File>
             <File>
-              <FileName>k_rtx_init.c</FileName>
+              <FileName>k_rtos_init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_rtx_init.c</FilePath>
+              <FilePath>.\src\k_rtos_init.c</FilePath>
             </File>
             <File>
               <FileName>k_node.h</FileName>

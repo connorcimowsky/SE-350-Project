@@ -1,10 +1,10 @@
-#include "k_rtx_init.h"
+#include "k_rtos_init.h"
 #include "uart_polling.h"
 #include "k_memory.h"
 #include "k_process.h"
 
 
-void k_rtx_init(void)
+void k_rtos_init(void)
 {
     __disable_irq();
     

@@ -619,8 +619,8 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\src\rtx.h</PathWithFileName>
-      <FilenameWithoutPath>rtx.h</FilenameWithoutPath>
+      <PathWithFileName>.\src\rtos.h</PathWithFileName>
+      <FilenameWithoutPath>rtos.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -635,8 +635,8 @@
       <TopLine>48</TopLine>
       <CurrentLine>76</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\src\k_rtx.h</PathWithFileName>
-      <FilenameWithoutPath>k_rtx.h</FilenameWithoutPath>
+      <PathWithFileName>.\src\k_rtos.h</PathWithFileName>
+      <FilenameWithoutPath>k_rtos.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -651,8 +651,8 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\src\k_rtx_init.h</PathWithFileName>
-      <FilenameWithoutPath>k_rtx_init.h</FilenameWithoutPath>
+      <PathWithFileName>.\src\k_rtos_init.h</PathWithFileName>
+      <FilenameWithoutPath>k_rtos_init.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -667,8 +667,8 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\src\k_rtx_init.c</PathWithFileName>
-      <FilenameWithoutPath>k_rtx_init.c</FilenameWithoutPath>
+      <PathWithFileName>.\src\k_rtos_init.c</PathWithFileName>
+      <FilenameWithoutPath>k_rtos_init.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
