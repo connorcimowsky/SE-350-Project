@@ -15,7 +15,7 @@ int insert_node(k_list_t *list, k_node_t *node)
         return RTX_ERR;
     }
     
-    node->next = list->first;
+    node->mp_next = list->first;
     list->first = node;
     
     return RTX_OK;
@@ -35,7 +35,7 @@ k_node_t *get_node(k_list_t *list)
     }
     
     first = list->first;
-    list->first = list->first->next;
+    list->first = list->first->mp_next;
     
     return first;
 }
@@ -58,7 +58,7 @@ int list_contains_node(k_list_t *list, k_node_t *node)
         if (iter == node) {
             return 1;
         }
-        iter = iter->next;
+        iter = iter->mp_next;
     }
     
     return 0;

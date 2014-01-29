@@ -102,9 +102,9 @@ void memory_init(void)
         k_node_t *node = (k_node_t *)p_end;
         if (i == (NUM_BLOCKS - 1)) {
             // last block
-            node->next = NULL;
+            node->mp_next = NULL;
         } else {
-            node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
+            node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
         }
         insert_node(gp_heap, (k_node_t *)node);
         p_end += sizeof(k_node_t) + BLOCK_SIZE;
@@ -117,7 +117,7 @@ void memory_init(void)
     printf("Memory blocks:\n");
     while (iterator != NULL) {
         printf("\tnode: 0x%x\n", iterator);
-        iterator = iterator->next;
+        iterator = iterator->mp_next;
     }
 #endif
 }

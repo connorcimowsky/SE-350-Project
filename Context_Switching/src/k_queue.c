@@ -15,14 +15,14 @@ int enqueue_node(k_queue_t *queue, k_node_t *node)
         return RTX_ERR;
     }
     
-    node->next = NULL;
+    node->mp_next = NULL;
     
     if (is_queue_empty(queue)) {
         queue->first = node;
         queue->last = node;
     } else {
-        queue->last->next = node;
-        queue->last = queue->last->next;
+        queue->last->mp_next = node;
+        queue->last = queue->last->mp_next;
     }
     
     return RTX_OK;
@@ -47,7 +47,7 @@ k_node_t *dequeue_node(k_queue_t *queue)
         queue->first = NULL;
         queue->last = NULL;
     } else {
-        queue->first = queue->first->next;
+        queue->first = queue->first->mp_next;
     }
     
     return first;
@@ -72,24 +72,24 @@ int remove_node_from_queue(k_queue_t *queue, k_node_t *node)
             queue->first = NULL;
             queue->last = NULL;
         } else {
-            queue->first = queue->first->next;
+            queue->first = queue->first->mp_next;
         }
         
         return RTX_OK;
     }
     
-    current_iter = queue->first->next;
+    current_iter = queue->first->mp_next;
     previous_iter = queue->first;
     while (current_iter != NULL && previous_iter != NULL) {
         if (node == current_iter) {
             if (current_iter == queue->last) {
                 queue->last = previous_iter;
             }
-            previous_iter->next = current_iter->next;
+            previous_iter->mp_next = current_iter->mp_next;
             return RTX_OK;
         }
         previous_iter = current_iter;
-        current_iter = current_iter->next;
+        current_iter = current_iter->mp_next;
     }
     
 #ifdef DEBUG_0
@@ -117,7 +117,7 @@ int queue_contains_node(k_queue_t *queue, k_node_t *node)
         if (iter == node) {
             return 1;
         }
-        iter = iter->next;
+        iter = iter->mp_next;
     }
     
     return 0;
@@ -147,8 +147,8 @@ int print_queue(k_queue_t *queue) {
     printf("queue: 0x%x\n\tfirst:0x%x\n\tlast:0x%x\n", queue, queue->first, queue->last);
     printf("nodes:\n");
     while (iter != NULL) {
-        printf("\t0x%x, next: 0x%x\n", iter, iter->next);
-        iter = iter->next;
+        printf("\t0x%x, next: 0x%x\n", iter, iter->mp_next);
+        iter = iter->mp_next;
     }
     
     return RTX_OK;
