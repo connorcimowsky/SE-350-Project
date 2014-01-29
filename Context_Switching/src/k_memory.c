@@ -54,7 +54,7 @@ void memory_init(void)
     /* 4 bytes padding */
     p_end += 4;
 
-    /* allocate memory for pcb node pointers   */
+    /* allocate memory for pcb node pointers */
     gp_pcb_nodes = (k_pcb_node_t **)p_end;
     p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
   
@@ -127,22 +127,22 @@ void memory_init(void)
 
 U32 *alloc_stack(U32 size_b) 
 {
-    U32 *sp;
-    sp = gp_stack; /* gp_stack is always 8 bytes aligned */
+    U32 *p_sp;
+    p_sp = gp_stack; /* gp_stack is always 8 bytes aligned */
     
     /* update gp_stack */
-    gp_stack = (U32 *)((U8 *)sp - size_b);
+    gp_stack = (U32 *)((U8 *)p_sp - size_b);
     
     /* 8 bytes alignement adjustment to exception stack frame */
     if ((U32)gp_stack & 0x04) {
         --gp_stack; 
     }
-    return sp;
+    return p_sp;
 }
 
 void *k_request_memory_block(void)
 {
-    k_node_t *memory_block = NULL;
+    k_node_t *p_mem_blk = NULL;
     while (is_list_empty(gp_heap)) {
     
 #ifdef DEBUG_0
@@ -154,19 +154,19 @@ void *k_request_memory_block(void)
         }
     }
 
-    memory_block = get_node(gp_heap);
-    memory_block += 1;
+    p_mem_blk = get_node(gp_heap);
+    p_mem_blk += 1;
     
 #ifdef DEBUG_0
         // printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
     
-    return (void *)memory_block;
+    return (void *)p_mem_blk;
 }
 
 int k_release_memory_block(void *p_mem_blk)
 {
-    k_node_t *block_ptr = NULL;
+    k_node_t *p_node = NULL;
     k_pcb_node_t* p_blocked_pcb_node = NULL;
     
 #ifdef DEBUG_0
@@ -182,11 +182,11 @@ int k_release_memory_block(void *p_mem_blk)
         return RTX_ERR;
     }
     
-    block_ptr = p_mem_blk;
-    block_ptr -= 1;
+    p_node = p_mem_blk;
+    p_node -= 1;
     
     // make sure the pointer is not out of bounds
-    if ((U8 *)block_ptr < gp_heap_begin_addr || (U8 *)block_ptr > gp_heap_end_addr) {
+    if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
         
 #ifdef DEBUG_0
         printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
@@ -206,7 +206,7 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     // make sure we aren't trying to release a duplicate block
-    if (list_contains_node(gp_heap, block_ptr)) {
+    if (list_contains_node(gp_heap, p_node)) {
         
 #ifdef DEBUG_0
         printf("k_release_memory_block: 0x%x has already been returned to the heap\n", p_mem_blk);
@@ -215,7 +215,7 @@ int k_release_memory_block(void *p_mem_blk)
         return RTX_ERR;
     }
     
-    if (insert_node(gp_heap, block_ptr) == RTX_ERR) {
+    if (insert_node(gp_heap, p_node) == RTX_ERR) {
         return RTX_ERR;
     }
     
