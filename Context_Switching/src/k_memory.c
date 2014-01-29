@@ -46,7 +46,10 @@ void memory_init(void)
 {
     U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
     int i;
-    k_node_t *iterator = NULL;
+    
+#ifdef DEBUG_0
+    k_node_t *p_iterator = NULL;
+#endif
     
     /* 4 bytes padding */
     p_end += 4;
@@ -99,25 +102,25 @@ void memory_init(void)
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
-        k_node_t *node = (k_node_t *)p_end;
+        k_node_t *p_node = (k_node_t *)p_end;
         if (i == (NUM_BLOCKS - 1)) {
             // last block
-            node->mp_next = NULL;
+            p_node->mp_next = NULL;
         } else {
-            node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
+            p_node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
         }
-        insert_node(gp_heap, (k_node_t *)node);
+        insert_node(gp_heap, (k_node_t *)p_node);
         p_end += sizeof(k_node_t) + BLOCK_SIZE;
     }
     
     gp_heap_end_addr = p_end;
     
 #ifdef DEBUG_0
-    iterator = gp_heap->mp_first;
+    p_iterator = gp_heap->mp_first;
     printf("Memory blocks:\n");
-    while (iterator != NULL) {
-        printf("\tnode: 0x%x\n", iterator);
-        iterator = iterator->mp_next;
+    while (p_iterator != NULL) {
+        printf("\tnode: 0x%x\n", p_iterator);
+        p_iterator = p_iterator->mp_next;
     }
 #endif
 }
