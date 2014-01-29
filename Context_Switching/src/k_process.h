@@ -15,6 +15,12 @@ void process_init(void);
 /* invoke the scheduler and switch to the next process */
 int k_release_processor(void);
 
+/* set the priority of the process specified by pid */
+int k_set_process_priority(int pid, int priority);
+
+/* get the priority of the process specified by pid */
+int k_get_process_priority(int pid);
+
 /* perform a context switch from p_pcb_node_old to p_pcb_node_new */
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new);
 

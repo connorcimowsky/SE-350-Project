@@ -79,6 +79,16 @@ int k_release_processor(void)
     return RTX_OK;
 }
 
+int k_set_process_priority(int pid, int priority)
+{
+    return RTX_OK;
+}
+
+int k_get_process_priority(int pid)
+{
+    return LOWEST;
+}
+
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
 {
     PROC_STATE_E new_state = p_pcb_node_new->pcb->m_state;
