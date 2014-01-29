@@ -77,11 +77,13 @@ void memory_init(void)
     }
     
     /* create blocked queue */
-    gp_blocked_queue = (k_queue_t *)p_end;
-    gp_blocked_queue->first = NULL;
-    gp_blocked_queue->last = NULL;
-    
-    p_end += sizeof(k_queue_t);
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        gp_blocked_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_queue[i]->first = NULL;
+        gp_blocked_queue[i]->last = NULL;
+        
+        p_end += sizeof(k_queue_t);
+    }
     
     /* prepare for alloc_stack() to allocate memory for stacks */
     
@@ -162,6 +164,7 @@ void *k_request_memory_block(void)
 int k_release_memory_block(void *p_mem_blk)
 {
     k_node_t *block_ptr = NULL;
+    k_pcb_node_t* p_blocked_pcb_node = NULL;
     
 #ifdef DEBUG_0
         // printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
@@ -213,10 +216,14 @@ int k_release_memory_block(void *p_mem_blk)
         return RTX_ERR;
     }
     
-    if (!is_queue_empty(gp_blocked_queue)) {
-        k_pcb_node_t* p_blocked_pcb_node = k_dequeue_blocked_process();
+    p_blocked_pcb_node = k_dequeue_blocked_process();
+    
+    if (p_blocked_pcb_node != NULL) {
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTX_OK) {
-            k_release_processor();
+            if (p_blocked_pcb_node->pcb->m_priority > gp_current_process->pcb->m_priority) {
+                // only preempt the calling process if the newly-unblocked process has a higher priority
+                k_release_processor();
+            }
         }
     }
     

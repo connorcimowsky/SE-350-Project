@@ -76,11 +76,11 @@ extern k_pcb_node_t **gp_pcb_nodes;
 /* the process whose state is EXECUTING */
 extern k_pcb_node_t *gp_current_process;
 
-/* array of priority queues, one for each priority */
+/* array of queues for processes that are READY, one for each priority */
 extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 
-/* queue for processes that are BLOCKED_ON_RESOURCE */
-extern k_queue_t *gp_blocked_queue;
+/* array of queues for processes that are BLOCKED_ON_RESOURCE, one for each priority */
+extern k_queue_t *gp_blocked_queue[NUM_PRIORITIES];
 
 
 #endif /* K_RTX_H */
