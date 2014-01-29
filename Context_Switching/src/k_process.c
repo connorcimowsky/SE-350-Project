@@ -19,53 +19,53 @@ k_queue_t *gp_blocked_queue[NUM_PRIORITIES];
 void process_init(void) 
 {
     int i;
-    U32 *sp;
+    U32 *p_sp;
     
     /* fill out the initialization table */
     set_test_procs();
-    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-        k_queue_t *queue = gp_ready_queue[g_test_procs[i].m_priority];
+    for (i = 0; i < NUM_TEST_PROCS; i++) {
+        k_queue_t *p_queue = gp_ready_queue[g_test_procs[i].m_priority];
         
         g_proc_table[i].m_pid = g_test_procs[i].m_pid;
         g_proc_table[i].m_priority = g_test_procs[i].m_priority;
         g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
         g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
-        enqueue_node(queue, (k_node_t *)gp_pcb_nodes[i]);
+        enqueue_node(p_queue, (k_node_t *)gp_pcb_nodes[i]);
     }
   
     /* initilize exception stack frame (i.e. initial context) for each process */
-    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+    for (i = 0; i < NUM_TEST_PROCS; i++) {
         int j;
         (gp_pcb_nodes[i])->mp_pcb->m_pid = (g_proc_table[i]).m_pid;
         (gp_pcb_nodes[i])->mp_pcb->m_priority = (g_proc_table[i]).m_priority;
         (gp_pcb_nodes[i])->mp_pcb->m_state = NEW;
         
-        sp = alloc_stack((g_proc_table[i]).m_stack_size);
-        *(--sp)  = INITIAL_xPSR;      // user process initial xPSR  
-        *(--sp)  = (U32)((g_proc_table[i]).mpf_start_pc); // PC contains the entry point of the process
-        for ( j = 0; j < 6; j++ ) { // R0-R3, R12 are cleared with 0
-            *(--sp) = 0x0;
+        p_sp = alloc_stack((g_proc_table[i]).m_stack_size);
+        *(--p_sp)  = INITIAL_xPSR;      // user process initial xPSR
+        *(--p_sp)  = (U32)((g_proc_table[i]).mpf_start_pc); // PC contains the entry point of the process
+        for (j = 0; j < 6; j++) { // R0-R3, R12 are cleared with 0
+            *(--p_sp) = 0x0;
         }
-        (gp_pcb_nodes[i])->mp_pcb->mp_sp = sp;
+        (gp_pcb_nodes[i])->mp_pcb->mp_sp = p_sp;
     }
 }
 
 int k_release_processor(void)
 {
     k_pcb_node_t *p_pcb_node_old = NULL;
-    k_pcb_node_t *next_ready_queue_node = NULL;
+    k_pcb_node_t *p_pcb_node_new = NULL;
     
     p_pcb_node_old = gp_current_process;
-    next_ready_queue_node = k_dequeue_ready_process();
+    p_pcb_node_new = k_dequeue_ready_process();
     
-    if (next_ready_queue_node != NULL) {
-        gp_current_process = next_ready_queue_node;
+    if (p_pcb_node_new != NULL) {
+        gp_current_process = p_pcb_node_new;
     } else {
         gp_current_process = NULL;
     }
     
-    if ( gp_current_process == NULL ) {
+    if (gp_current_process == NULL) {
         // We want to resume execution of the process without adding it back to the
         // ready queue, i.e. 'pretend k_release_processor() was never called.
         
@@ -76,6 +76,7 @@ int k_release_processor(void)
     }
     
     context_switch(p_pcb_node_old, gp_current_process);
+    
     return RTX_OK;
 }
 
@@ -200,16 +201,16 @@ int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node)
 k_pcb_node_t *k_dequeue_ready_process(void)
 {
     int i;
-    k_pcb_node_t *node = NULL;
+    k_pcb_node_t *p_node = NULL;
     
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_ready_queue[i])) {
-            node = (k_pcb_node_t *)dequeue_node(gp_ready_queue[i]);
+            p_node = (k_pcb_node_t *)dequeue_node(gp_ready_queue[i]);
             break;
         }
     }
     
-    return node;
+    return p_node;
 }
 
 int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
@@ -235,14 +236,14 @@ int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
 k_pcb_node_t* k_dequeue_blocked_process(void)
 {
     int i;
-    k_pcb_node_t *node = NULL;
+    k_pcb_node_t *p_node = NULL;
     
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_blocked_queue[i])) {
-            node = (k_pcb_node_t *)dequeue_node(gp_blocked_queue[i]);
+            p_node = (k_pcb_node_t *)dequeue_node(gp_blocked_queue[i]);
             break;
         }
     }
     
-    return node;
+    return p_node;
 }
