@@ -46,7 +46,10 @@ void memory_init(void)
 {
     U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
     int i;
-    k_node_t *iterator = NULL;
+    
+#ifdef DEBUG_0
+    k_node_t *p_iterator = NULL;
+#endif
     
     /* 4 bytes padding */
     p_end += 4;
@@ -63,15 +66,15 @@ void memory_init(void)
     
     /* allocate memory for pcbs */
     for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
-        gp_pcb_nodes[i]->pcb = (PCB *)p_end;
-        p_end += sizeof(PCB);
+        gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
+        p_end += sizeof(k_pcb_t);
     }
     
     /* create ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         gp_ready_queue[i] = (k_queue_t *)p_end;
-        gp_ready_queue[i]->first = NULL;
-        gp_ready_queue[i]->last = NULL;
+        gp_ready_queue[i]->mp_first = NULL;
+        gp_ready_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }
@@ -79,8 +82,8 @@ void memory_init(void)
     /* create blocked queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         gp_blocked_queue[i] = (k_queue_t *)p_end;
-        gp_blocked_queue[i]->first = NULL;
-        gp_blocked_queue[i]->last = NULL;
+        gp_blocked_queue[i]->mp_first = NULL;
+        gp_blocked_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }
@@ -93,31 +96,31 @@ void memory_init(void)
     }
     
     gp_heap = (k_list_t *)p_end;
-    gp_heap->first = NULL;
+    gp_heap->mp_first = NULL;
     p_end += sizeof(k_list_t);
     
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
-        k_node_t *node = (k_node_t *)p_end;
+        k_node_t *p_node = (k_node_t *)p_end;
         if (i == (NUM_BLOCKS - 1)) {
             // last block
-            node->next = NULL;
+            p_node->mp_next = NULL;
         } else {
-            node->next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
+            p_node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
         }
-        insert_node(gp_heap, (k_node_t *)node);
+        insert_node(gp_heap, (k_node_t *)p_node);
         p_end += sizeof(k_node_t) + BLOCK_SIZE;
     }
     
     gp_heap_end_addr = p_end;
     
 #ifdef DEBUG_0
-    iterator = gp_heap->first;
+    p_iterator = gp_heap->mp_first;
     printf("Memory blocks:\n");
-    while (iterator != NULL) {
-        printf("\tnode: 0x%x\n", iterator);
-        iterator = iterator->next;
+    while (p_iterator != NULL) {
+        printf("\tnode: 0x%x\n", p_iterator);
+        p_iterator = p_iterator->mp_next;
     }
 #endif
 }
@@ -220,7 +223,7 @@ int k_release_memory_block(void *p_mem_blk)
     
     if (p_blocked_pcb_node != NULL) {
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTX_OK) {
-            if (p_blocked_pcb_node->pcb->m_priority > gp_current_process->pcb->m_priority) {
+            if (p_blocked_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
                 // only preempt the calling process if the newly-unblocked process has a higher priority
                 k_release_processor();
             }

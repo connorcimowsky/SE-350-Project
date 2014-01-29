@@ -1,12 +1,14 @@
+#include "k_list.h"
 #include "rtx.h"
+
 #ifdef DEBUG_0
 #include "printf.h"
 #endif
-#include "k_list.h"
 
-int insert_node(k_list_t *list, k_node_t *node)
+
+int insert_node(k_list_t *p_list, k_node_t *p_node)
 {
-    if (list == NULL || node == NULL) {
+    if (p_list == NULL || p_node == NULL) {
 				
 #ifdef DEBUG_0
         printf("Node insertion error.\n");
@@ -15,17 +17,17 @@ int insert_node(k_list_t *list, k_node_t *node)
         return RTX_ERR;
     }
     
-    node->next = list->first;
-    list->first = node;
+    p_node->mp_next = p_list->mp_first;
+    p_list->mp_first = p_node;
     
     return RTX_OK;
 }
 
-k_node_t *get_node(k_list_t *list)
+k_node_t *get_node(k_list_t *p_list)
 {
-    k_node_t *first = NULL;
+    k_node_t *p_first = NULL;
     
-    if (is_list_empty(list)) {
+    if (is_list_empty(p_list)) {
         
 #ifdef DEBUG_0
         printf("Attempted to get the top node of an empty list.\n");
@@ -34,17 +36,17 @@ k_node_t *get_node(k_list_t *list)
         return NULL;
     }
     
-    first = list->first;
-    list->first = list->first->next;
+    p_first = p_list->mp_first;
+    p_list->mp_first = p_list->mp_first->mp_next;
     
-    return first;
+    return p_first;
 }
 
-int list_contains_node(k_list_t *list, k_node_t *node)
+int list_contains_node(k_list_t *p_list, k_node_t *p_node)
 {
-    k_node_t *iter = NULL;
+    k_node_t *p_iter = NULL;
     
-    if (is_list_empty(list)) {
+    if (is_list_empty(p_list)) {
     
 #ifdef DEBUG_0
         printf("Attempted to check node membership for an empty list.\n");
@@ -53,20 +55,20 @@ int list_contains_node(k_list_t *list, k_node_t *node)
         return RTX_ERR;
     }
     
-    iter = list->first;
-    while (iter != NULL) {
-        if (iter == node) {
+    p_iter = p_list->mp_first;
+    while (p_iter != NULL) {
+        if (p_iter == p_node) {
             return 1;
         }
-        iter = iter->next;
+        p_iter = p_iter->mp_next;
     }
     
     return 0;
 }
 
-int is_list_empty(k_list_t *list)
+int is_list_empty(k_list_t *p_list)
 {
-    if (list == NULL) {
+    if (p_list == NULL) {
 
 #ifdef DEBUG_0
         printf("Attempted to check if a NULL list was empty.\n");
@@ -74,6 +76,6 @@ int is_list_empty(k_list_t *list)
     
         return RTX_ERR;
     } else {
-        return (list->first == NULL);
+        return (p_list->mp_first == NULL);
     }
 }

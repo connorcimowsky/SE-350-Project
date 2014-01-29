@@ -33,7 +33,7 @@ typedef enum {
 
 
 /* process control block */
-typedef struct pcb 
+typedef struct k_pcb_t
 {
     /* stack pointer */
 	U32 *mp_sp;
@@ -46,13 +46,13 @@ typedef struct pcb
     
     /* state */
 	PROC_STATE_E m_state;
-} PCB;
+} k_pcb_t;
 
 
 /* pcb node */
 typedef struct k_pcb_node_t {
-    struct k_pcb_node_t *next;
-    PCB *pcb;
+    struct k_pcb_node_t *mp_next;
+    k_pcb_t *mp_pcb;
 } k_pcb_node_t;
 
 
