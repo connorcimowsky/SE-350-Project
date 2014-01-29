@@ -29,18 +29,18 @@ typedef enum {
 
 /* process initialization table item */
 typedef struct proc_init
-{	
+{
     /* process id */
-	int m_pid;
+    int m_pid;
 
     /* priority */
-	PRIORITY_E m_priority;
+    PRIORITY_E m_priority;
     
     /* size of stack in words */
-	int m_stack_size;
+    int m_stack_size;
     
     /* entry point of the process */
-	void (*mpf_start_pc) ();
+    void (*mpf_start_pc) ();
 } PROC_INIT;
 
 
@@ -71,5 +71,6 @@ extern int __SVC_0 _set_process_priority(U32 p_func, int pid, int priority);
 extern int k_get_process_priority(int);
 #define get_process_priority(pid) _get_process_priority((U32)k_get_process_priority, pid)
 extern int __SVC_0 _get_process_priority(U32 p_func, int pid);
+
 
 #endif /* RTX_H */

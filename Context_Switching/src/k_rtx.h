@@ -36,16 +36,16 @@ typedef enum {
 typedef struct k_pcb_t
 {
     /* stack pointer */
-	U32 *mp_sp;
+    U32 *mp_sp;
     
     /* process id */
-	U32 m_pid;
+    U32 m_pid;
     
     /* priority */
     PRIORITY_E m_priority;
     
     /* state */
-	PROC_STATE_E m_state;
+    PROC_STATE_E m_state;
 } k_pcb_t;
 
 
