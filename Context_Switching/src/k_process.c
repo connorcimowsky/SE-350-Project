@@ -79,6 +79,66 @@ int k_release_processor(void)
     return RTX_OK;
 }
 
+int k_set_process_priority(int pid, int priority)
+{
+    k_pcb_node_t *p_pcb_node = NULL;
+    
+    if (pid < 0 || pid > NUM_TEST_PROCS) {
+        // invalid pid
+        return RTX_ERR;
+    }
+    
+    if (priority < 0 || priority >= NUM_PRIORITIES) {
+        // invalid priority
+        return RTX_ERR;
+    }
+    
+    if (pid == 0 || priority == LOWEST) {
+        // reserved for the null process
+        return RTX_ERR;
+    }
+    
+    p_pcb_node = gp_pcb_nodes[pid - 1];
+    
+    if (p_pcb_node->pcb->m_priority == priority) {
+        // don't do anything
+        return RTX_OK;
+    }
+    
+    switch(p_pcb_node->pcb->m_state) {
+        case READY:
+            if (remove_node_from_queue(gp_ready_queue[p_pcb_node->pcb->m_priority], (k_node_t *)p_pcb_node)) {
+                p_pcb_node->pcb->m_priority = (PRIORITY_E)priority;
+                if (k_enqueue_ready_process(p_pcb_node) == RTX_ERR) {
+                    return RTX_ERR;
+                }
+            }
+            break;
+        case BLOCKED_ON_RESOURCE:
+            if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->pcb->m_priority], (k_node_t *)p_pcb_node)) {
+                p_pcb_node->pcb->m_priority = (PRIORITY_E)priority;
+                if (k_enqueue_blocked_process(p_pcb_node) == RTX_ERR) {
+                    return RTX_ERR;
+                }
+            }
+            break;
+    }
+    
+    k_release_processor();
+    
+    return RTX_OK;
+}
+
+int k_get_process_priority(int pid)
+{
+    if (pid < 0 || pid > NUM_TEST_PROCS) {
+        // invalid pid
+        return RTX_ERR;
+    }
+    
+    return (int)gp_pcb_nodes[pid - 1]->pcb->m_priority;
+}
+
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
 {
     PROC_STATE_E new_state = p_pcb_node_new->pcb->m_state;
