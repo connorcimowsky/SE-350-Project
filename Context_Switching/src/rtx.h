@@ -72,4 +72,5 @@ extern int k_get_process_priority(int);
 #define get_process_priority(pid) _get_process_priority((U32)k_get_process_priority, pid)
 extern int __SVC_0 _get_process_priority(U32 p_func, int pid);
 
+
 #endif /* RTX_H */
