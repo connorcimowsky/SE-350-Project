@@ -8,8 +8,8 @@
 
 /* global variables */
 k_list_t *gp_heap;
-U32 *gp_heap_begin_addr;
-U32 *gp_heap_end_addr;
+U8 *gp_heap_begin_addr;
+U8 *gp_heap_end_addr;
 U32 *gp_stack;
 
 
@@ -44,12 +44,12 @@ U32 *gp_stack;
 
 void memory_init(void)
 {
-    U32 *p_end = (U32 *)&Image$$RW_IRAM1$$ZI$$Limit;
+    U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
     int i;
     k_node_t *iterator = NULL;
     
     /* 4 bytes padding */
-    p_end += 1;
+    p_end += 4;
 
     /* allocate memory for pcb node pointers   */
     gp_pcb_nodes = (k_pcb_node_t **)p_end;
@@ -183,7 +183,7 @@ int k_release_memory_block(void *p_mem_blk)
     block_ptr -= 1;
     
     // make sure the pointer is not out of bounds
-    if ((U32 *)block_ptr < gp_heap_begin_addr || (U32 *)block_ptr > gp_heap_end_addr) {
+    if ((U8 *)block_ptr < gp_heap_begin_addr || (U8 *)block_ptr > gp_heap_end_addr) {
         
 #ifdef DEBUG_0
         printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
