@@ -20,11 +20,11 @@ int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node);
 
 int is_queue_empty(k_queue_t *p_queue);
 
-#ifdef DEBUG_0
+#ifdef DEBUG_1
 
 int print_queue(k_queue_t *p_queue);
 
-#endif /* DEBUG_0 */
+#endif /* DEBUG_1 */
 
 
 #endif /* K_QUEUE_H */

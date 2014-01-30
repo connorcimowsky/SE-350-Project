@@ -14,12 +14,6 @@
 
 #define INITIAL_xPSR 0x01000000
 
-#ifdef DEBUG_0
-#define USR_SZ_STACK 0x200 /* 512 bytes */
-#else
-#define USR_SZ_STACK 0x100 /* 256 bytes */
-#endif
-
 
 /* process state */
 typedef enum {
