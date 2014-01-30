@@ -12,6 +12,12 @@
 
 #define NULL_PROC_PID 0
 
+#ifdef DEBUG_0
+#define USR_SZ_STACK 0x200 /* 512 bytes */
+#else
+#define USR_SZ_STACK 0x100 /* 256 bytes */
+#endif
+
 
 /* integer types */
 typedef unsigned char U8;
