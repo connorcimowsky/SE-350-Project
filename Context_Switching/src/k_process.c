@@ -168,11 +168,11 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
                     k_enqueue_ready_process(p_pcb_node_old);
                 }
                 p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
-                
-                p_pcb_node_new->mp_pcb->m_state = EXECUTING;
-                
-                __set_MSP((U32)p_pcb_node_new->mp_pcb->mp_sp); //switch to the new proc's stack
             }
+                
+            p_pcb_node_new->mp_pcb->m_state = EXECUTING;
+                
+            __set_MSP((U32)p_pcb_node_new->mp_pcb->mp_sp); //switch to the new proc's stack
             
             break;
             
