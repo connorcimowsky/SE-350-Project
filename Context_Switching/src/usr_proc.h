@@ -14,14 +14,13 @@ void set_test_procs(void);
 /* indefinitely releases the processor */
 void null_process(void);
 
-/* prints five uppercase letters and then releases the processor */
+/* test processes */
 void proc1(void);
-
-/* prints five numbers and then releases the processor */
 void proc2(void);
-
-/* indefinitely requests memory blocks */
 void proc3(void);
+void proc4(void);
+void proc5(void);
+void proc6(void);
 
 
 #endif /* USR_PROC_H */
