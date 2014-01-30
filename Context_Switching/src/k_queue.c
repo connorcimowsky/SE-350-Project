@@ -1,7 +1,7 @@
 #include "k_queue.h"
 #include "rtos.h"
 
-#ifdef DEBUG_0
+#ifdef DEBUG_1
 #include "printf.h"
 #endif
 
@@ -10,7 +10,7 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
 {
     if (p_queue == NULL || p_node == NULL) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Node insertion error.\n");
 #endif
     
@@ -36,7 +36,7 @@ k_node_t *dequeue_node(k_queue_t *p_queue)
     
     if (is_queue_empty(p_queue)) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Attempted to dequeue a node from an empty queue.\n");
 #endif
     
@@ -62,7 +62,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
     
     if (is_queue_empty(p_queue)) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Attempted to remove a node from an empty queue.\n");
 #endif
     
@@ -94,7 +94,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
         p_current_iter = p_current_iter->mp_next;
     }
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Node not found.\n");
 #endif
     
@@ -107,7 +107,7 @@ int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node)
     
     if (is_queue_empty(p_queue)) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Attempted to check node membership for an empty queue.\n");
 #endif
     
@@ -129,7 +129,7 @@ int is_queue_empty(k_queue_t *p_queue)
 {
     if (p_queue == NULL) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("Attempted to check if a NULL queue was empty.\n");
 #endif
     
@@ -139,7 +139,7 @@ int is_queue_empty(k_queue_t *p_queue)
     }
 }
 
-#ifdef DEBUG_0
+#ifdef DEBUG_1
 
 int print_queue(k_queue_t *p_queue)
 {
@@ -160,4 +160,4 @@ int print_queue(k_queue_t *p_queue)
     return RTOS_OK;
 }
 
-#endif /* DEBUG_0 */
+#endif /* DEBUG_1 */

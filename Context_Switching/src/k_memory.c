@@ -1,7 +1,7 @@
 #include "k_memory.h"
 #include "k_process.h"
 
-#ifdef DEBUG_0
+#ifdef DEBUG_1
 #include "printf.h"
 #endif
 
@@ -46,10 +46,6 @@ void memory_init(void)
 {
     U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
     int i;
-    
-#ifdef DEBUG_0
-    k_node_t *p_iterator = NULL;
-#endif
     
     /* 4 bytes padding */
     p_end += 4;
@@ -114,15 +110,6 @@ void memory_init(void)
     }
     
     gp_heap_end_addr = p_end;
-    
-#ifdef 0
-    p_iterator = gp_heap->mp_first;
-    printf("Memory blocks:\n");
-    while (p_iterator != NULL) {
-        printf("\tnode: 0x%x\n", p_iterator);
-        p_iterator = p_iterator->mp_next;
-    }
-#endif
 }
 
 U32 *alloc_stack(U32 size_b) 
@@ -145,7 +132,7 @@ void *k_request_memory_block(void)
     k_node_t *p_mem_blk = NULL;
     while (is_list_empty(gp_heap)) {
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
@@ -157,7 +144,7 @@ void *k_request_memory_block(void)
     p_mem_blk = get_node(gp_heap);
     p_mem_blk += 1;
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         // printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
 #endif
     
@@ -169,13 +156,13 @@ int k_release_memory_block(void *p_mem_blk)
     k_node_t *p_node = NULL;
     k_pcb_node_t* p_blocked_pcb_node = NULL;
     
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         // printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
 #endif
     
     if (p_mem_blk == NULL ) {
         
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("k_release_memory_block: cannot release NULL\n");
 #endif
         
@@ -188,7 +175,7 @@ int k_release_memory_block(void *p_mem_blk)
     // make sure the pointer is not out of bounds
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
         
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
 #endif
         
@@ -198,7 +185,7 @@ int k_release_memory_block(void *p_mem_blk)
     // make sure the pointer is block-aligned
     if (((U8 *)p_node - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
         
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
 #endif
         
@@ -208,7 +195,7 @@ int k_release_memory_block(void *p_mem_blk)
     // make sure we aren't trying to release a duplicate block
     if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
         
-#ifdef DEBUG_0
+#ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x has already been returned to the heap\n", p_mem_blk);
 #endif
         

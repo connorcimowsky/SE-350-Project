@@ -3,10 +3,6 @@
 #include "k_process.h"
 #include "usr_proc.h"
 
-#ifdef DEBUG_0
-#include "printf.h"
-#endif
-
 
 /* global variables */
 PROC_INIT g_proc_table[NUM_TEST_PROCS];
