@@ -196,7 +196,7 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     // make sure the pointer is block-aligned
-    if ((gp_heap_end_addr - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
+    if (((U8 *)p_node - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
         
 #ifdef DEBUG_0
         printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);

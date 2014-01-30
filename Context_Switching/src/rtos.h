@@ -10,6 +10,8 @@
 #define NULL 0
 #define NUM_TEST_PROCS 4
 
+#define NULL_PROC_PID 0
+
 
 /* integer types */
 typedef unsigned char U8;

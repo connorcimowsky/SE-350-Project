@@ -17,9 +17,9 @@ void set_test_procs(void)
         g_test_procs[i].m_pid = (U32)i;
     }
     
-    g_test_procs[0].m_priority = LOWEST;
-    g_test_procs[0].m_stack_size = 0x100;
-    g_test_procs[0].mpf_start_pc = &null_process;
+    g_test_procs[NULL_PROC_PID].m_priority = LOWEST;
+    g_test_procs[NULL_PROC_PID].m_stack_size = 0x100;
+    g_test_procs[NULL_PROC_PID].mpf_start_pc = &null_process;
     
     g_test_procs[1].m_priority = LOW;
     g_test_procs[1].m_stack_size = 0x100;
