@@ -54,28 +54,20 @@ void process_init(void)
 int k_release_processor(void)
 {
     k_pcb_node_t *p_pcb_node_old = NULL;
-    k_pcb_node_t *p_pcb_node_new = NULL;
     
     p_pcb_node_old = gp_current_process;
-    p_pcb_node_new = k_dequeue_ready_process();
+    gp_current_process = k_dequeue_ready_process();
     
-    if (p_pcb_node_new != NULL) {
-        gp_current_process = p_pcb_node_new;
-    } else {
-        gp_current_process = NULL;
+    if (gp_current_process == NULL && p_pcb_node_old == gp_pcb_nodes[NULL_PROC_PID]) {
+        // we are executing the null process and there is nothing in the ready queue
+        // revert back to the null process
+        gp_current_process = p_pcb_node_old;
+        return RTOS_OK;
     }
     
-    if (gp_current_process == NULL) {
-        // We want to resume execution of the process without adding it back to the
-        // ready queue, i.e. 'pretend k_release_processor() was never called.
-        
-        // This handles the case of the null process (priority 4) and other error cases.
-        
-        gp_current_process = p_pcb_node_old; // revert back to the old process
+    if (context_switch(p_pcb_node_old, gp_current_process) == RTOS_ERR) {
         return RTOS_ERR;
     }
-    
-    context_switch(p_pcb_node_old, gp_current_process);
     
     return RTOS_OK;
 }
@@ -177,7 +169,6 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             break;
             
         default:
-            p_pcb_node_new = p_pcb_node_old; // revert back to the old proc on error
             return RTOS_ERR;
     }
     
