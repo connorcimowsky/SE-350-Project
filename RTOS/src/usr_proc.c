@@ -13,7 +13,7 @@ PROC_INIT g_test_procs[NUM_TEST_PROCS];
 /* pointers to memory blocks returned by request_memory_block() */
 void *gp_mem_blks[16];
 
-/* the index of the most recently requested memory block */
+/* the index of gp_mem_blks pointing to the most recently requested memory block */
 int g_mem_blk_index = 0;
 
 /* the pid of the most recently executed process */

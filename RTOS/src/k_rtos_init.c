@@ -6,6 +6,7 @@
 
 void k_rtos_init(void)
 {
+    /* disable interrupt requests */
     __disable_irq();
     
     uart0_init();
@@ -14,6 +15,7 @@ void k_rtos_init(void)
     
     process_init();
     
+    /* enable interrupt requests */
     __enable_irq();
     
     /* start the first process */
