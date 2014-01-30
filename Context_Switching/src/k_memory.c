@@ -206,7 +206,7 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     // make sure we aren't trying to release a duplicate block
-    if (list_contains_node(gp_heap, p_node)) {
+    if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
         
 #ifdef DEBUG_0
         printf("k_release_memory_block: 0x%x has already been returned to the heap\n", p_mem_blk);
@@ -223,7 +223,7 @@ int k_release_memory_block(void *p_mem_blk)
     
     if (p_blocked_pcb_node != NULL) {
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
-            if (p_blocked_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
+            if (p_blocked_pcb_node->mp_pcb->m_priority < gp_current_process->mp_pcb->m_priority) {
                 // only preempt the calling process if the newly-unblocked process has a higher priority
                 k_release_processor();
             }
