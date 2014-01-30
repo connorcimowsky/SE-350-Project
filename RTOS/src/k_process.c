@@ -85,7 +85,7 @@ int k_set_process_priority(int pid, int priority)
 {
     k_pcb_node_t *p_pcb_node = NULL;
     
-    if (pid < 0 || pid > NUM_TEST_PROCS) {
+    if (pid < 0 || pid >= NUM_TEST_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }
@@ -144,7 +144,7 @@ int k_set_process_priority(int pid, int priority)
 
 int k_get_process_priority(int pid)
 {
-    if (pid < 0 || pid > NUM_TEST_PROCS) {
+    if (pid < 0 || pid >= NUM_TEST_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }
