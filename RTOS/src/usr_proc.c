@@ -27,10 +27,13 @@ void set_test_procs(void)
 {
     int i;
     for(i = 0; i < NUM_TEST_PROCS; i++) {
+        /* ensure that PIDs increase sequentially; start from 0 to account for the null process */
         g_test_procs[i].m_pid = (U32)i;
+        /* give each process an appropriate stack frame size */
         g_test_procs[i].m_stack_size = USR_SZ_STACK;
     }
     
+    /* the null process should always have a priority of LOWEST */
     g_test_procs[NULL_PROC_PID].m_priority = LOWEST;
     g_test_procs[NULL_PROC_PID].mpf_start_pc = &null_process;
     
