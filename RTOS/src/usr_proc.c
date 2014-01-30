@@ -13,7 +13,7 @@ PROC_INIT g_test_procs[NUM_TEST_PROCS];
 /* pointers to memory blocks returned by request_memory_block() */
 void *gp_mem_blks[16];
 
-/* the index of the most recently requested memory block */
+/* the index of gp_mem_blks pointing to the most recently requested memory block */
 int g_mem_blk_index = 0;
 
 /* the pid of the most recently executed process */
@@ -27,10 +27,13 @@ void set_test_procs(void)
 {
     int i;
     for(i = 0; i < NUM_TEST_PROCS; i++) {
+        /* ensure that PIDs increase sequentially; start from 0 to account for the null process */
         g_test_procs[i].m_pid = (U32)i;
+        /* give each process an appropriate stack frame size */
         g_test_procs[i].m_stack_size = USR_SZ_STACK;
     }
     
+    /* the null process should always have a priority of LOWEST */
     g_test_procs[NULL_PROC_PID].m_priority = LOWEST;
     g_test_procs[NULL_PROC_PID].mpf_start_pc = &null_process;
     
