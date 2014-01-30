@@ -1,11 +1,11 @@
-#ifndef RTX_H
-#define RTX_H
+#ifndef RTOS_H
+#define RTOS_H
 
 
 /* definitions */
 
-#define RTX_ERR -1
-#define RTX_OK  0
+#define RTOS_ERR -1
+#define RTOS_OK  0
 
 #define NULL 0
 #define NUM_TEST_PROCS 4
@@ -48,9 +48,9 @@ typedef struct proc_init
 
 #define __SVC_0  __svc_indirect(0)
 
-extern void k_rtx_init(void);
-#define rtx_init() _rtx_init((U32)k_rtx_init)
-extern void __SVC_0 _rtx_init(U32 p_func);
+extern void k_rtos_init(void);
+#define rtos_init() _rtos_init((U32)k_rtos_init)
+extern void __SVC_0 _rtos_init(U32 p_func);
 
 extern void *k_request_memory_block(void);
 #define request_memory_block() _request_memory_block((U32)k_request_memory_block)
@@ -73,4 +73,4 @@ extern int k_get_process_priority(int);
 extern int __SVC_0 _get_process_priority(U32 p_func, int pid);
 
 
-#endif /* RTX_H */
+#endif /* RTOS_H */

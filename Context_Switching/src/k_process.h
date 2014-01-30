@@ -1,7 +1,7 @@
 #ifndef K_PROCESS_H
 #define K_PROCESS_H
 
-#include "k_rtx.h"
+#include "k_rtos.h"
 
 
 /* external functions */

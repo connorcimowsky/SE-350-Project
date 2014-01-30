@@ -35,7 +35,7 @@ U32 *gp_stack;
           |---------------------------|  
           |Image$$RW_IRAM1$$ZI$$Limit |
           |...........................|          
-          |       RTX  Image          |
+          |        RTOS Image         |
           |                           |
 0x10000000+---------------------------+ Low Address
 
@@ -149,7 +149,7 @@ void *k_request_memory_block(void)
         printf("k_request_memory_block: no available blocks, releasing processor\n");
 #endif
     
-        if (k_enqueue_blocked_process(gp_current_process) == RTX_OK) {
+        if (k_enqueue_blocked_process(gp_current_process) == RTOS_OK) {
             k_release_processor();
         }
     }
@@ -179,7 +179,7 @@ int k_release_memory_block(void *p_mem_blk)
         printf("k_release_memory_block: cannot release NULL\n");
 #endif
         
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_node = p_mem_blk;
@@ -192,7 +192,7 @@ int k_release_memory_block(void *p_mem_blk)
         printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
 #endif
         
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     // make sure the pointer is block-aligned
@@ -202,7 +202,7 @@ int k_release_memory_block(void *p_mem_blk)
         printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
 #endif
         
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     // make sure we aren't trying to release a duplicate block
@@ -212,17 +212,17 @@ int k_release_memory_block(void *p_mem_blk)
         printf("k_release_memory_block: 0x%x has already been returned to the heap\n", p_mem_blk);
 #endif
         
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
-    if (insert_node(gp_heap, p_node) == RTX_ERR) {
-        return RTX_ERR;
+    if (insert_node(gp_heap, p_node) == RTOS_ERR) {
+        return RTOS_ERR;
     }
     
     p_blocked_pcb_node = k_dequeue_blocked_process();
     
     if (p_blocked_pcb_node != NULL) {
-        if (k_enqueue_ready_process(p_blocked_pcb_node) == RTX_OK) {
+        if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
             if (p_blocked_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
                 // only preempt the calling process if the newly-unblocked process has a higher priority
                 k_release_processor();
@@ -230,5 +230,5 @@ int k_release_memory_block(void *p_mem_blk)
         }
     }
     
-    return RTX_OK;
+    return RTOS_OK;
 }

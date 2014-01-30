@@ -1,7 +1,7 @@
 #include <LPC17xx.h>
 #include <system_LPC17xx.h>
 
-#include "rtx.h"
+#include "rtos.h"
 
 #ifdef DEBUG_0
 #include "uart_polling.h"
@@ -18,9 +18,9 @@ int main(void)
     init_printf(NULL, putc);
 #endif
     
-    /* initialize the RTX */
-    rtx_init();  
+    /* initialize the RTOS */
+    rtos_init();  
     
     /* we should never reach this */
-    return RTX_ERR;  
+    return RTOS_ERR;  
 }

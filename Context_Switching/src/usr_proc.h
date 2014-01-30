@@ -1,7 +1,7 @@
 #ifndef USR_PROC_H
 #define USR_PROC_H
 
-#include "rtx.h"
+#include "rtos.h"
 
 
 /* external functions */

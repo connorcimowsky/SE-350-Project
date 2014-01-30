@@ -1,5 +1,5 @@
 #include "k_list.h"
-#include "rtx.h"
+#include "rtos.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
@@ -14,13 +14,13 @@ int insert_node(k_list_t *p_list, k_node_t *p_node)
         printf("Node insertion error.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_node->mp_next = p_list->mp_first;
     p_list->mp_first = p_node;
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 k_node_t *get_node(k_list_t *p_list)
@@ -52,7 +52,7 @@ int list_contains_node(k_list_t *p_list, k_node_t *p_node)
         printf("Attempted to check node membership for an empty list.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_iter = p_list->mp_first;
@@ -74,7 +74,7 @@ int is_list_empty(k_list_t *p_list)
         printf("Attempted to check if a NULL list was empty.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     } else {
         return (p_list->mp_first == NULL);
     }

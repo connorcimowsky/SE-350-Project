@@ -1,7 +1,7 @@
 #ifndef K_MEM_H
 #define K_MEM_H
 
-#include "k_rtx.h"
+#include "k_rtos.h"
 
 
 /* initialize process control structures, align the stack, and divide the heap into blocks */

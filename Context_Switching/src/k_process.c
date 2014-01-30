@@ -72,12 +72,12 @@ int k_release_processor(void)
         // This handles the case of the null process (priority 4) and other error cases.
         
         gp_current_process = p_pcb_node_old; // revert back to the old process
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     context_switch(p_pcb_node_old, gp_current_process);
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 int k_set_process_priority(int pid, int priority)
@@ -86,40 +86,40 @@ int k_set_process_priority(int pid, int priority)
     
     if (pid < 0 || pid > NUM_TEST_PROCS) {
         // invalid pid
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     if (priority < 0 || priority >= NUM_PRIORITIES) {
         // invalid priority
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     if (pid == 0 || priority == LOWEST) {
         // reserved for the null process
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_pcb_node = gp_pcb_nodes[pid - 1];
     
     if (p_pcb_node->mp_pcb->m_priority == priority) {
         // don't do anything
-        return RTX_OK;
+        return RTOS_OK;
     }
     
     switch(p_pcb_node->mp_pcb->m_state) {
         case READY:
             if (remove_node_from_queue(gp_ready_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
                 p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_ready_process(p_pcb_node) == RTX_ERR) {
-                    return RTX_ERR;
+                if (k_enqueue_ready_process(p_pcb_node) == RTOS_ERR) {
+                    return RTOS_ERR;
                 }
             }
             break;
         case BLOCKED_ON_RESOURCE:
             if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
                 p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_blocked_process(p_pcb_node) == RTX_ERR) {
-                    return RTX_ERR;
+                if (k_enqueue_blocked_process(p_pcb_node) == RTOS_ERR) {
+                    return RTOS_ERR;
                 }
             }
             break;
@@ -127,14 +127,14 @@ int k_set_process_priority(int pid, int priority)
     
     k_release_processor();
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 int k_get_process_priority(int pid)
 {
     if (pid < 0 || pid > NUM_TEST_PROCS) {
         // invalid pid
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     return (int)gp_pcb_nodes[pid - 1]->mp_pcb->m_priority;
@@ -178,10 +178,10 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             
         default:
             p_pcb_node_new = p_pcb_node_old; // revert back to the old proc on error
-            return RTX_ERR;
+            return RTOS_ERR;
     }
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node)
@@ -189,7 +189,7 @@ int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node)
     PRIORITY_E priority;
     
     if (p_pcb_node == NULL || p_pcb_node->mp_pcb == NULL) {
-        return RTX_ERR;
+        return RTOS_ERR;
     }
 
     p_pcb_node->mp_pcb->m_state = READY;
@@ -218,7 +218,7 @@ int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
     k_queue_t *p_blocked_queue = NULL;
     
     if (p_pcb_node == NULL) {
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_pcb_node->mp_pcb->m_state = BLOCKED_ON_RESOURCE;
@@ -227,7 +227,7 @@ int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node)
     
     if (!is_queue_empty(p_blocked_queue) && queue_contains_node(p_blocked_queue, (k_node_t *)p_pcb_node)) {
         // the node is already in the blocked queue, so don't enqueue it again
-        return RTX_OK;
+        return RTOS_OK;
     }
     
     return (enqueue_node(p_blocked_queue, (k_node_t *)p_pcb_node));

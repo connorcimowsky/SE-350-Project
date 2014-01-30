@@ -1,5 +1,5 @@
 #include "k_queue.h"
-#include "rtx.h"
+#include "rtos.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
@@ -14,7 +14,7 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
         printf("Node insertion error.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_node->mp_next = NULL;
@@ -27,7 +27,7 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
         p_queue->mp_last = p_queue->mp_last->mp_next;
     }
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 k_node_t *dequeue_node(k_queue_t *p_queue)
@@ -66,7 +66,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
         printf("Attempted to remove a node from an empty queue.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     if (p_node == p_queue->mp_first) {
@@ -77,7 +77,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
             p_queue->mp_first = p_queue->mp_first->mp_next;
         }
         
-        return RTX_OK;
+        return RTOS_OK;
     }
     
     p_current_iter = p_queue->mp_first->mp_next;
@@ -88,7 +88,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
                 p_queue->mp_last = p_previous_iter;
             }
             p_previous_iter->mp_next = p_current_iter->mp_next;
-            return RTX_OK;
+            return RTOS_OK;
         }
         p_previous_iter = p_current_iter;
         p_current_iter = p_current_iter->mp_next;
@@ -98,7 +98,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
         printf("Node not found.\n");
 #endif
     
-    return RTX_ERR;
+    return RTOS_ERR;
 }
 
 int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node)
@@ -111,7 +111,7 @@ int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node)
         printf("Attempted to check node membership for an empty queue.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_iter = p_queue->mp_first;
@@ -133,7 +133,7 @@ int is_queue_empty(k_queue_t *p_queue)
         printf("Attempted to check if a NULL queue was empty.\n");
 #endif
     
-        return RTX_ERR;
+        return RTOS_ERR;
     } else {
         return (p_queue->mp_first == NULL);
     }
@@ -146,7 +146,7 @@ int print_queue(k_queue_t *p_queue)
     k_node_t *p_iter = NULL;
     
     if (p_queue == NULL) {
-        return RTX_ERR;
+        return RTOS_ERR;
     }
     
     p_iter = p_queue->mp_first;
@@ -157,7 +157,7 @@ int print_queue(k_queue_t *p_queue)
         p_iter = p_iter->mp_next;
     }
     
-    return RTX_OK;
+    return RTOS_OK;
 }
 
 #endif /* DEBUG_0 */
