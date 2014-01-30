@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>Context Switching SIM</TargetName>
+      <TargetName>RTOS SIM</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -44,7 +44,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\</OutputDirectory>
-          <OutputName>context_switching</OutputName>
+          <OutputName>rtos</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -434,7 +434,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>RTX Kernel Code</GroupName>
+          <GroupName>Kernel Code</GroupName>
           <Files>
             <File>
               <FileName>HAL.c</FileName>
@@ -526,7 +526,7 @@
       </Groups>
     </Target>
     <Target>
-      <TargetName>Context Switching RAM</TargetName>
+      <TargetName>RTOS RAM</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -563,7 +563,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\</OutputDirectory>
-          <OutputName>context_switching</OutputName>
+          <OutputName>rtos</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -953,7 +953,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>RTX Kernel Code</GroupName>
+          <GroupName>Kernel Code</GroupName>
           <Files>
             <File>
               <FileName>HAL.c</FileName>
