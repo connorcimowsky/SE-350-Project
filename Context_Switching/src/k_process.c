@@ -99,7 +99,7 @@ int k_set_process_priority(int pid, int priority)
         return RTOS_ERR;
     }
     
-    p_pcb_node = gp_pcb_nodes[pid - 1];
+    p_pcb_node = gp_pcb_nodes[pid];
     
     if (p_pcb_node->mp_pcb->m_priority == priority) {
         // don't do anything
@@ -137,7 +137,7 @@ int k_get_process_priority(int pid)
         return RTOS_ERR;
     }
     
-    return (int)gp_pcb_nodes[pid - 1]->mp_pcb->m_priority;
+    return (int)gp_pcb_nodes[pid]->mp_pcb->m_priority;
 }
 
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
