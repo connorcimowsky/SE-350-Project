@@ -115,7 +115,7 @@ void memory_init(void)
     
     gp_heap_end_addr = p_end;
     
-#ifdef DEBUG_0
+#ifdef 0
     p_iterator = gp_heap->mp_first;
     printf("Memory blocks:\n");
     while (p_iterator != NULL) {
@@ -222,6 +222,7 @@ int k_release_memory_block(void *p_mem_blk)
     p_blocked_pcb_node = k_dequeue_blocked_process();
     
     if (p_blocked_pcb_node != NULL) {
+        p_blocked_pcb_node->mp_pcb->m_state = READY;
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
             if (p_blocked_pcb_node->mp_pcb->m_priority < gp_current_process->mp_pcb->m_priority) {
                 // only preempt the calling process if the newly-unblocked process has a higher priority

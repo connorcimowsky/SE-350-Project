@@ -24,7 +24,7 @@ int k_get_process_priority(int pid);
 /* perform a context switch from p_pcb_node_old to p_pcb_node_new */
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new);
 
-/* set the state of p_pcb_node to READY and enqueue it in the ready queue */
+/* enqueue p_pcb_node in the ready queue */
 int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node);
 
 /* dequeue the highest-priority process from the ready queue */

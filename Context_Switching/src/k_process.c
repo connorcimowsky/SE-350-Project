@@ -99,22 +99,31 @@ int k_set_process_priority(int pid, int priority)
     }
     
     switch(p_pcb_node->mp_pcb->m_state) {
-        case READY:
-            if (remove_node_from_queue(gp_ready_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
+        case NEW:
+        case READY: {
+            // since processes in both the NEW and READY state can exist in the ready queue, do the same thing either way
+            if (remove_node_from_queue(gp_ready_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node) == RTOS_OK) {
                 p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
                 if (k_enqueue_ready_process(p_pcb_node) == RTOS_ERR) {
                     return RTOS_ERR;
                 }
             }
             break;
-        case BLOCKED_ON_RESOURCE:
-            if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node)) {
+        }
+        case BLOCKED_ON_RESOURCE: {
+            if (remove_node_from_queue(gp_blocked_queue[p_pcb_node->mp_pcb->m_priority], (k_node_t *)p_pcb_node) == RTOS_OK) {
                 p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
                 if (k_enqueue_blocked_process(p_pcb_node) == RTOS_ERR) {
                     return RTOS_ERR;
                 }
             }
             break;
+        }
+        case EXECUTING:
+        default: {
+            p_pcb_node->mp_pcb->m_priority = (PRIORITY_E)priority;
+            break;
+        }
     }
     
     k_release_processor();
@@ -141,6 +150,7 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             
             if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
                 if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
+                    p_pcb_node_old->mp_pcb->m_state = READY;
                     k_enqueue_ready_process(p_pcb_node_old);
                 }
                 p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP();
@@ -157,6 +167,7 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             
             if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
                 if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
+                    p_pcb_node_old->mp_pcb->m_state = READY;
                     k_enqueue_ready_process(p_pcb_node_old);
                 }
                 p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP(); // save the old process's sp
@@ -182,8 +193,7 @@ int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node)
     if (p_pcb_node == NULL || p_pcb_node->mp_pcb == NULL) {
         return RTOS_ERR;
     }
-
-    p_pcb_node->mp_pcb->m_state = READY;
+    
     priority = p_pcb_node->mp_pcb->m_priority;
     
     return (enqueue_node(gp_ready_queue[priority], (k_node_t *)p_pcb_node));
