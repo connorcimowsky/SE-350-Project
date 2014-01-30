@@ -13,8 +13,8 @@ PROC_INIT g_test_procs[NUM_TEST_PROCS];
 void set_test_procs(void)
 {
     int i;
-    for( i = 0; i < NUM_TEST_PROCS; i++ ) {
-        g_test_procs[i].m_pid = (U32)(i + 1);
+    for(i = 0; i < NUM_TEST_PROCS; i++) {
+        g_test_procs[i].m_pid = (U32)i;
     }
     
     g_test_procs[0].m_priority = LOWEST;
