@@ -6,6 +6,10 @@
 #endif
 
 
+/* size of message envelope header */
+#define MSG_HEADER_OFFSET sizeof(k_msg_t *) + sizeof(U32) + sizeof(U32)
+
+
 /* global variables */
 k_list_t *gp_heap;
 U8 *gp_heap_begin_addr;
@@ -110,7 +114,7 @@ U32 *alloc_stack(U32 size_b)
 
 void *k_request_memory_block(void)
 {
-    k_node_t *p_mem_blk = NULL;
+    U8 *p_mem_blk = NULL;
     
     while (is_list_empty(gp_heap)) {
         /* if the heap is empty, loop until a block becomes available */
@@ -126,10 +130,10 @@ void *k_request_memory_block(void)
     }
 
     /* retrieve the next available node from the heap */
-    p_mem_blk = get_node(gp_heap);
+    p_mem_blk = (U8 *)get_node(gp_heap);
 
-    /* increment the address of the node by 4 bytes to get the start address of the block itself */
-    p_mem_blk += 1;
+    /* increment the address of the node by the size of the header to get the start address of the block itself */
+    p_mem_blk += MSG_HEADER_OFFSET;
     
 #ifdef DEBUG_1
         printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
@@ -140,6 +144,7 @@ void *k_request_memory_block(void)
 
 int k_release_memory_block(void *p_mem_blk)
 {
+    U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
     k_pcb_node_t* p_blocked_pcb_node = NULL;
     
@@ -155,12 +160,15 @@ int k_release_memory_block(void *p_mem_blk)
         
         return RTOS_ERR;
     }
+		
+		/* cast the memory block for correct pointer arithmetic */
+		p_decrement = p_mem_blk;
     
-    /* cast the start address of the memory block to a k_node_t for correct pointer arithmetic */
-    p_node = p_mem_blk;
-    
-    /* decrement the address of the block by 4 bytes to get the start address of the node */
-    p_node -= 1;
+    /* decrement the address of the block by the size of the header to get the start address of the node */
+    p_decrement -= MSG_HEADER_OFFSET;
+		
+		/* cast the start address of the node to a k_node_t */
+    p_node = (k_node_t *)p_decrement;
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
