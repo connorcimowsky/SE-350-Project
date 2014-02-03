@@ -50,6 +50,23 @@ typedef struct k_pcb_node_t {
 } k_pcb_node_t;
 
 
+/* message type */
+typedef enum {
+	DEFAULT = 0,
+	KCD_REG
+} MSG_TYPE_E;
+
+
+/* message envelope */
+typedef struct k_msg_t {
+	struct k_msg_t *mp_next;
+	U32 m_sender_pid;
+	U32 m_destination_pid;
+	MSG_TYPE_E m_type;
+	char *mp_data;
+} k_msg_t;
+
+
 /* external variables */
 
 /* end address of the memory image */

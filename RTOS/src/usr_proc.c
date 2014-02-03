@@ -63,7 +63,7 @@ void null_process(void)
         int ret_val = release_processor();
         
 #ifdef DEBUG_0
-        printf("null_process: ret_val = %d\n", ret_val);
+        // printf("null_process: ret_val = %d\n\r", ret_val);
 #endif
         
     }
@@ -73,8 +73,8 @@ void proc1(void)
 {
     
 #ifdef DEBUG_0
-    printf("G019_test: START\n");
-    printf("G019_test: total 6 tests\n");
+    printf("G019_test: START\n\r");
+    printf("G019_test: total 6 tests\n\r");
 #endif
     
     /**
@@ -106,7 +106,7 @@ void proc1(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 1 ");
-    printf(g_success_flags[0] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[0] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     set_process_priority(1, LOW);
@@ -159,7 +159,7 @@ void proc2(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 2 ");
-    printf(g_success_flags[1] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[1] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     while (g_mem_blk_index > 0) {
@@ -226,7 +226,7 @@ void proc3(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 3 ");
-    printf(g_success_flags[2] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[2] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     // request memory blocks until we are preempted
@@ -262,7 +262,7 @@ void proc3(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 5 ");
-    printf(g_success_flags[4] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[4] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     release_processor();
@@ -358,7 +358,7 @@ void proc5(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 4 ");
-    printf(g_success_flags[3] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[3] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     // this will not result in preemption; the priority of proc3 is not higher than the priority of proc5
@@ -404,7 +404,7 @@ void proc6(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 6 ");
-    printf(g_success_flags[5] == 1 ? "OK\n" : "FAIL\n");
+    printf(g_success_flags[5] == 1 ? "OK\n\r" : "FAIL\n\r");
 #endif
     
     /* END TEST CASE 6 */
@@ -414,10 +414,10 @@ void proc6(void)
     }
     
 #ifdef DEBUG_0
-    printf("G019_test: %d/%d tests OK\n", num_successes, 6);
-    printf("G019_test: %d/%d tests FAIL\n", (6 - num_successes), 6);
+    printf("G019_test: %d/%d tests OK\n\r", num_successes, 6);
+    printf("G019_test: %d/%d tests FAIL\n\r", (6 - num_successes), 6);
     
-    printf("G019_test: END\n");
+    printf("G019_test: END\n\r");
 #endif
     
     
