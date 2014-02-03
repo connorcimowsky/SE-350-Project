@@ -62,7 +62,7 @@ extern k_list_t *gp_heap;
 extern U32 *gp_stack;
 
 /* process initialization table */
-extern PROC_INIT g_proc_table[NUM_TEST_PROCS];
+extern PROC_INIT g_proc_table[NUM_PROCS];
 
 /* array of nodes pointing to PCBs */
 extern k_pcb_node_t **gp_pcb_nodes;

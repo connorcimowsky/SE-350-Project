@@ -5,7 +5,7 @@
 
 
 /* global variables */
-PROC_INIT g_proc_table[NUM_TEST_PROCS];
+PROC_INIT g_proc_table[NUM_PROCS];
 k_pcb_node_t **gp_pcb_nodes = NULL;
 k_pcb_node_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
@@ -17,25 +17,32 @@ void process_init(void)
     int i;
     U32 *p_sp;
     
+    /* configure the null process */
+    g_proc_table[NULL_PROC_PID].m_pid = NULL_PROC_PID;
+    g_proc_table[NULL_PROC_PID].m_priority = LOWEST;
+    g_proc_table[NULL_PROC_PID].m_stack_size = USR_SZ_STACK;
+    g_proc_table[NULL_PROC_PID].mpf_start_pc = &null_process;
+    enqueue_node(gp_ready_queue[LOWEST], (k_node_t *)gp_pcb_nodes[NULL_PROC_PID]);
+    
     /* populate the test process table */
     set_test_procs();
     
-    /* populate the process initialization table */
+    /* add the test processes to the initialization table */
     for (i = 0; i < NUM_TEST_PROCS; i++) {
         /* get a pointer to the correct ready queue for this process */
         k_queue_t *p_queue = gp_ready_queue[g_test_procs[i].m_priority];
         
-        g_proc_table[i].m_pid = g_test_procs[i].m_pid;
-        g_proc_table[i].m_priority = g_test_procs[i].m_priority;
-        g_proc_table[i].m_stack_size = g_test_procs[i].m_stack_size;
-        g_proc_table[i].mpf_start_pc = g_test_procs[i].mpf_start_pc;
+        g_proc_table[i + 1].m_pid = g_test_procs[i].m_pid;
+        g_proc_table[i + 1].m_priority = g_test_procs[i].m_priority;
+        g_proc_table[i + 1].m_stack_size = g_test_procs[i].m_stack_size;
+        g_proc_table[i + 1].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
         /* add the PCB node corresponding to this process to the ready queue */
-        enqueue_node(p_queue, (k_node_t *)gp_pcb_nodes[i]);
+        enqueue_node(p_queue, (k_node_t *)gp_pcb_nodes[i + 1]);
     }
   
     /* initialize the exception stack frame (i.e. initial context) for each process */
-    for (i = 0; i < NUM_TEST_PROCS; i++) {
+    for (i = 0; i < NUM_PROCS; i++) {
         int j;
         
         (gp_pcb_nodes[i])->mp_pcb->m_pid = (g_proc_table[i]).m_pid;
@@ -85,7 +92,7 @@ int k_set_process_priority(int pid, int priority)
 {
     k_pcb_node_t *p_pcb_node = NULL;
     
-    if (pid < 0 || pid >= NUM_TEST_PROCS) {
+    if (pid < 0 || pid >= NUM_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }
@@ -144,7 +151,7 @@ int k_set_process_priority(int pid, int priority)
 
 int k_get_process_priority(int pid)
 {
-    if (pid < 0 || pid >= NUM_TEST_PROCS) {
+    if (pid < 0 || pid >= NUM_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }

@@ -24,16 +24,16 @@ void memory_init(void)
 
     /* reserve memory for pointers to PCB nodes */
     gp_pcb_nodes = (k_pcb_node_t **)p_end;
-    p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
+    p_end += NUM_PROCS * sizeof(k_pcb_node_t *);
   
     /* reserve memory for the PCB nodes themselves */
-    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+    for (i = 0; i < NUM_PROCS; i++) {
         gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
         p_end += sizeof(k_pcb_node_t); 
     }
     
     /* reserve memory for the PCBs themselves */
-    for ( i = 0; i < NUM_TEST_PROCS; i++ ) {
+    for (i = 0; i < NUM_PROCS; i++) {
         gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
         p_end += sizeof(k_pcb_t);
     }
