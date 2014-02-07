@@ -88,6 +88,22 @@ int k_release_processor(void)
     return RTOS_OK;
 }
 
+k_pcb_node_t *k_ready_queue_peek(void)
+{
+    int i;
+    k_pcb_node_t *p_node = NULL;
+    
+    /* iterate through the ready queues in priority sequence, using FIFO ordering within each queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        if (!is_queue_empty(gp_ready_queue[i])) {
+            p_node = (k_pcb_node_t *)queue_peek(gp_ready_queue[i]);
+            break;
+        }
+    }
+    
+    return p_node;
+}
+
 int k_set_process_priority(int pid, int priority)
 {
     k_pcb_node_t *p_pcb_node = NULL;
