@@ -8,7 +8,8 @@
 #define RTOS_OK  0
 
 #define NULL 0
-#define NUM_TEST_PROCS 7
+#define NUM_TEST_PROCS 6
+#define NUM_PROCS (NUM_TEST_PROCS + 1)
 
 #define NULL_PROC_PID 0
 
