@@ -70,6 +70,10 @@ typedef struct k_msg_t {
 } k_msg_t;
 
 
+/* size of message envelope header */
+#define MSG_HEADER_OFFSET sizeof(k_msg_t *) + sizeof(U32) + sizeof(U32)
+
+
 /* external variables */
 
 /* end address of the memory image */

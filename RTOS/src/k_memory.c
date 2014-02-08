@@ -6,10 +6,6 @@
 #endif
 
 
-/* size of message envelope header */
-#define MSG_HEADER_OFFSET sizeof(k_msg_t *) + sizeof(U32) + sizeof(U32)
-
-
 /* global variables */
 k_list_t *gp_heap;
 U8 *gp_heap_begin_addr;
