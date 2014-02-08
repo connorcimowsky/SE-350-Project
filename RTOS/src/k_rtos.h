@@ -40,6 +40,9 @@ typedef struct k_pcb_t
     
     /* state */
     PROC_STATE_E m_state;
+    
+    /* message queue */
+    k_queue_t m_msg_queue;
 } k_pcb_t;
 
 

@@ -39,6 +39,8 @@ void memory_init(void)
     /* reserve memory for the PCBs themselves */
     for (i = 0; i < NUM_PROCS; i++) {
         gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
+        gp_pcb_nodes[i]->mp_pcb->m_msg_queue.mp_first = NULL;
+        gp_pcb_nodes[i]->mp_pcb->m_msg_queue.mp_last = NULL;
         p_end += sizeof(k_pcb_t);
     }
     

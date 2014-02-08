@@ -81,5 +81,9 @@ extern int k_get_process_priority(int);
 #define get_process_priority(pid) _get_process_priority((U32)k_get_process_priority, pid)
 extern int __SVC_0 _get_process_priority(U32 p_func, int pid);
 
+extern int k_send_message(int, void *);
+#define send_message(recipient_pid, p_msg) _send_message((U32)k_send_message, recipient_pid, p_msg)
+extern int __SVC_0 _send_message(U32 p_func, int recipient_pid, void *p_msg);
+
 
 #endif /* RTOS_H */
