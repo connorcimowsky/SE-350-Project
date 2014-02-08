@@ -203,10 +203,14 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             
             if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
                 /* only dereference members if non-NULL */
-                if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
-                    /* only enqueue in the ready queue if not already in the blocked queue */
+                if (p_pcb_node_old->mp_pcb->m_state == EXECUTING) {
+                    /* only enqueue in the ready queue if executing */
                     p_pcb_node_old->mp_pcb->m_state = READY;
                     k_enqueue_ready_process(p_pcb_node_old);
+                } else if (p_pcb_node_old->mp_pcb->m_state == BLOCKED_ON_RESOURCE) {
+                    /* don't add a process to the ready queue if it is already in the blocked queue */
+                } else if (p_pcb_node_old->mp_pcb->m_state == WAITING_FOR_MESSAGE) {
+                    /* don't add a process to the ready queue if it is waiting for a message */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP();
@@ -225,10 +229,14 @@ int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new)
             
             if (p_pcb_node_old != NULL && p_pcb_node_old->mp_pcb != NULL) {
                 /* only dereference members if non-NULL */
-                if (p_pcb_node_old->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
-                    /* only enqueue in the ready queue if not already in the blocked queue */
+                if (p_pcb_node_old->mp_pcb->m_state == EXECUTING) {
+                    /* only enqueue in the ready queue if executing */
                     p_pcb_node_old->mp_pcb->m_state = READY;
                     k_enqueue_ready_process(p_pcb_node_old);
+                } else if (p_pcb_node_old->mp_pcb->m_state == BLOCKED_ON_RESOURCE) {
+                    /* don't add a process to the ready queue if it is already in the blocked queue */
+                } else if (p_pcb_node_old->mp_pcb->m_state == WAITING_FOR_MESSAGE) {
+                    /* don't add a process to the ready queue if it is waiting for a message */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_node_old->mp_pcb->mp_sp = (U32 *)__get_MSP();
