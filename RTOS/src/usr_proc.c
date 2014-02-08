@@ -28,32 +28,28 @@ void set_test_procs(void)
     int i;
     for(i = 0; i < NUM_TEST_PROCS; i++) {
         /* ensure that PIDs increase sequentially; start from 0 to account for the null process */
-        g_test_procs[i].m_pid = (U32)i;
+        g_test_procs[i].m_pid = (U32)(i + 1);
         /* give each process an appropriate stack frame size */
         g_test_procs[i].m_stack_size = USR_SZ_STACK;
     }
     
-    /* the null process should always have a priority of LOWEST */
-    g_test_procs[NULL_PROC_PID].m_priority = LOWEST;
-    g_test_procs[NULL_PROC_PID].mpf_start_pc = &null_process;
+    g_test_procs[0].m_priority = HIGHEST;
+    g_test_procs[0].mpf_start_pc = &proc1;
     
-    g_test_procs[1].m_priority = HIGHEST;
-    g_test_procs[1].mpf_start_pc = &proc1;
+    g_test_procs[1].m_priority = MEDIUM;
+    g_test_procs[1].mpf_start_pc = &proc2;
     
-    g_test_procs[2].m_priority = MEDIUM;
-    g_test_procs[2].mpf_start_pc = &proc2;
+    g_test_procs[2].m_priority = LOW;
+    g_test_procs[2].mpf_start_pc = &proc3;
     
     g_test_procs[3].m_priority = LOW;
-    g_test_procs[3].mpf_start_pc = &proc3;
+    g_test_procs[3].mpf_start_pc = &proc4;
     
     g_test_procs[4].m_priority = LOW;
-    g_test_procs[4].mpf_start_pc = &proc4;
+    g_test_procs[4].mpf_start_pc = &proc5;
     
     g_test_procs[5].m_priority = LOW;
-    g_test_procs[5].mpf_start_pc = &proc5;
-    
-    g_test_procs[6].m_priority = LOW;
-    g_test_procs[6].mpf_start_pc = &proc6;
+    g_test_procs[5].mpf_start_pc = &proc6;
 }
 
 void null_process(void)
@@ -63,7 +59,7 @@ void null_process(void)
         int ret_val = release_processor();
         
 #ifdef DEBUG_0
-        // printf("null_process: ret_val = %d\n\r", ret_val);
+        printf("null_process: ret_val = %d\n", ret_val);
 #endif
         
     }
@@ -73,8 +69,8 @@ void proc1(void)
 {
     
 #ifdef DEBUG_0
-    printf("G019_test: START\n\r");
-    printf("G019_test: total 6 tests\n\r");
+    printf("G019_test: START\n");
+    printf("G019_test: total 6 tests\n");
 #endif
     
     /**
@@ -106,7 +102,7 @@ void proc1(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 1 ");
-    printf(g_success_flags[0] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[0] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     set_process_priority(1, LOW);
@@ -159,7 +155,7 @@ void proc2(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 2 ");
-    printf(g_success_flags[1] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[1] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     while (g_mem_blk_index > 0) {
@@ -226,7 +222,7 @@ void proc3(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 3 ");
-    printf(g_success_flags[2] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[2] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     // request memory blocks until we are preempted
@@ -262,7 +258,7 @@ void proc3(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 5 ");
-    printf(g_success_flags[4] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[4] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     release_processor();
@@ -358,7 +354,7 @@ void proc5(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 4 ");
-    printf(g_success_flags[3] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[3] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     // this will not result in preemption; the priority of proc3 is not higher than the priority of proc5
@@ -404,7 +400,7 @@ void proc6(void)
     
 #ifdef DEBUG_0
     printf("G019_test: test 6 ");
-    printf(g_success_flags[5] == 1 ? "OK\n\r" : "FAIL\n\r");
+    printf(g_success_flags[5] == 1 ? "OK\n" : "FAIL\n");
 #endif
     
     /* END TEST CASE 6 */
@@ -414,10 +410,10 @@ void proc6(void)
     }
     
 #ifdef DEBUG_0
-    printf("G019_test: %d/%d tests OK\n\r", num_successes, 6);
-    printf("G019_test: %d/%d tests FAIL\n\r", (6 - num_successes), 6);
+    printf("G019_test: %d/%d tests OK\n", num_successes, 6);
+    printf("G019_test: %d/%d tests FAIL\n", (6 - num_successes), 6);
     
-    printf("G019_test: END\n\r");
+    printf("G019_test: END\n");
 #endif
     
     
