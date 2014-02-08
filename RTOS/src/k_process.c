@@ -161,7 +161,32 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    return RTOS_OK;
+    k_msg_t *p_msg_envelope = NULL;
+    k_pcb_node_t *p_recipient_pcb_node = NULL;
+    int ret_val;
+    
+    /* disable interrupt requests */
+    __disable_irq();
+    
+    p_msg_envelope = (k_msg_t *)((U8 *)p_msg - MSG_HEADER_OFFSET);
+    p_msg_envelope->m_sender_pid = gp_current_process->mp_pcb->m_pid;
+    p_msg_envelope->m_recipient_pid = recipient_pid;
+    
+    p_recipient_pcb_node = gp_pcb_nodes[recipient_pid];
+    
+    ret_val = enqueue_node(&(p_recipient_pcb_node->mp_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
+    
+    if (ret_val == RTOS_OK) {
+        if (p_recipient_pcb_node->mp_pcb->m_state == WAITING_FOR_MESSAGE) {
+            p_recipient_pcb_node->mp_pcb->m_state = READY;
+            ret_val = k_enqueue_ready_process(p_recipient_pcb_node);
+        }
+    }
+    
+    /* enable interrupt requests */
+    __enable_irq();
+    
+    return ret_val;
 }
 
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
