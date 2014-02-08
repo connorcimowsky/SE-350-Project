@@ -24,6 +24,9 @@ int k_get_process_priority(int pid);
 /* send a message to the processs specified by recipient_pid */
 int k_send_message(int recipient_pid, void *p_msg);
 
+/* dequeue the first message from the message queue of the calling process */
+void *k_receive_message(int *p_sender_pid);
+
 /* perform a context switch from p_pcb_node_old to p_pcb_node_new */
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new);
 

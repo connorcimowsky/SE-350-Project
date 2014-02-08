@@ -189,6 +189,11 @@ int k_send_message(int recipient_pid, void *p_msg)
     return ret_val;
 }
 
+void *k_receive_message(int *p_sender_pid)
+{
+    return NULL;
+}
+
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
 {
     PROC_STATE_E new_state = p_pcb_node_new->mp_pcb->m_state;

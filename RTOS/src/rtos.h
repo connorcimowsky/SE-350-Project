@@ -85,5 +85,9 @@ extern int k_send_message(int, void *);
 #define send_message(recipient_pid, p_msg) _send_message((U32)k_send_message, recipient_pid, p_msg)
 extern int __SVC_0 _send_message(U32 p_func, int recipient_pid, void *p_msg);
 
+extern void *k_receive_message(int *);
+#define receive_message(p_sender_pid) _send_message((U32)k_receive_message, p_sender_pid)
+extern int __SVC_0 _receive_message(U32 p_func, int *p_sender_pid);
+
 
 #endif /* RTOS_H */
