@@ -191,7 +191,30 @@ int k_send_message(int recipient_pid, void *p_msg)
 
 void *k_receive_message(int *p_sender_pid)
 {
-    return NULL;
+    k_msg_t *p_msg = NULL;
+    
+    /* disable interrupt requests */
+    __disable_irq();
+    
+    while (is_queue_empty(&(gp_current_process->mp_pcb->m_msg_queue))) {
+        gp_current_process->mp_pcb->m_state = WAITING_FOR_MESSAGE;
+        release_processor();
+    }
+    
+    p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->mp_pcb->m_msg_queue));
+
+    if (p_msg != NULL) {
+        *p_sender_pid = p_msg->m_sender_pid;
+    }
+    
+    /* enable interrupt requests */
+    __enable_irq();
+    
+    if (p_msg == NULL) {
+        return NULL;
+    }
+    
+    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
 }
 
 int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new) 
