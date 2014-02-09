@@ -67,21 +67,26 @@ void process_init(void)
 
 int k_release_processor(void)
 {
-    k_pcb_node_t *p_pcb_node_old = NULL;
+    k_pcb_node_t *p_previous_pcb_node = NULL;
+    k_pcb_node_t *p_next_pcb_node = k_ready_queue_peek();
     
-    /* save a pointer to the currently-executing process */
-    p_pcb_node_old = gp_current_process;
-    /* dequeue the next available process from the ready queue in order of priority */
-    gp_current_process = k_dequeue_ready_process();
-    
-    /* if there is nothing in the ready queue, we must be executing the null process; revert */
-    if (gp_current_process == NULL && p_pcb_node_old == gp_pcb_nodes[NULL_PROC_PID]) {
-        gp_current_process = p_pcb_node_old;
+    /* if there is nothing in the ready queue, do nothing */
+    if (p_next_pcb_node == NULL) {
         return RTOS_OK;
     }
     
+    /* if the next process is of lesser importance, do nothing */
+    if (p_next_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
+        return RTOS_OK;
+    }
+    
+    /* save a pointer to the currently-executing process */
+    p_previous_pcb_node = gp_current_process;
+    /* dequeue the next available process from the ready queue */
+    gp_current_process = k_dequeue_ready_process();
+    
     /* perform a context switch from the previous process to the next process */
-    if (context_switch(p_pcb_node_old, gp_current_process) == RTOS_ERR) {
+    if (context_switch(p_previous_pcb_node, gp_current_process) == RTOS_ERR) {
         return RTOS_ERR;
     }
     
