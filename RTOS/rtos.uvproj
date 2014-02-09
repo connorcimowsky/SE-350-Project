@@ -506,6 +506,16 @@
               <FileType>1</FileType>
               <FilePath>.\src\k_process.c</FilePath>
             </File>
+            <File>
+              <FileName>k_null_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_null_proc.h</FilePath>
+            </File>
+            <File>
+              <FileName>k_null_proc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\k_null_proc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1024,6 +1034,16 @@
               <FileName>k_process.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\k_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>k_null_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_null_proc.h</FilePath>
+            </File>
+            <File>
+              <FileName>k_null_proc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\k_null_proc.c</FilePath>
             </File>
           </Files>
         </Group>

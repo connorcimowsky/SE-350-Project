@@ -1,6 +1,7 @@
 #include <LPC17xx.h>
 
 #include "k_process.h"
+#include "k_null_proc.h"
 #include "usr_proc.h"
 
 
