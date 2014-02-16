@@ -204,10 +204,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (p_blocked_pcb_node != NULL) {
         p_blocked_pcb_node->mp_pcb->m_state = READY;
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
-            if (p_blocked_pcb_node->mp_pcb->m_priority < gp_current_process->mp_pcb->m_priority) {
-                /* only preempt the calling process if the newly-unblocked process has a higher priority */
-                k_release_processor();
-            }
+            k_release_processor();
         }
     }
     
