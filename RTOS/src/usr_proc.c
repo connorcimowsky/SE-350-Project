@@ -52,19 +52,6 @@ void set_test_procs(void)
     g_test_procs[5].mpf_start_pc = &proc6;
 }
 
-void null_process(void)
-{   
-    while (1) {
-        
-        int ret_val = release_processor();
-        
-#ifdef DEBUG_0
-        printf("null_process: ret_val = %d\n", ret_val);
-#endif
-        
-    }
-}
-
 void proc1(void)
 {
     

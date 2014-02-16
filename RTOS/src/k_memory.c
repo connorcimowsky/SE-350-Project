@@ -132,7 +132,7 @@ void *k_request_memory_block(void)
     p_mem_blk += 1;
     
 #ifdef DEBUG_1
-        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (memory_block - 1), memory_block);
+        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (p_mem_blk - 1), p_mem_blk);
 #endif
     
     return (void *)p_mem_blk;
@@ -142,10 +142,6 @@ int k_release_memory_block(void *p_mem_blk)
 {
     k_node_t *p_node = NULL;
     k_pcb_node_t* p_blocked_pcb_node = NULL;
-    
-#ifdef DEBUG_1
-        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", block_ptr, (block_ptr + 1));
-#endif
     
     if (p_mem_blk == NULL ) {
         
@@ -161,6 +157,10 @@ int k_release_memory_block(void *p_mem_blk)
     
     /* decrement the address of the block by 4 bytes to get the start address of the node */
     p_node -= 1;
+    
+    #ifdef DEBUG_1
+        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", p_node, (p_node + 1));
+    #endif
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
@@ -204,10 +204,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (p_blocked_pcb_node != NULL) {
         p_blocked_pcb_node->mp_pcb->m_state = READY;
         if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
-            if (p_blocked_pcb_node->mp_pcb->m_priority < gp_current_process->mp_pcb->m_priority) {
-                /* only preempt the calling process if the newly-unblocked process has a higher priority */
-                k_release_processor();
-            }
+            k_release_processor();
         }
     }
     
