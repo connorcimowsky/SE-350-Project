@@ -116,6 +116,7 @@ k_pcb_node_t *k_ready_queue_peek(void)
 int k_set_process_priority(int pid, int priority)
 {
     k_pcb_node_t *p_pcb_node = NULL;
+    k_pcb_node_t *p_next_ready_queue_node = NULL;
     
     if (pid < 0 || pid >= NUM_PROCS) {
         /* pid is out-of-bounds */
@@ -168,8 +169,13 @@ int k_set_process_priority(int pid, int priority)
         }
     }
     
-    /* yield the processor so that the scheduler can run again */
-    k_release_processor();
+    p_next_ready_queue_node = k_ready_queue_peek();
+    if (p_next_ready_queue_node != NULL) {
+        if (p_next_ready_queue_node->mp_pcb->m_priority < gp_current_process->mp_pcb->m_priority) {
+            // only yield the processor if there is a higher-priority process waiting to be executed
+            k_release_processor();
+        }
+    }
     
     return RTOS_OK;
 }
