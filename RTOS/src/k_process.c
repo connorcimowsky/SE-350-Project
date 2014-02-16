@@ -76,9 +76,12 @@ int k_release_processor(void)
         return RTOS_OK;
     }
     
-    /* if the next process is of lesser importance, do nothing */
-    if (p_next_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
-        return RTOS_OK;
+    /* only check the priority of the next process if the current process is not blocked */
+    if (gp_current_process->mp_pcb->m_state != BLOCKED_ON_RESOURCE) {
+        /* if the next process is of lesser importance, do nothing */
+        if (p_next_pcb_node->mp_pcb->m_priority > gp_current_process->mp_pcb->m_priority) {
+            return RTOS_OK;
+        }
     }
     
     /* save a pointer to the currently-executing process */
