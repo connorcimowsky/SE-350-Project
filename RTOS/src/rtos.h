@@ -51,6 +51,20 @@ typedef struct proc_init
 } PROC_INIT;
 
 
+/* message type */
+typedef enum {
+	DEFAULT = 0,
+	KCD_REG
+} MSG_TYPE_E;
+
+
+/* user-facing message envelope */
+typedef struct msg_t {
+	MSG_TYPE_E m_type;
+	char *mp_data;
+} msg_t;
+
+
 /* user-facing api */
 
 #define __SVC_0  __svc_indirect(0)

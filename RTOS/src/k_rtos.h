@@ -49,13 +49,6 @@ typedef struct k_pcb_t
 } k_pcb_t;
 
 
-/* message type */
-typedef enum {
-	DEFAULT = 0,
-	KCD_REG
-} MSG_TYPE_E;
-
-
 /* message envelope */
 typedef struct k_msg_t {
 	struct k_msg_t *mp_next;
