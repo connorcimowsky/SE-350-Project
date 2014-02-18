@@ -29,6 +29,9 @@ typedef enum {
 /* process control block */
 typedef struct k_pcb_t
 {
+    /* pointer to the next PCB */
+    struct k_pcb_t *mp_next;
+    
     /* stack pointer */
     U32 *mp_sp;
     
@@ -44,13 +47,6 @@ typedef struct k_pcb_t
     /* message queue */
     k_queue_t m_msg_queue;
 } k_pcb_t;
-
-
-/* pcb node */
-typedef struct k_pcb_node_t {
-    struct k_pcb_node_t *mp_next;
-    k_pcb_t *mp_pcb;
-} k_pcb_node_t;
 
 
 /* message type */
@@ -88,11 +84,11 @@ extern U32 *gp_stack;
 /* process initialization table */
 extern PROC_INIT g_proc_table[NUM_PROCS];
 
-/* array of nodes pointing to PCBs */
-extern k_pcb_node_t **gp_pcb_nodes;
+/* array of PCBs */
+extern k_pcb_t **gp_pcbs;
 
 /* the process whose state is EXECUTING */
-extern k_pcb_node_t *gp_current_process;
+extern k_pcb_t *gp_current_process;
 
 /* array of queues for processes that are READY, one for each priority */
 extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];

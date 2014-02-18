@@ -22,21 +22,15 @@ void memory_init(void)
     /* add 4 bytes of padding */
     p_end += 4;
 
-    /* reserve memory for pointers to PCB nodes */
-    gp_pcb_nodes = (k_pcb_node_t **)p_end;
-    p_end += NUM_PROCS * sizeof(k_pcb_node_t *);
-  
-    /* reserve memory for the PCB nodes themselves */
-    for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
-        p_end += sizeof(k_pcb_node_t); 
-    }
+    /* set the start address of the PCB array */
+    gp_pcbs = (k_pcb_t **)p_end;
     
     /* reserve memory for the PCBs themselves */
     for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
-        gp_pcb_nodes[i]->mp_pcb->m_msg_queue.mp_first = NULL;
-        gp_pcb_nodes[i]->mp_pcb->m_msg_queue.mp_last = NULL;
+        gp_pcbs[i] = (k_pcb_t *)p_end;
+        gp_pcbs[i]->m_msg_queue.mp_first = NULL;
+        gp_pcbs[i]->m_msg_queue.mp_last = NULL;
+        
         p_end += sizeof(k_pcb_t);
     }
     
@@ -138,7 +132,7 @@ int k_release_memory_block(void *p_mem_blk)
 {
     U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
-    k_pcb_node_t* p_blocked_pcb_node = NULL;
+    k_pcb_t *p_blocked_pcb = NULL;
     
     if (p_mem_blk == NULL ) {
         
@@ -148,9 +142,9 @@ int k_release_memory_block(void *p_mem_blk)
         
         return RTOS_ERR;
     }
-		
-		/* cast the memory block for correct pointer arithmetic */
-		p_decrement = p_mem_blk;
+	
+	/* cast the memory block for correct pointer arithmetic */
+	p_decrement = p_mem_blk;
     
     /* decrement the address of the block by the size of the header to get the start address of the node */
     p_decrement -= MSG_HEADER_OFFSET;
@@ -198,12 +192,12 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     /* attempt to dequeue the next available process from the blocked queue */
-    p_blocked_pcb_node = k_dequeue_blocked_process();
+    p_blocked_pcb = k_dequeue_blocked_process();
     
     /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
-    if (p_blocked_pcb_node != NULL) {
-        p_blocked_pcb_node->mp_pcb->m_state = READY;
-        if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
+    if (p_blocked_pcb != NULL) {
+        p_blocked_pcb->m_state = READY;
+        if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
             k_release_processor();
         }
     }
