@@ -186,6 +186,7 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
+    U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     k_pcb_t *p_recipient_pcb = NULL;
     int ret_val;
@@ -193,7 +194,11 @@ int k_send_message(int recipient_pid, void *p_msg)
     /* disable interrupt requests */
     __disable_irq();
     
-    p_msg_envelope = (k_msg_t *)((U8 *)p_msg - MSG_HEADER_OFFSET);
+    /* get the address of the actual message envelope */
+    p_decrement = (U8 *)p_msg;
+    p_decrement -= MSG_HEADER_OFFSET;
+    
+    p_msg_envelope = (k_msg_t *)p_decrement;
     p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
