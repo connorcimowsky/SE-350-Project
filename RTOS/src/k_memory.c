@@ -23,7 +23,9 @@ void memory_init(void)
     p_end += 4;
 
     /* set the start address of the PCB array */
+    
     gp_pcbs = (k_pcb_t **)p_end;
+    p_end += NUM_PROCS * sizeof(k_pcb_t *);
     
     /* reserve memory for the PCBs themselves */
     for (i = 0; i < NUM_PROCS; i++) {
