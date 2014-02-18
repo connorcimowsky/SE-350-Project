@@ -77,13 +77,7 @@ void memory_init(void)
         
         /* create a node to represent a memory block */
         k_node_t *p_node = (k_node_t *)p_end;
-        if (i == (NUM_BLOCKS - 1)) {
-            /* the list should be NULL-terminated */
-            p_node->mp_next = NULL;
-        } else {
-            /* block headers should not use any of the block's storage */
-            p_node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
-        }
+        
         
         /* insert the node into the memory heap structure */
         insert_node(gp_heap, (k_node_t *)p_node);
