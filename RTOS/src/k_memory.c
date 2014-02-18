@@ -87,7 +87,7 @@ void memory_init(void)
         
         /* insert the node into the memory heap structure */
         insert_node(gp_heap, (k_node_t *)p_node);
-        p_end += sizeof(k_node_t) + BLOCK_SIZE;
+        p_end += BLOCK_SIZE;
     }
     
     /* save the end address of the heap for error-checking later on */
@@ -129,13 +129,13 @@ void *k_request_memory_block(void)
 
     /* retrieve the next available node from the heap */
     p_mem_blk = (U8 *)get_node(gp_heap);
-
-    /* increment the address of the node by the size of the header to get the start address of the block itself */
-    p_mem_blk += MSG_HEADER_OFFSET;
     
 #ifdef DEBUG_1
-        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (p_mem_blk - 1), p_mem_blk);
+        printf("k_request_memory_block: 0x%x\n", p_mem_blk);
 #endif
+    
+    /* increment the address of the node by the size of the header to get the start address of the block itself */
+    p_mem_blk += MSG_HEADER_OFFSET;
     
     return (void *)p_mem_blk;
 }
@@ -164,9 +164,9 @@ int k_release_memory_block(void *p_mem_blk)
 		/* cast the start address of the node to a k_node_t */
     p_node = (k_node_t *)p_decrement;
     
-    #ifdef DEBUG_1
-        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", p_node, (p_node + 1));
-    #endif
+#ifdef DEBUG_1
+        printf("k_release_memory_block: 0x%x\n", p_node);
+#endif
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
@@ -179,7 +179,7 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     /* make sure the pointer is block-aligned */
-    if (((U8 *)p_node - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
+    if (((U8 *)p_node - gp_heap_begin_addr) % BLOCK_SIZE != 0) {
         
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
