@@ -15,6 +15,9 @@ void process_init(void);
 /* invoke the scheduler and switch to the next process */
 int k_release_processor(void);
 
+/* return the next-to-run process from the ready queue without dequeueing it, or NULL if empty */
+k_pcb_node_t *k_ready_queue_peek(void);
+
 /* set the priority of the process specified by pid */
 int k_set_process_priority(int pid, int priority);
 

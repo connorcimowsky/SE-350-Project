@@ -30,6 +30,20 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
     return RTOS_OK;
 }
 
+k_node_t *queue_peek(k_queue_t *p_queue)
+{
+    if (is_queue_empty(p_queue)) {
+    
+#ifdef DEBUG_1
+        printf("Attempted to peek at an empty queue.\n");
+#endif
+    
+        return NULL;
+    }
+    
+    return p_queue->mp_first;
+}
+
 k_node_t *dequeue_node(k_queue_t *p_queue)
 {
     k_node_t *p_first = NULL;
