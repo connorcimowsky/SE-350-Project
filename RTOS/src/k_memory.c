@@ -22,19 +22,16 @@ void memory_init(void)
     /* add 4 bytes of padding */
     p_end += 4;
 
-    /* reserve memory for pointers to PCB nodes */
-    gp_pcb_nodes = (k_pcb_node_t **)p_end;
-    p_end += NUM_PROCS * sizeof(k_pcb_node_t *);
-  
-    /* reserve memory for the PCB nodes themselves */
-    for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
-        p_end += sizeof(k_pcb_node_t); 
-    }
+    /* reserve memory for pointers to PCBs */
+    gp_pcbs = (k_pcb_t **)p_end;
+    p_end += NUM_PROCS * sizeof(k_pcb_t *);
     
     /* reserve memory for the PCBs themselves */
     for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcb_nodes[i]->mp_pcb = (k_pcb_t *)p_end;
+        gp_pcbs[i] = (k_pcb_t *)p_end;
+        gp_pcbs[i]->m_msg_queue.mp_first = NULL;
+        gp_pcbs[i]->m_msg_queue.mp_last = NULL;
+        
         p_end += sizeof(k_pcb_t);
     }
     
@@ -63,7 +60,6 @@ void memory_init(void)
     }
     
     /* create the memory heap */
-    
     gp_heap = (k_list_t *)p_end;
     gp_heap->mp_first = NULL;
     p_end += sizeof(k_list_t);
@@ -72,20 +68,14 @@ void memory_init(void)
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
-        
         /* create a node to represent a memory block */
         k_node_t *p_node = (k_node_t *)p_end;
-        if (i == (NUM_BLOCKS - 1)) {
-            /* the list should be NULL-terminated */
-            p_node->mp_next = NULL;
-        } else {
-            /* block headers should not use any of the block's storage */
-            p_node->mp_next = (k_node_t *)(p_end + sizeof(k_node_t) + BLOCK_SIZE);
-        }
         
         /* insert the node into the memory heap structure */
         insert_node(gp_heap, (k_node_t *)p_node);
-        p_end += sizeof(k_node_t) + BLOCK_SIZE;
+
+        /* space each memory block apart using the defined block size */
+        p_end += BLOCK_SIZE;
     }
     
     /* save the end address of the heap for error-checking later on */
@@ -110,7 +100,7 @@ U32 *alloc_stack(U32 size_b)
 
 void *k_request_memory_block(void)
 {
-    k_node_t *p_mem_blk = NULL;
+    U8 *p_mem_blk = NULL;
     
     while (is_list_empty(gp_heap)) {
         /* if the heap is empty, loop until a block becomes available */
@@ -126,22 +116,23 @@ void *k_request_memory_block(void)
     }
 
     /* retrieve the next available node from the heap */
-    p_mem_blk = get_node(gp_heap);
-
-    /* increment the address of the node by 4 bytes to get the start address of the block itself */
-    p_mem_blk += 1;
+    p_mem_blk = (U8 *)get_node(gp_heap);
     
 #ifdef DEBUG_1
-        printf("k_request_memory_block: node address: 0x%x, block address: 0x%x\n", (p_mem_blk - 1), p_mem_blk);
+        printf("k_request_memory_block: 0x%x\n", p_mem_blk);
 #endif
+    
+    /* increment the address of the node by the size of the header to get the start address of the block itself */
+    p_mem_blk += MSG_HEADER_OFFSET;
     
     return (void *)p_mem_blk;
 }
 
 int k_release_memory_block(void *p_mem_blk)
 {
+    U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
-    k_pcb_node_t* p_blocked_pcb_node = NULL;
+    k_pcb_t *p_blocked_pcb = NULL;
     
     if (p_mem_blk == NULL ) {
         
@@ -152,15 +143,18 @@ int k_release_memory_block(void *p_mem_blk)
         return RTOS_ERR;
     }
     
-    /* cast the start address of the memory block to a k_node_t for correct pointer arithmetic */
-    p_node = p_mem_blk;
+    /* cast the memory block for correct pointer arithmetic */
+    p_decrement = p_mem_blk;
     
-    /* decrement the address of the block by 4 bytes to get the start address of the node */
-    p_node -= 1;
+    /* decrement the address of the block by the size of the header to get the start address of the node */
+    p_decrement -= MSG_HEADER_OFFSET;
+        
+    /* cast the start address of the node to a k_node_t */
+    p_node = (k_node_t *)p_decrement;
     
-    #ifdef DEBUG_1
-        printf("k_release_memory_block: node address: 0x%x, block address: 0x%x\n", p_node, (p_node + 1));
-    #endif
+#ifdef DEBUG_1
+        printf("k_release_memory_block: 0x%x\n", p_node);
+#endif
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
@@ -173,7 +167,7 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     /* make sure the pointer is block-aligned */
-    if (((U8 *)p_node - gp_heap_begin_addr) % (BLOCK_SIZE + sizeof(k_node_t)) != 0) {
+    if (((U8 *)p_node - gp_heap_begin_addr) % BLOCK_SIZE != 0) {
         
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
@@ -198,12 +192,12 @@ int k_release_memory_block(void *p_mem_blk)
     }
     
     /* attempt to dequeue the next available process from the blocked queue */
-    p_blocked_pcb_node = k_dequeue_blocked_process();
+    p_blocked_pcb = k_dequeue_blocked_process();
     
     /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
-    if (p_blocked_pcb_node != NULL) {
-        p_blocked_pcb_node->mp_pcb->m_state = READY;
-        if (k_enqueue_ready_process(p_blocked_pcb_node) == RTOS_OK) {
+    if (p_blocked_pcb != NULL) {
+        p_blocked_pcb->m_state = READY;
+        if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
             k_release_processor();
         }
     }

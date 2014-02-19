@@ -16,7 +16,7 @@ void process_init(void);
 int k_release_processor(void);
 
 /* return the next-to-run process from the ready queue without dequeueing it, or NULL if empty */
-k_pcb_node_t *k_ready_queue_peek(void);
+k_pcb_t *k_ready_queue_peek(void);
 
 /* set the priority of the process specified by pid */
 int k_set_process_priority(int pid, int priority);
@@ -24,20 +24,26 @@ int k_set_process_priority(int pid, int priority);
 /* get the priority of the process specified by pid */
 int k_get_process_priority(int pid);
 
-/* perform a context switch from p_pcb_node_old to p_pcb_node_new */
-int context_switch(k_pcb_node_t *p_pcb_node_old, k_pcb_node_t *p_pcb_node_new);
+/* send a message to the process specified by recipient_pid */
+int k_send_message(int recipient_pid, void *p_msg);
 
-/* enqueue p_pcb_node in the ready queue */
-int k_enqueue_ready_process(k_pcb_node_t *p_pcb_node);
+/* dequeue the first message from the message queue of the calling process */
+void *k_receive_message(int *p_sender_pid);
+
+/* perform a context switch from p_pcb_old to p_pcb_new */
+int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
+
+/* enqueue p_pcb in the ready queue */
+int k_enqueue_ready_process(k_pcb_t *p_pcb);
 
 /* dequeue the highest-priority process from the ready queue */
-k_pcb_node_t *k_dequeue_ready_process(void);
+k_pcb_t *k_dequeue_ready_process(void);
 
-/* set the state of p_pcb_node to BLOCKED_ON_RESOURCE and enqueue it in the blocked queue */
-int k_enqueue_blocked_process(k_pcb_node_t *p_pcb_node);
+/* set the state of p_pcb to BLOCKED_ON_RESOURCE and enqueue it in the blocked queue */
+int k_enqueue_blocked_process(k_pcb_t *p_pcb);
 
 /* dequeue the next available process from the blocked queue */
-k_pcb_node_t *k_dequeue_blocked_process(void);
+k_pcb_t *k_dequeue_blocked_process(void);
 
 
 #endif /* K_PROCESS_H */

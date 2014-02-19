@@ -51,6 +51,20 @@ typedef struct proc_init
 } PROC_INIT;
 
 
+/* message type */
+typedef enum {
+    DEFAULT = 0,
+    KCD_REG
+} MSG_TYPE_E;
+
+
+/* user-facing message envelope */
+typedef struct msg_t {
+    MSG_TYPE_E m_type;
+    char *mp_data;
+} msg_t;
+
+
 /* user-facing api */
 
 #define __SVC_0  __svc_indirect(0)
@@ -78,6 +92,14 @@ extern int __SVC_0 _set_process_priority(U32 p_func, int pid, int priority);
 extern int k_get_process_priority(int);
 #define get_process_priority(pid) _get_process_priority((U32)k_get_process_priority, pid)
 extern int __SVC_0 _get_process_priority(U32 p_func, int pid);
+
+extern int k_send_message(int, void *);
+#define send_message(recipient_pid, p_msg) _send_message((U32)k_send_message, recipient_pid, p_msg)
+extern int __SVC_0 _send_message(U32 p_func, int recipient_pid, void *p_msg);
+
+extern void *k_receive_message(int *);
+#define receive_message(p_sender_pid) _receive_message((U32)k_receive_message, p_sender_pid)
+extern void *_receive_message(U32 p_func, int *p_sender_pid) __SVC_0;
 
 
 #endif /* RTOS_H */
