@@ -102,9 +102,6 @@ void *k_request_memory_block(void)
 {
     U8 *p_mem_blk = NULL;
     
-    /* disable interrupt requests */
-    __disable_irq();
-    
     while (is_list_empty(gp_heap)) {
         /* if the heap is empty, loop until a block becomes available */
         
@@ -128,9 +125,6 @@ void *k_request_memory_block(void)
     /* increment the address of the node by the size of the header to get the start address of the block itself */
     p_mem_blk += MSG_HEADER_OFFSET;
     
-    /* enable interrupt requests */
-    __enable_irq();
-    
     return (void *)p_mem_blk;
 }
 
@@ -139,9 +133,6 @@ int k_release_memory_block(void *p_mem_blk)
     U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
     k_pcb_t *p_blocked_pcb = NULL;
-    
-    /* disable interrupt requests */
-    __disable_irq();
     
     if (p_mem_blk == NULL ) {
         
@@ -210,9 +201,6 @@ int k_release_memory_block(void *p_mem_blk)
             k_release_processor();
         }
     }
-    
-    /* enable interrupt requests */
-    __enable_irq();
     
     return RTOS_OK;
 }
