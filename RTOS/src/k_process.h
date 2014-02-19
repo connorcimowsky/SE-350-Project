@@ -24,7 +24,7 @@ int k_set_process_priority(int pid, int priority);
 /* get the priority of the process specified by pid */
 int k_get_process_priority(int pid);
 
-/* send a message to the processs specified by recipient_pid */
+/* send a message to the process specified by recipient_pid */
 int k_send_message(int recipient_pid, void *p_msg);
 
 /* dequeue the first message from the message queue of the calling process */
