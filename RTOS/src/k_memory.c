@@ -22,8 +22,7 @@ void memory_init(void)
     /* add 4 bytes of padding */
     p_end += 4;
 
-    /* set the start address of the PCB array */
-    
+    /* reserve memory for pointers to PCBs */
     gp_pcbs = (k_pcb_t **)p_end;
     p_end += NUM_PROCS * sizeof(k_pcb_t *);
     
@@ -61,7 +60,6 @@ void memory_init(void)
     }
     
     /* create the memory heap */
-    
     gp_heap = (k_list_t *)p_end;
     gp_heap->mp_first = NULL;
     p_end += sizeof(k_list_t);
@@ -70,13 +68,13 @@ void memory_init(void)
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
-        
         /* create a node to represent a memory block */
         k_node_t *p_node = (k_node_t *)p_end;
         
-        
         /* insert the node into the memory heap structure */
         insert_node(gp_heap, (k_node_t *)p_node);
+
+        /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
     }
     
