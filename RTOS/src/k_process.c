@@ -77,7 +77,7 @@ int k_release_processor(void)
     }
     
     /* only check the priority of the next process if the current process is not blocked */
-    if (gp_current_process->m_state != BLOCKED_ON_RESOURCE) {
+    if (gp_current_process->m_state != BLOCKED_ON_RESOURCE && gp_current_process->m_state != WAITING_FOR_MESSAGE) {
         /* if the next process is of lesser importance, do nothing */
         if (p_next_pcb->m_priority > gp_current_process->m_priority) {
             return RTOS_OK;
@@ -160,12 +160,13 @@ int k_set_process_priority(int pid, int priority)
                 }
             }
             break;
+        case WAITING_FOR_MESSAGE:
+            /* if the process is waiting for a message, then it is not in a queue; simply update its priority */
         case EXECUTING:
             /* if the process is executing, then it is not in a queue; simply update its priority */
-        default: {
+        default:
             p_pcb->m_priority = (PRIORITY_E)priority;
             break;
-        }
     }
     
     /* yield the processor so that the scheduler can run again */
