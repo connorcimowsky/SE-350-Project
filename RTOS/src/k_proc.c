@@ -1,4 +1,4 @@
-#include "k_null_proc.h"
+#include "k_proc.h"
 #include "rtos.h"
 
 #ifdef DEBUG_0

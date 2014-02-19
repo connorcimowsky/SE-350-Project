@@ -507,14 +507,14 @@
               <FilePath>.\src\k_process.c</FilePath>
             </File>
             <File>
-              <FileName>k_null_proc.h</FileName>
+              <FileName>k_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_null_proc.h</FilePath>
+              <FilePath>.\src\k_proc.h</FilePath>
             </File>
             <File>
-              <FileName>k_null_proc.c</FileName>
+              <FileName>k_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_null_proc.c</FilePath>
+              <FilePath>.\src\k_proc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1036,14 +1036,14 @@
               <FilePath>.\src\k_process.c</FilePath>
             </File>
             <File>
-              <FileName>k_null_proc.h</FileName>
+              <FileName>k_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_null_proc.h</FilePath>
+              <FilePath>.\src\k_proc.h</FilePath>
             </File>
             <File>
-              <FileName>k_null_proc.c</FileName>
+              <FileName>k_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_null_proc.c</FilePath>
+              <FilePath>.\src\k_proc.c</FilePath>
             </File>
           </Files>
         </Group>

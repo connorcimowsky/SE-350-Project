@@ -1,5 +1,5 @@
-#ifndef K_NULL_PROC_H
-#define K_NULL_PROC_H
+#ifndef K_PROC_H
+#define K_PROC_H
 
 #define NULL_PROC_PID 0
 
@@ -8,4 +8,4 @@
 void null_process(void);
 
 
-#endif /* K_NULL_PROC_H */
+#endif /* K_PROC_H */
