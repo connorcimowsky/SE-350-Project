@@ -142,14 +142,14 @@ int k_release_memory_block(void *p_mem_blk)
         
         return RTOS_ERR;
     }
-	
-	/* cast the memory block for correct pointer arithmetic */
-	p_decrement = p_mem_blk;
+    
+    /* cast the memory block for correct pointer arithmetic */
+    p_decrement = p_mem_blk;
     
     /* decrement the address of the block by the size of the header to get the start address of the node */
     p_decrement -= MSG_HEADER_OFFSET;
-		
-	/* cast the start address of the node to a k_node_t */
+        
+    /* cast the start address of the node to a k_node_t */
     p_node = (k_node_t *)p_decrement;
     
 #ifdef DEBUG_1
