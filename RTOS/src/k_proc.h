@@ -7,5 +7,8 @@
 /* indefinitely releases the processor */
 void null_process(void);
 
+/* timing service i-process */
+void timer_i_process(void);
+
 
 #endif /* K_PROC_H */
