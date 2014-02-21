@@ -30,6 +30,53 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
     return RTOS_OK;
 }
 
+int enqueue_sorted_node(k_queue_t *p_queue, k_node_t *p_node)
+{
+    k_node_t *p_current_iter = NULL;
+    k_node_t *p_previous_iter = NULL;
+    
+    if (p_queue == NULL || p_node == NULL) {
+        
+#ifdef DEBUG_1
+        printf("Sorted node insertion error.\n");
+#endif
+        
+        return RTOS_ERR;
+    }
+    
+    if (is_queue_empty(p_queue)) {
+        p_queue->mp_first = p_node;
+        p_queue->mp_last = p_node;
+        
+        p_node->mp_next = NULL;
+    } else {
+        p_previous_iter = NULL;
+        p_current_iter = p_queue->mp_first;
+        
+        // find the correct position in the queue
+        while (p_current_iter != NULL && p_current_iter->m_val <= p_node->m_val) {
+            p_previous_iter = p_current_iter;
+            p_current_iter = p_current_iter->mp_next;
+        }
+        
+        if (p_previous_iter == NULL) {
+            // we did not iterate at all; insert at the front
+            p_node->mp_next = p_current_iter;
+            p_queue->mp_first = p_node;
+        } else {
+            // the node is either inserted in the middle or at the back; this handles both cases
+            p_previous_iter->mp_next = p_node;
+            p_node->mp_next = p_current_iter;
+            
+            if (p_current_iter == NULL) {
+                p_queue->mp_last = p_node;
+            }
+        }
+    }
+    
+    return RTOS_OK;
+}
+
 k_node_t *queue_peek(k_queue_t *p_queue)
 {
     if (is_queue_empty(p_queue)) {

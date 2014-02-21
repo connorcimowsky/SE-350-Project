@@ -12,6 +12,8 @@ typedef struct k_queue_t {
 
 int enqueue_node(k_queue_t *p_queue, k_node_t *p_node);
 
+int enqueue_sorted_node(k_queue_t *p_queue, k_node_t *p_node);
+
 k_node_t *queue_peek(k_queue_t *p_queue);
 
 k_node_t *dequeue_node(k_queue_t *p_queue);
