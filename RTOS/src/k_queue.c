@@ -53,18 +53,18 @@ int enqueue_sorted_node(k_queue_t *p_queue, k_node_t *p_node)
         p_previous_iter = NULL;
         p_current_iter = p_queue->mp_first;
         
-        // find the correct position in the queue
+        /* find the correct position in the queue */
         while (p_current_iter != NULL && p_current_iter->m_val <= p_node->m_val) {
             p_previous_iter = p_current_iter;
             p_current_iter = p_current_iter->mp_next;
         }
         
         if (p_previous_iter == NULL) {
-            // we did not iterate at all; insert at the front
+            /* we did not iterate at all; insert at the front */
             p_node->mp_next = p_current_iter;
             p_queue->mp_first = p_node;
         } else {
-            // the node is either inserted in the middle or at the back; this handles both cases
+            /* the node is either inserted in the middle or at the back; this handles both cases */
             p_previous_iter->mp_next = p_node;
             p_node->mp_next = p_current_iter;
             
