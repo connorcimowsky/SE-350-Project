@@ -30,7 +30,7 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
     return RTOS_OK;
 }
 
-int enqueue_sorted_node(k_queue_t *p_queue, k_node_t *p_node)
+int queue_sorted_insert(k_queue_t *p_queue, k_node_t *p_node)
 {
     k_node_t *p_current_iter = NULL;
     k_node_t *p_previous_iter = NULL;
