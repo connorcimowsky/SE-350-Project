@@ -52,6 +52,7 @@ typedef struct k_pcb_t
 /* message envelope */
 typedef struct k_msg_t {
     struct k_msg_t *mp_next;
+    U32 m_expiry;
     U32 m_sender_pid;
     U32 m_recipient_pid;
 } k_msg_t;
