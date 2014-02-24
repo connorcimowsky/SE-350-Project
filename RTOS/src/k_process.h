@@ -30,6 +30,9 @@ int k_send_message(int recipient_pid, void *p_msg);
 /* dequeue the first message from the message queue of the calling process */
 void *k_receive_message(int *p_sender_pid);
 
+/* non-blocking version of k_receive_message() */
+void *k_non_blocking_receive_message(void);
+
 /* perform a context switch from p_pcb_old to p_pcb_new */
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
 

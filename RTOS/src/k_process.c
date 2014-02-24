@@ -254,6 +254,19 @@ void *k_receive_message(int *p_sender_pid)
     return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
 }
 
+void *k_non_blocking_receive_message(void)
+{
+    k_msg_t *p_msg = NULL;
+    
+    if (!is_queue_empty(&(gp_current_process->m_msg_queue))) {
+        p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
+    } else {
+        return NULL;
+    }
+    
+    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
+}
+
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
 {
     PROC_STATE_E new_state = p_pcb_new->m_state;
