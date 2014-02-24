@@ -1,5 +1,6 @@
 #include "k_memory.h"
 #include "k_process.h"
+#include "k_proc.h"
 
 #ifdef DEBUG_1
 #include "printf.h"
@@ -80,6 +81,10 @@ void memory_init(void)
     
     /* save the end address of the heap for error-checking later on */
     gp_heap_end_addr = p_end;
+    
+    /* initialize the timeout queue for the timer i-process */
+    g_timeout_queue.mp_first = NULL;
+    g_timeout_queue.mp_last = NULL;
 }
 
 U32 *alloc_stack(U32 size_b) 

@@ -4,6 +4,12 @@
 #define NULL_PROC_PID 0
 #define TIMER_I_PROC_PID 7
 
+#include "k_queue.h"
+
+
+/* external variables */
+extern k_queue_t g_timeout_queue;
+
 
 /* indefinitely releases the processor */
 void null_process(void);

@@ -1,6 +1,6 @@
 #include <LPC17xx.h>
 #include "k_proc.h"
-#include "rtos.h"
+#include "k_rtos.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
@@ -9,6 +9,7 @@
 
 /* global variables */
 volatile uint32_t g_timer_count = 0;
+k_queue_t g_timeout_queue;
 
 
 void null_process(void)
