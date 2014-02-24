@@ -54,13 +54,11 @@ typedef struct k_msg_t {
     struct k_msg_t *mp_next;
     U32 m_sender_pid;
     U32 m_recipient_pid;
-    MSG_TYPE_E m_type;
-    char *mp_data;
 } k_msg_t;
 
 
 /* size of message envelope header */
-#define MSG_HEADER_OFFSET sizeof(k_msg_t *) + sizeof(U32) + sizeof(U32)
+#define MSG_HEADER_OFFSET sizeof(k_msg_t)
 
 
 /* external variables */
