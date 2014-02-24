@@ -2,6 +2,7 @@
 #define K_PROC_H
 
 #define NULL_PROC_PID 0
+#define TIMER_I_PROC_PID 7
 
 
 /* indefinitely releases the processor */

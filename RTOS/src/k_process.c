@@ -41,6 +41,12 @@ void process_init(void)
         /* add the PCB corresponding to this process to the ready queue */
         enqueue_node(p_queue, (k_node_t *)gp_pcbs[i + 1]);
     }
+    
+    /* configure the timer i-process */
+    g_proc_table[TIMER_I_PROC_PID].m_pid = TIMER_I_PROC_PID;
+    g_proc_table[TIMER_I_PROC_PID].m_priority = HIGHEST;
+    g_proc_table[TIMER_I_PROC_PID].m_stack_size = USR_SZ_STACK;
+    g_proc_table[TIMER_I_PROC_PID].mpf_start_pc = &timer_i_process;
   
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
