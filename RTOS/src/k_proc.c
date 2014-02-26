@@ -1,6 +1,7 @@
 #include <LPC17xx.h>
 #include "k_proc.h"
 #include "k_rtos.h"
+#include "k_process.h"
 
 #ifdef DEBUG_0
 #include "printf.h"
