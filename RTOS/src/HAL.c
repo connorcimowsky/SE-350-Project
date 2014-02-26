@@ -5,6 +5,9 @@
  *       The code borrowed some ideas from ARM RL-RTX source code
  */
  
+ #include "k_rtos.h"
+ 
+ 
 /* pop the exception stack frame and return to thread mode */
 __asm void __rte(void)
 {
@@ -35,10 +38,22 @@ __asm void SVC_Handler (void)
                        ; NOTE R0 contains the sp before this instruction
 
   PUSH {R4-R11, LR}    ; Save other registers for preemption caused by i-procs
+	
+	LDR R3, =__cpp(&gp_current_process)         ; load the address of the address of the current PCB into R3
+  LDR R3, [R3]                                ; load the address of the current PCB into R3
+  LDM R3, {R1, R2}                            ; load the first two fields into R1, R2
+  STR SP, [R2]                                ; store the current SP into the SP field
+
   BLX  R12             ; Call SVC C Function, 
                        ; R12 contains the corresponding 
                        ; C kernel functions entry point
                        ; R0-R3 contains the kernel function input parameter (See AAPCS)
+	
+	LDR R3, =__cpp(&gp_current_process)         ; load the address of the address of the current PCB into R3
+  LDR R3, [R3]                                ; load the address of the current PCB into R3
+  LDM R3, {R1, R2}                            ; load the first two fields into R1, R2
+  LDR SP, [R2]                                ; load the PCB SP into the SP register
+	
   POP {R4-R11, LR}     ; Restore other registers for preemption caused by i-procs
   MRS  R12, MSP        ; Read MSP
   STR  R0, [R12]       ; store C kernel function return value in R0
