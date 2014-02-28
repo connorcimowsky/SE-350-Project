@@ -52,9 +52,18 @@ __asm void SVC_Handler (void)
   ; This does the equivalent of __set_MSP(gp_current_process->mp_sp)
   LDR R4, =__cpp(&gp_current_process)   ; Load the address of gp_current_process into R4
   LDR R4, [R4]                          ; Load the value of gp_current_process into R4
-  LDM R4, {R5, R6}                      ; Load the first two fields of gp_current_process into R5, R6
+  LDM R4, {R5, R6, R7, R8}              ; Load the first four fields of gp_current_process into R5, R6, R7, R8
   MOV SP, R6                            ; Store gp_current_process->mp_sp into the SP register
+  
+  CMP R7, #1                            ; Check if gp_current_process->m_unblocked is 1
+  BNE FINISH                            ; If not, continue as normal at FINISH
+  
+  MOV R0, R8                            ; Store gp_current_process->m_ret_val into R0
+  MOV R9, #0
+  STR R7, [R9]                          ; Flip the unblocked flag back to 0
 
+FINISH
+  
   POP {R4-R11, LR}     ; Restore other registers for preemption caused by i-procs
   MRS  R12, MSP        ; Read MSP
   STR  R0, [R12]       ; store C kernel function return value in R0

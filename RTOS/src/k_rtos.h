@@ -35,6 +35,12 @@ typedef struct k_pcb_t
     /* stack pointer */
     U32 *mp_sp;
     
+    /* flag for when a process has been unblocked */
+    U32 m_unblocked;
+    
+    /* kernel function return value */
+    U32 m_ret_val;
+    
     /* process id */
     U32 m_pid;
     
