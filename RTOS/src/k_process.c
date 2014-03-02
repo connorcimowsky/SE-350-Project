@@ -258,6 +258,11 @@ void *k_receive_message(int *p_sender_pid)
     return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
 }
 
+int k_delayed_send(int recipient_pid, void *p_msg, int delay)
+{
+    return RTOS_OK;
+}
+
 void *k_non_blocking_receive_message(void)
 {
     k_msg_t *p_msg = NULL;

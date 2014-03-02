@@ -101,5 +101,9 @@ extern void *k_receive_message(int *);
 #define receive_message(p_sender_pid) _receive_message((U32)k_receive_message, p_sender_pid)
 extern void *_receive_message(U32 p_func, int *p_sender_pid) __SVC_0;
 
+extern int k_delayed_send(int, void *, int);
+#define delayed_send(recipient_pid, p_msg, delay) _delayed_send((U32)k_delayed_send, recipient_pid, p_msg, delay)
+extern int __SVC_0 _delayed_send(U32 p_func, int recipient_pid, void *p_msg, int delay);
+
 
 #endif /* RTOS_H */

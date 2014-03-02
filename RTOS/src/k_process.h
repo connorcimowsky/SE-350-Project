@@ -27,6 +27,9 @@ int k_get_process_priority(int pid);
 /* send a message to the process specified by recipient_pid */
 int k_send_message(int recipient_pid, void *p_msg);
 
+/* send a message to the process specified by recipient_pid after a delay */
+int k_delayed_send(int recipient_pid, void *p_msg, int delay);
+
 /* dequeue the first message from the message queue of the calling process */
 void *k_receive_message(int *p_sender_pid);
 
