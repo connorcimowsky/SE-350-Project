@@ -19,11 +19,11 @@ void process_init(void)
     U32 *p_sp;
     
     /* configure the null process */
-    g_proc_table[NULL_PROC_PID].m_pid = NULL_PROC_PID;
-    g_proc_table[NULL_PROC_PID].m_priority = LOWEST;
-    g_proc_table[NULL_PROC_PID].m_stack_size = USR_SZ_STACK;
-    g_proc_table[NULL_PROC_PID].mpf_start_pc = &null_process;
-    enqueue_node(gp_ready_queue[LOWEST], (k_node_t *)gp_pcbs[NULL_PROC_PID]);
+    g_proc_table[PID_NULL].m_pid = PID_NULL;
+    g_proc_table[PID_NULL].m_priority = LOWEST;
+    g_proc_table[PID_NULL].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_NULL].mpf_start_pc = &null_process;
+    enqueue_node(gp_ready_queue[LOWEST], (k_node_t *)gp_pcbs[PID_NULL]);
     
     /* populate the test process table */
     set_test_procs();
@@ -43,11 +43,29 @@ void process_init(void)
     }
     
     /* configure the timer i-process */
-    g_proc_table[TIMER_I_PROC_PID].m_pid = TIMER_I_PROC_PID;
-    g_proc_table[TIMER_I_PROC_PID].m_priority = HIGHEST;
-    g_proc_table[TIMER_I_PROC_PID].m_stack_size = USR_SZ_STACK;
-    g_proc_table[TIMER_I_PROC_PID].mpf_start_pc = &timer_i_process;
-  
+    g_proc_table[PID_TIMER_IPROC].m_pid = PID_TIMER_IPROC;
+    g_proc_table[PID_TIMER_IPROC].m_priority = HIGHEST;
+    g_proc_table[PID_TIMER_IPROC].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_TIMER_IPROC].mpf_start_pc = &timer_i_process;
+    
+    /* configure the UART i-process */
+    g_proc_table[PID_UART_IPROC].m_pid = PID_UART_IPROC;
+    g_proc_table[PID_UART_IPROC].m_priority = HIGHEST;
+    g_proc_table[PID_UART_IPROC].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_UART_IPROC].mpf_start_pc = &uart_i_process;
+    
+    /* configure the KCD process */
+    g_proc_table[PID_KCD].m_pid = PID_KCD;
+    g_proc_table[PID_KCD].m_priority = HIGHEST;
+    g_proc_table[PID_KCD].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_KCD].mpf_start_pc = &kcd_proc;
+    
+    /* configure the CRT process */
+    g_proc_table[PID_CRT].m_pid = PID_CRT;
+    g_proc_table[PID_CRT].m_priority = HIGHEST;
+    g_proc_table[PID_CRT].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_CRT].mpf_start_pc = &crt_proc;
+    
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;
@@ -240,7 +258,7 @@ void *k_receive_message(int *p_sender_pid)
     
     p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
 
-    if (p_msg != NULL) {
+    if (p_msg != NULL && p_sender_pid != NULL) {
         *p_sender_pid = p_msg->m_sender_pid;
     }
     

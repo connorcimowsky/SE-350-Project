@@ -112,3 +112,23 @@ void timer_i_process(void)
     
     g_timer_count++;
 }
+
+void kcd_proc(void)
+{
+    msg_t *p_msg = (msg_t *)receive_message(NULL);
+    
+    if (p_msg->mp_data[0] == '%' && p_msg->mp_data[1] == 'W' && p_msg->mp_data[2] == 'S') {
+        // wall clock
+    }
+    
+    return;
+}
+
+void crt_proc(void)
+{
+    msg_t *p_msg = (msg_t *)receive_message(NULL);
+    
+    send_message(PID_UART_IPROC, p_msg);
+
+    return;
+}

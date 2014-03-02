@@ -9,7 +9,6 @@
 
 #define NULL 0
 #define NUM_TEST_PROCS 6
-#define NUM_PROCS (NUM_TEST_PROCS + 2)
 
 #ifdef DEBUG_0
 #define USR_SZ_STACK 0x200 /* 512 bytes */
