@@ -1,5 +1,6 @@
 #include "k_rtos_init.h"
 #include "uart_polling.h"
+#include "uart_irq.h"
 #include "timer.h"
 #include "k_memory.h"
 #include "k_process.h"
@@ -12,7 +13,8 @@ void k_rtos_init(void)
     
     timer_init(0);
     
-    uart0_init();
+    uart_irq_init(0);
+    uart_init(1);
     
     memory_init();
     

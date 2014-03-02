@@ -14,6 +14,9 @@ extern k_queue_t g_timeout_queue;
 /* indefinitely releases the processor */
 void null_process(void);
 
+/* uart i-process */
+void uart_i_process(void);
+
 /* timing service i-process */
 void timer_i_process(void);
 

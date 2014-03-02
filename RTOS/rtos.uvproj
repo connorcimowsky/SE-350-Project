@@ -417,6 +417,16 @@
               <FilePath>.\src\uart_polling.c</FilePath>
             </File>
             <File>
+              <FileName>uart_irq.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\uart_irq.h</FilePath>
+            </File>
+            <File>
+              <FileName>uart_irq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\uart_irq.c</FilePath>
+            </File>
+            <File>
               <FileName>printf.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\src\printf.h</FilePath>
@@ -954,6 +964,16 @@
               <FileName>uart_polling.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\uart_polling.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_irq.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\uart_irq.h</FilePath>
+            </File>
+            <File>
+              <FileName>uart_irq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\uart_irq.c</FilePath>
             </File>
             <File>
               <FileName>printf.h</FileName>
