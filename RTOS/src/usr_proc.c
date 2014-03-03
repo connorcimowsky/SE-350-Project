@@ -65,7 +65,10 @@ void proc1(void)
     printf("proc1: send_message returned %d\n", ret_val);
 #endif
     
-    release_processor();
+    while (1) {
+        printf("proc1: releasing processor\n\r");
+        release_processor();
+    }
 }
 
 void proc2(void)
@@ -77,12 +80,16 @@ void proc2(void)
     printf("sender was %d, message: %s\n", sender_pid, p_msg->mp_data);
 #endif
     
-    release_processor();
+    while (1) {
+        printf("proc2: releasing processor\n\r");
+        release_processor();
+    }
 }
 
 void proc3(void)
 {
     while (1) {
+        printf("proc3: releasing processor\n\r");
         release_processor();
     }
 }
@@ -90,6 +97,7 @@ void proc3(void)
 void proc4(void)
 {
     while (1) {
+        printf("proc4: releasing processor\n\r");
         release_processor();
     }
 }
@@ -97,6 +105,7 @@ void proc4(void)
 void proc5(void)
 {
     while (1) {
+        printf("proc5: releasing processor\n\r");
         release_processor();
     }
 }
@@ -104,6 +113,7 @@ void proc5(void)
 void proc6(void)
 {
     while (1) {
+        printf("proc6: releasing processor\n\r");
         release_processor();
     }
 }
