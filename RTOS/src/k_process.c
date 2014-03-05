@@ -69,7 +69,7 @@ void process_init(void)
         }
         /* ensure that there is space for R4-R11 and LR/PC */
         for (j = 0; j < 9; j++) {
-            *(--p_sp) = 0x0;
+        *(--p_sp) = 0x0;
         }
         /* set the PCB's stack pointer */
         (gp_pcbs[i])->mp_sp = p_sp;
