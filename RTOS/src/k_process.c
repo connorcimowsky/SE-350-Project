@@ -215,10 +215,14 @@ int k_send_message(int recipient_pid, void *p_msg)
 {
     /* call the non-premptive version of k_send_message, preempting afterward if necessary */
     if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == RTOS_OK) {
-        return k_release_processor();
+        if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
+            return k_release_processor();
+        }
     } else {
         return RTOS_ERR;
     }
+    
+    return RTOS_OK;
 }
 
 void *k_receive_message(int *p_sender_pid)
@@ -267,19 +271,16 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
 
 void *k_non_blocking_receive_message(int pid)
 {
-    k_msg_t *p_msg = NULL;
-    U8 *p_decrement = NULL;
-    
     if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
-        p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
+        k_msg_t *p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
+        
+        U8 *p_decrement = (U8 *)p_msg;
+        p_decrement += MSG_HEADER_OFFSET;
+        
+        return (void *)p_decrement;
     } else {
         return NULL;
     }
-    
-    p_decrement = (U8 *)p_msg;
-    p_decrement += MSG_HEADER_OFFSET;
-    
-    return (void *)p_decrement;
 }
 
 int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)

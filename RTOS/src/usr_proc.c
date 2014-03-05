@@ -33,13 +33,13 @@ void set_test_procs(void)
         g_test_procs[i].m_stack_size = USR_SZ_STACK;
     }
     
-    g_test_procs[0].m_priority = HIGHEST;
+    g_test_procs[0].m_priority = MEDIUM;
     g_test_procs[0].mpf_start_pc = &proc1;
     
-    g_test_procs[1].m_priority = HIGHEST;
+    g_test_procs[1].m_priority = HIGH;
     g_test_procs[1].mpf_start_pc = &proc2;
     
-    g_test_procs[2].m_priority = LOW;
+    g_test_procs[2].m_priority = HIGHEST;
     g_test_procs[2].mpf_start_pc = &proc3;
     
     g_test_procs[3].m_priority = LOW;
@@ -56,13 +56,15 @@ void proc1(void)
 {
     int ret_val;
     msg_t *p_msg = (msg_t *)request_memory_block();
-    p_msg->m_type = DEFAULT;
+    p_msg->m_type = MSG_TYPE_DEFAULT;
     p_msg->mp_data = "hello";
     
-    ret_val = send_message(2, p_msg);
+    printf("proc1: sending a message to proc2\n\r");
+    
+    ret_val = delayed_send(2, p_msg, 50);
     
 #ifdef DEBUG_1
-    printf("proc1: send_message returned %d\n", ret_val);
+    printf("proc1: send_message returned %d\n\r", ret_val);
 #endif
     
     while (1) {
@@ -77,7 +79,7 @@ void proc2(void)
     msg_t *p_msg = (msg_t *)receive_message(&sender_pid);
     
 #ifdef DEBUG_1
-    printf("sender was %d, message: %s\n", sender_pid, p_msg->mp_data);
+    printf("proc2: received a message from PID %d, message: %s\n", sender_pid, p_msg->mp_data);
 #endif
     
     while (1) {
@@ -88,6 +90,21 @@ void proc2(void)
 
 void proc3(void)
 {
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_CRT_DISP;
+    p_msg->mp_data = "test message 1\n\r";
+    delayed_send(13, p_msg, 100);
+    
+    p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_CRT_DISP;
+    p_msg->mp_data = "test message 2\n\r";
+    delayed_send(13, p_msg, 200);
+    
+    p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_CRT_DISP;
+    p_msg->mp_data = "test message 3\n\r";
+    delayed_send(13, p_msg, 300);
+    
     while (1) {
         printf("proc3: releasing processor\n\r");
         release_processor();

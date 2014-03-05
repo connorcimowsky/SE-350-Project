@@ -20,7 +20,7 @@ k_queue_t g_timeout_queue;
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_preemption_flag = 0;
 
-char *gp_buffer = {'\0'};
+msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
 uint8_t g_char_out;
 
@@ -52,6 +52,8 @@ void uart_i_process(void)
     uint8_t IIR_IntId;
 	LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
     
+    __disable_irq();
+    
     /* reading IIR automatically acknowledges the interrupt; skip pending bit */
     IIR_IntId = ((pUart->IIR) >> 1);
     
@@ -67,13 +69,13 @@ void uart_i_process(void)
         
     } else if (IIR_IntId & IIR_THRE) {
         
-        msg_t *p_msg = (msg_t *)k_non_blocking_receive_message(PID_UART_IPROC);
-        if (p_msg != NULL) {
-            gp_buffer = p_msg->mp_data;
+        if (gp_cur_msg == NULL) {
+            gp_cur_msg = k_non_blocking_receive_message(PID_UART_IPROC);
         }
         
-        if (*gp_buffer != '\0' ) {
-            g_char_out = *gp_buffer;
+        if (*gp_cur_msg->mp_data != '\0' ) {
+            
+            g_char_out = *gp_cur_msg->mp_data;
             
 #ifdef DEBUG_0
             printf("UART i-process: writing %c\n\r", g_char_out);
@@ -81,13 +83,17 @@ void uart_i_process(void)
             
             pUart->THR = g_char_out;
             
-            gp_buffer++;
+            gp_cur_msg->mp_data++;
         } else {
             pUart->IER ^= IER_THRE;
             pUart->THR = '\0';
-            gp_buffer = '\0';
+            k_release_memory_block(gp_cur_msg);
+            gp_cur_msg = NULL;
         }
-    }
+        
+    } 
+    
+    __enable_irq();
 }
 
 __asm void TIMER0_IRQHandler(void)
@@ -169,13 +175,16 @@ void crt_proc(void)
 {
     LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *) LPC_UART0;
     
-    msg_t *p_msg = (msg_t *)receive_message(NULL);
-    
-    if (p_msg->m_type != MSG_TYPE_CRT_DISP) {
-        return;
+    while (1) {
+        msg_t *p_msg = (msg_t *)receive_message(NULL);
+        
+        if (p_msg->m_type != MSG_TYPE_CRT_DISP) {
+            k_release_memory_block(p_msg);
+            break;
+        }
+        
+        send_message(PID_UART_IPROC, p_msg);
+        
+        pUart->IER = IER_THRE | IER_RLS | IER_RBR;
     }
-    
-    pUart->IER = IER_THRE | IER_RLS | IER_RBR; 
-    
-    send_message(PID_UART_IPROC, p_msg);
 }
