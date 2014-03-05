@@ -67,10 +67,6 @@ void process_init(void)
         for (j = 0; j < 6; j++) {
             *(--p_sp) = 0x0;
         }
-				/* ensure that there is space for R4-R11 and LR/PC */
-				for (j = 0; j < 9; j++) {
-            *(--p_sp) = 0x0;
-        }
         /* set the PCB's stack pointer */
         (gp_pcbs[i])->mp_sp = p_sp;
     }
@@ -295,15 +291,15 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* don't add a process to the ready queue if it is waiting for a message */
                 }
                 /* save the main stack pointer of the previous process */
-                // p_pcb_old->mp_sp = (U32 *)__get_MSP();
+                p_pcb_old->mp_sp = (U32 *)__get_MSP();
             }
             
             p_pcb_new->m_state = EXECUTING;
             
             /* switch to the stack pointer of the new process */
-            // __set_MSP((U32)p_pcb_new->mp_sp);
+            __set_MSP((U32)p_pcb_new->mp_sp);
             /* pop the exception stack frame to give the new process an initial context */
-            // __rte();
+            __rte();
             
             break;
             
@@ -321,13 +317,13 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* don't add a process to the ready queue if it is waiting for a message */
                 }
                 /* save the main stack pointer of the previous process */
-                // p_pcb_old->mp_sp = (U32 *)__get_MSP();
+                p_pcb_old->mp_sp = (U32 *)__get_MSP();
             }
                 
             p_pcb_new->m_state = EXECUTING;
             
             /* switch to the stack pointer of the next-to-run process */
-            // __set_MSP((U32)p_pcb_new->mp_sp);
+            __set_MSP((U32)p_pcb_new->mp_sp);
             
             break;
             
