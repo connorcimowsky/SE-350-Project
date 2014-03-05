@@ -22,6 +22,7 @@ U32 g_preemption_flag = 0;
 
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
+k_list_t g_kcd_reg;
 
 
 void null_process(void)

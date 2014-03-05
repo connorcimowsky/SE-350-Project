@@ -85,6 +85,25 @@ void memory_init(void)
     /* initialize the timeout queue for the timer i-process */
     g_timeout_queue.mp_first = NULL;
     g_timeout_queue.mp_last = NULL;
+    
+    /* initialize the keyboard command registry for the KCD process */
+    g_kcd_reg.mp_first = NULL;
+    
+    /* populate the keyboard command registry with NUM_KCD_REG empty entries */
+    for (i = 0; i < NUM_KCD_REG; i++) {
+        int j;
+        
+        k_kcd_reg_t *p_reg = (k_kcd_reg_t *)p_end;
+        
+        /* make sure the keyboard command identifier is an array of null characters */
+        for (j = 0; j < KCD_REG_LENGTH; j++) {
+            p_reg->m_id[j] = '\0';
+        }
+        
+        insert_node(&g_kcd_reg, (k_node_t *)p_reg);
+        
+        p_end += sizeof(k_kcd_reg_t);
+    }
 }
 
 U32 *alloc_stack(U32 size_b) 

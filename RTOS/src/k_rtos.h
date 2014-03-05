@@ -14,6 +14,12 @@
 
 #define INITIAL_xPSR 0x01000000
 
+/* maximum number of entries in the keyboard command registry */
+#define NUM_KCD_REG 10
+
+/* maximum number of characters in a keyboard command identifier */
+#define KCD_REG_LENGTH 10
+
 
 /* process state */
 typedef enum {
@@ -62,6 +68,19 @@ typedef struct k_msg_t {
 #define MSG_HEADER_OFFSET sizeof(k_msg_t)
 
 
+/* keyboard command registry entry */
+typedef struct k_kcd_reg_t {
+    /* pointer to the next keyboard command registry entry */
+    struct k_kcd_reg *mp_next;
+    
+    /* the keyboard command identifier */
+    char m_id[KCD_REG_LENGTH];
+    
+    /* the process identifier associated with this entry */
+    U32 m_pid;
+} k_kcd_reg_t;
+
+
 /* external variables */
 
 /* end address of the memory image */
@@ -87,6 +106,9 @@ extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_RESOURCE, one for each priority */
 extern k_queue_t *gp_blocked_queue[NUM_PRIORITIES];
+
+/* the registry of keyboard command entries */
+extern k_list_t g_kcd_reg;
 
 
 #endif /* K_RTOS_H */
