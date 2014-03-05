@@ -247,6 +247,7 @@ int k_send_message(int recipient_pid, void *p_msg)
 void *k_receive_message(int *p_sender_pid)
 {
     k_msg_t *p_msg = NULL;
+    U8 *p_increment = NULL;
     
     /* disable interrupt requests */
     __disable_irq();
@@ -269,7 +270,10 @@ void *k_receive_message(int *p_sender_pid)
         return NULL;
     }
     
-    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
+    p_increment = (U8 *)p_msg;
+    p_increment += MSG_HEADER_OFFSET;
+    
+    return (void *)p_increment;
 }
 
 int k_delayed_send(int recipient_pid, void *p_msg, int delay)
