@@ -179,7 +179,7 @@ void crt_proc(void)
         
         if (p_msg->m_type != MSG_TYPE_CRT_DISP) {
             k_release_memory_block(p_msg);
-            break;
+            continue;
         }
         
         send_message(PID_UART_IPROC, p_msg);
