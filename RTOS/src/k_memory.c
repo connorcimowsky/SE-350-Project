@@ -107,7 +107,7 @@ void *k_request_memory_block(void)
 {
     U8 *p_mem_blk = NULL;
     
-    if (is_list_empty(gp_heap)) {
+    while (is_list_empty(gp_heap)) {
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
@@ -117,7 +117,6 @@ void *k_request_memory_block(void)
         /* add the calling process to the blocked queue and yield the processor */
         if (k_enqueue_blocked_process(gp_current_process) == RTOS_OK) {
             k_release_processor();
-            return NULL;
         }
     }
 
@@ -192,6 +191,11 @@ int k_release_memory_block(void *p_mem_blk)
         return RTOS_ERR;
     }
     
+    /* if none of the above tests failed, insert the node into the memory heap */
+    if (insert_node(gp_heap, p_node) == RTOS_ERR) {
+        return RTOS_ERR;
+    }
+    
     /* attempt to dequeue the next available process from the blocked queue */
     p_blocked_pcb = k_dequeue_blocked_process();
     
@@ -199,15 +203,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (p_blocked_pcb != NULL) {
         p_blocked_pcb->m_state = READY;
         if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-            p_decrement += MSG_HEADER_OFFSET;
-            p_blocked_pcb->m_ret_val = (U32)p_decrement;
-            p_blocked_pcb->m_unblocked = 1;
             k_release_processor();
-        }
-    } else {
-        /* if none of the above tests failed, insert the node into the memory heap */
-        if (insert_node(gp_heap, p_node) == RTOS_ERR) {
-            return RTOS_ERR;
         }
     }
     
