@@ -61,7 +61,7 @@ void proc1(void)
     
     printf("proc1: sending a message to proc2\n\r");
     
-    ret_val = delayed_send(2, p_msg, 50);
+    ret_val = delayed_send(PID_P2, p_msg, 50);
     
 #ifdef DEBUG_1
     printf("proc1: send_message returned %d\n\r", ret_val);
@@ -93,17 +93,17 @@ void proc3(void)
     msg_t *p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_CRT_DISP;
     p_msg->mp_data = "test message 1\n\r";
-    delayed_send(13, p_msg, 100);
+    delayed_send(PID_CRT, p_msg, 100);
     
     p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_CRT_DISP;
     p_msg->mp_data = "test message 2\n\r";
-    delayed_send(13, p_msg, 200);
+    delayed_send(PID_CRT, p_msg, 200);
     
     p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_CRT_DISP;
     p_msg->mp_data = "test message 3\n\r";
-    delayed_send(13, p_msg, 300);
+    delayed_send(PID_CRT, p_msg, 300);
     
     while (1) {
         printf("proc3: releasing processor\n\r");
