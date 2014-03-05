@@ -165,7 +165,7 @@ int k_release_memory_block(void *p_mem_blk)
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is out of bounds\n", p_node);
 #endif
         
         return RTOS_ERR;
@@ -175,7 +175,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (((U8 *)p_node - gp_heap_begin_addr) % BLOCK_SIZE != 0) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_node);
 #endif
         
         return RTOS_ERR;
@@ -185,7 +185,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is already contained in the heap\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is already contained in the heap\n", p_node);
 #endif
         
         return RTOS_ERR;
