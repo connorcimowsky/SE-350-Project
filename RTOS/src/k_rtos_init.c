@@ -10,7 +10,7 @@ void k_rtos_init(void)
     /* disable interrupt requests */
     __disable_irq();
     
-    // timer_init(0);
+    timer_init(0);
     
     uart0_init();
     

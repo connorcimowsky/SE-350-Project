@@ -5,9 +5,6 @@
  *       The code borrowed some ideas from ARM RL-RTX source code
  */
  
- #include "k_rtos.h"
-
-
 /* pop the exception stack frame and return to thread mode */
 __asm void __rte(void)
 {
@@ -38,16 +35,20 @@ __asm void SVC_Handler (void)
                        ; NOTE R0 contains the sp before this instruction
 
   PUSH {R4-R11, LR}    ; Save other registers for preemption caused by i-procs
+<<<<<<< HEAD
 
   ; This does the equivalent of gp_current_process->mp_sp = __get_MSP()
   LDR R4, =__cpp(&gp_current_process)   ; Load the address of gp_current_process into R4
   LDR R4, [R4]                          ; Load the value of gp_current_process into R4
   STR SP, [R4, #04]                     ; Store the current SP into gp_current_process->mp_sp
 
+=======
+>>>>>>> parent of c8220ed... WIP: First attempt at switching to an assembly-based context switch.
   BLX  R12             ; Call SVC C Function, 
                        ; R12 contains the corresponding 
                        ; C kernel functions entry point
                        ; R0-R3 contains the kernel function input parameter (See AAPCS)
+<<<<<<< HEAD
 
   ; This does the equivalent of __set_MSP(gp_current_process->mp_sp)
   LDR R4, =__cpp(&gp_current_process)   ; Load the address of gp_current_process into R4
@@ -64,6 +65,8 @@ __asm void SVC_Handler (void)
 
 FINISH
   
+=======
+>>>>>>> parent of c8220ed... WIP: First attempt at switching to an assembly-based context switch.
   POP {R4-R11, LR}     ; Restore other registers for preemption caused by i-procs
   MRS  R12, MSP        ; Read MSP
   STR  R0, [R12]       ; store C kernel function return value in R0
