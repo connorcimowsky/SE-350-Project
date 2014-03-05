@@ -6,8 +6,8 @@
  */
  
  #include "k_rtos.h"
-
-
+ 
+ 
 /* pop the exception stack frame and return to thread mode */
 __asm void __rte(void)
 {
@@ -38,23 +38,22 @@ __asm void SVC_Handler (void)
                        ; NOTE R0 contains the sp before this instruction
 
   PUSH {R4-R11, LR}    ; Save other registers for preemption caused by i-procs
-
-  ; This does the equivalent of gp_current_process->mp_sp = __get_MSP()
-  LDR R4, =__cpp(&gp_current_process)   ; Load the address of gp_current_process into R4
-  LDR R4, [R4]                          ; Load the value of gp_current_process into R4
-  STR SP, [R4, #04]                     ; Store the current SP into gp_current_process->mp_sp
+	
+	LDR R3, =__cpp(&gp_current_process)         ; load the address of the address of the current PCB into R3
+  LDR R3, [R3]                                ; load the address of the current PCB into R3
+  LDM R3, {R1, R2}                            ; load the first two fields into R1, R2
+  STR SP, [R2]                                ; store the current SP into the SP field
 
   BLX  R12             ; Call SVC C Function, 
                        ; R12 contains the corresponding 
                        ; C kernel functions entry point
                        ; R0-R3 contains the kernel function input parameter (See AAPCS)
-
-  ; This does the equivalent of __set_MSP(gp_current_process->mp_sp)
-  LDR R4, =__cpp(&gp_current_process)   ; Load the address of gp_current_process into R4
-  LDR R4, [R4]                          ; Load the value of gp_current_process into R4
-  LDM R4, {R5, R6}                      ; Load the first two fields of gp_current_process into R5, R6
-  MOV SP, R6                            ; Store gp_current_process->mp_sp into the SP register
-
+	
+	LDR R3, =__cpp(&gp_current_process)         ; load the address of the address of the current PCB into R3
+  LDR R3, [R3]                                ; load the address of the current PCB into R3
+  LDM R3, {R1, R2}                            ; load the first two fields into R1, R2
+  LDR SP, [R2]                                ; load the PCB SP into the SP register
+	
   POP {R4-R11, LR}     ; Restore other registers for preemption caused by i-procs
   MRS  R12, MSP        ; Read MSP
   STR  R0, [R12]       ; store C kernel function return value in R0
