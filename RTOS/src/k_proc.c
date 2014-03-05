@@ -20,9 +20,7 @@ k_queue_t g_timeout_queue;
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_preemption_flag = 0;
 
-uint8_t g_buffer[]= "You Typed a Q\n\r";
-uint8_t *gp_buffer = g_buffer;
-uint8_t g_send_char = 0;
+char *gp_buffer = {'\0'};
 uint8_t g_char_in;
 uint8_t g_char_out;
 
@@ -54,19 +52,26 @@ void uart_i_process(void)
     uint8_t IIR_IntId;
 	LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
     
-    /* reading automatically acknowledges the interrupt; skip pending bit */
+    /* reading IIR automatically acknowledges the interrupt; skip pending bit */
     IIR_IntId = ((pUart->IIR) >> 1);
     
     if (IIR_IntId & IIR_RDA) {
+        /* reading RBR will clear the interrupt */
         g_char_in = pUart->RBR;
         
 #ifdef DEBUG_0
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
         
-        g_buffer[12] = g_char_in;
-        g_send_char = 1;
+        /* send the character to the KCD here */
+        
     } else if (IIR_IntId & IIR_THRE) {
+        
+        msg_t *p_msg = (msg_t *)k_non_blocking_receive_message(PID_UART_IPROC);
+        if (p_msg != NULL) {
+            gp_buffer = p_msg->mp_data;
+        }
+        
         if (*gp_buffer != '\0' ) {
             g_char_out = *gp_buffer;
             
@@ -75,12 +80,12 @@ void uart_i_process(void)
 #endif
             
             pUart->THR = g_char_out;
+            
             gp_buffer++;
         } else {
             pUart->IER ^= IER_THRE;
             pUart->THR = '\0';
-            g_send_char = 0;
-            gp_buffer = g_buffer;
+            gp_buffer = '\0';
         }
     }
 }
@@ -162,9 +167,15 @@ void kcd_proc(void)
 
 void crt_proc(void)
 {
+    LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *) LPC_UART0;
+    
     msg_t *p_msg = (msg_t *)receive_message(NULL);
     
+    if (p_msg->m_type != MSG_TYPE_CRT_DISP) {
+        return;
+    }
+    
+    pUart->IER = IER_THRE | IER_RLS | IER_RBR; 
+    
     send_message(PID_UART_IPROC, p_msg);
-
-    return;
 }

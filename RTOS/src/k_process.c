@@ -59,12 +59,14 @@ void process_init(void)
     g_proc_table[PID_KCD].m_priority = HIGHEST;
     g_proc_table[PID_KCD].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_KCD].mpf_start_pc = &kcd_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_KCD]);
     
     /* configure the CRT process */
     g_proc_table[PID_CRT].m_pid = PID_CRT;
     g_proc_table[PID_CRT].m_priority = HIGHEST;
     g_proc_table[PID_CRT].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_CRT].mpf_start_pc = &crt_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_CRT]);
     
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
