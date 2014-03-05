@@ -277,17 +277,21 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     return RTOS_OK;
 }
 
-void *k_non_blocking_receive_message(void)
+void *k_non_blocking_receive_message(int pid)
 {
     k_msg_t *p_msg = NULL;
+    U8 *p_decrement = NULL;
     
-    if (!is_queue_empty(&(gp_current_process->m_msg_queue))) {
-        p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
+    if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
+        p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
     } else {
         return NULL;
     }
     
-    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
+    p_decrement = (U8 *)p_msg;
+    p_decrement += MSG_HEADER_OFFSET;
+    
+    return (void *)p_decrement;
 }
 
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 

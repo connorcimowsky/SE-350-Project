@@ -34,7 +34,7 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay);
 void *k_receive_message(int *p_sender_pid);
 
 /* non-blocking version of k_receive_message() */
-void *k_non_blocking_receive_message(void);
+void *k_non_blocking_receive_message(int pid);
 
 /* perform a context switch from p_pcb_old to p_pcb_new */
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);

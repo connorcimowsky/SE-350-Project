@@ -12,6 +12,7 @@
 /* global variables */
 volatile uint32_t g_timer_count = 0;
 k_queue_t g_timeout_queue;
+U32 g_flag = 0;
 
 uint8_t g_buffer[]= "You Typed a Q\n\r";
 uint8_t *gp_buffer = g_buffer;
@@ -82,14 +83,28 @@ __asm void TIMER0_IRQHandler(void)
 {
     PRESERVE8
     IMPORT timer_i_process
-    PUSH {r4-r11, lr}
+    IMPORT k_release_processor
+    PUSH {R4-R11, LR}
     BL timer_i_process
-    POP {r4-r11, pc}
+    LDR R4, =__cpp(&g_flag);
+    LDR R4, [R4]
+    MOV R5, #0
+    CMP R4, R5
+    BEQ RESTORE
+    BL k_release_processor
+RESTORE
+    POP {R4-R11, PC}
 }
 
 void timer_i_process(void)
-{   
-    msg_t *p_msg = (msg_t *)k_non_blocking_receive_message();
+{
+    msg_t *p_msg = NULL;
+    
+    __disable_irq();
+    
+    LPC_TIM0->IR = (1 << 0);
+    
+    p_msg = (msg_t *)k_non_blocking_receive_message(PID_TIMER_IPROC);
     if (p_msg != NULL) {
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
@@ -97,20 +112,26 @@ void timer_i_process(void)
         queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
     }
     
+    g_flag = 0;
+    
     while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
         k_msg_t *p_next_message = (k_msg_t *)dequeue_node(&g_timeout_queue);
         k_pcb_t *p_recipient_pcb = gp_pcbs[p_next_message->m_recipient_pid];
     
-        if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_next_message) == RTOS_ERR) {
+        if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_next_message) == RTOS_OK) {
+            if (p_recipient_pcb->m_priority <= gp_current_process->m_priority) {
+                g_flag = 1;
+            }
+        } else {
 #ifdef DEBUG_1
             printf("%s: Could not send message to process %d\n\r", __FUNCTION__, p_recipient_pcb->m_pid);
 #endif
         }
     }
     
-    LPC_TIM0->IR = (1 << 0);
-    
     g_timer_count++;
+    
+    __enable_irq();
 }
 
 void kcd_proc(void)
