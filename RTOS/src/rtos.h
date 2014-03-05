@@ -22,6 +22,28 @@ typedef unsigned char U8;
 typedef unsigned int U32;
 
 
+/* process identifiers */
+typedef enum {
+    PID_NULL = 0,
+    PID_P1,
+    PID_P2,
+    PID_P3,
+    PID_P4,
+    PID_P5,
+    PID_P6,
+    PID_A,
+    PID_B,
+    PID_C,
+    PID_SET_PRIO,
+    PID_CLOCK,
+    PID_KCD,
+    PID_CRT,
+    PID_TIMER_IPROC,
+    PID_UART_IPROC,
+    NUM_PROCS
+} PID_E;
+
+
 /* process priority */
 typedef enum {
     HIGHEST = 0,
