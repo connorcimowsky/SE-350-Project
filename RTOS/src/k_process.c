@@ -211,37 +211,15 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    U8 *p_decrement = NULL;
-    k_msg_t *p_msg_envelope = NULL;
-    k_pcb_t *p_recipient_pcb = NULL;
-    int ret_val;
-    
-    /* disable interrupt requests */
-    __disable_irq();
-    
-    /* get the address of the actual message envelope */
-    p_decrement = (U8 *)p_msg;
-    p_decrement -= MSG_HEADER_OFFSET;
-    
-    p_msg_envelope = (k_msg_t *)p_decrement;
-    p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
-    p_msg_envelope->m_recipient_pid = recipient_pid;
-    
-    p_recipient_pcb = gp_pcbs[recipient_pid];
-    
-    ret_val = enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
-    
-    if (ret_val == RTOS_OK) {
-        if (p_recipient_pcb->m_state == WAITING_FOR_MESSAGE) {
-            p_recipient_pcb->m_state = READY;
-            ret_val = k_enqueue_ready_process(p_recipient_pcb);
+    if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == RTOS_OK) {
+        if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
+            return k_release_processor();
         }
+    } else {
+        return RTOS_ERR;
     }
     
-    /* enable interrupt requests */
-    __enable_irq();
-    
-    return ret_val;
+    return RTOS_OK;
 }
 
 void *k_receive_message(int *p_sender_pid)
@@ -249,12 +227,9 @@ void *k_receive_message(int *p_sender_pid)
     k_msg_t *p_msg = NULL;
     U8 *p_increment = NULL;
     
-    /* disable interrupt requests */
-    __disable_irq();
-    
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         gp_current_process->m_state = WAITING_FOR_MESSAGE;
-        release_processor();
+        k_release_processor();
     }
     
     p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
@@ -262,9 +237,6 @@ void *k_receive_message(int *p_sender_pid)
     if (p_msg != NULL && p_sender_pid != NULL) {
         *p_sender_pid = p_msg->m_sender_pid;
     }
-    
-    /* enable interrupt requests */
-    __enable_irq();
     
     if (p_msg == NULL) {
         return NULL;
@@ -278,7 +250,22 @@ void *k_receive_message(int *p_sender_pid)
 
 int k_delayed_send(int recipient_pid, void *p_msg, int delay)
 {
-    return RTOS_OK;
+    U8 *p_decrement = NULL;
+    k_msg_t *p_msg_envelope = NULL;
+    
+    __disable_irq();
+    
+    p_decrement = (U8 *)p_msg;
+    p_decrement -= MSG_HEADER_OFFSET;
+    
+    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope->m_expiry = g_timer_count + delay;
+    p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
+    p_msg_envelope->m_recipient_pid = recipient_pid;
+    
+    __enable_irq();
+        
+    return enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (k_node_t *)p_msg_envelope);
 }
 
 void *k_non_blocking_receive_message(int pid)
@@ -296,6 +283,41 @@ void *k_non_blocking_receive_message(int pid)
     p_decrement += MSG_HEADER_OFFSET;
     
     return (void *)p_decrement;
+}
+
+int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
+{
+    U8 *p_decrement = NULL;
+    k_msg_t *p_msg_envelope = NULL;
+    k_pcb_t *p_recipient_pcb = NULL;
+    int ret_val;
+    
+    /* disable interrupt requests */
+    __disable_irq();
+    
+    /* get the address of the actual message envelope */
+    p_decrement = (U8 *)p_msg;
+    p_decrement -= MSG_HEADER_OFFSET;
+    
+    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope->m_sender_pid = sender_pid;
+    p_msg_envelope->m_recipient_pid = recipient_pid;
+    
+    p_recipient_pcb = gp_pcbs[recipient_pid];
+    
+    ret_val = enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
+    
+    if (ret_val == RTOS_OK) {
+        if (p_recipient_pcb->m_state == WAITING_FOR_MESSAGE) {
+            p_recipient_pcb->m_state = READY;
+            ret_val = k_enqueue_ready_process(p_recipient_pcb);
+        }
+    }
+    
+    /* enable interrupt requests */
+    __enable_irq();
+    
+    return ret_val;
 }
 
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 

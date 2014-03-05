@@ -5,6 +5,7 @@
 
 
 /* external variables */
+extern volatile U32 g_timer_count;
 extern k_queue_t g_timeout_queue;
 
 

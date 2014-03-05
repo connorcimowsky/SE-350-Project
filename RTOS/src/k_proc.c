@@ -10,7 +10,7 @@
 
 
 /* global variables */
-volatile uint32_t g_timer_count = 0;
+volatile U32 g_timer_count = 0;
 k_queue_t g_timeout_queue;
 U32 g_flag = 0;
 
@@ -116,15 +116,16 @@ void timer_i_process(void)
     
     while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
         k_msg_t *p_next_message = (k_msg_t *)dequeue_node(&g_timeout_queue);
-        k_pcb_t *p_recipient_pcb = gp_pcbs[p_next_message->m_recipient_pid];
-    
-        if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_next_message) == RTOS_OK) {
-            if (p_recipient_pcb->m_priority <= gp_current_process->m_priority) {
+        U8 *p_increment = (U8 *)p_next_message;
+        p_increment += MSG_HEADER_OFFSET;
+        
+        if (k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment) == RTOS_OK) {
+            if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
                 g_flag = 1;
             }
         } else {
 #ifdef DEBUG_1
-            printf("%s: Could not send message to process %d\n\r", __FUNCTION__, p_recipient_pcb->m_pid);
+            printf("%s: Could not send message to process %d\n\r", __FUNCTION__, p_next_message->m_recipient_pid);
 #endif
         }
     }
