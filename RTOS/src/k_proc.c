@@ -1,4 +1,5 @@
 #include <LPC17xx.h>
+#include "uart_irq.h"
 #include "k_proc.h"
 #include "k_rtos.h"
 #include "k_process.h"
@@ -12,6 +13,12 @@
 volatile uint32_t g_timer_count = 0;
 k_queue_t g_timeout_queue;
 
+uint8_t g_buffer[]= "You Typed a Q\n\r";
+uint8_t *gp_buffer = g_buffer;
+uint8_t g_send_char = 0;
+uint8_t g_char_in;
+uint8_t g_char_out;
+
 
 void null_process(void)
 {   
@@ -23,6 +30,51 @@ void null_process(void)
         printf("null_process: ret_val = %d\n", ret_val);
 #endif
         
+    }
+}
+
+__asm void UART0_IRQHandler(void)
+{
+    PRESERVE8
+    IMPORT uart_i_process
+    PUSH {r4-r11, lr}
+    BL uart_i_process
+    POP {r4-r11, pc}
+}
+
+void uart_i_process(void)
+{
+    uint8_t IIR_IntId;
+	LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
+    
+    /* reading automatically acknowledges the interrupt; skip pending bit */
+    IIR_IntId = ((pUart->IIR) >> 1);
+    
+    if (IIR_IntId & IIR_RDA) {
+        g_char_in = pUart->RBR;
+        
+#ifdef DEBUG_0
+        printf("UART i-process: read %c\n\r", g_char_in);
+#endif
+        
+        g_buffer[12] = g_char_in;
+        g_send_char = 1;
+    } else if (IIR_IntId & IIR_THRE) {
+        if (*gp_buffer != '\0' ) {
+            g_char_out = *gp_buffer;
+            
+#ifdef DEBUG_0
+            printf("UART i-process: writing %c\n\r", g_char_out);
+#endif
+            
+            pUart->THR = g_char_out;
+            gp_buffer++;
+        } else {
+            pUart->IER ^= IER_THRE;
+            pUart->THR = '\0';
+            g_send_char = 0;
+            gp_buffer = g_buffer;
+        }
     }
 }
 
@@ -59,4 +111,24 @@ void timer_i_process(void)
     LPC_TIM0->IR = (1 << 0);
     
     g_timer_count++;
+}
+
+void kcd_proc(void)
+{
+    msg_t *p_msg = (msg_t *)receive_message(NULL);
+    
+    if (p_msg->mp_data[0] == '%' && p_msg->mp_data[1] == 'W' && p_msg->mp_data[2] == 'S') {
+        // wall clock
+    }
+    
+    return;
+}
+
+void crt_proc(void)
+{
+    msg_t *p_msg = (msg_t *)receive_message(NULL);
+    
+    send_message(PID_UART_IPROC, p_msg);
+
+    return;
 }
