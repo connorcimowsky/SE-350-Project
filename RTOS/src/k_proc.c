@@ -10,9 +10,15 @@
 
 
 /* global variables */
+
+/* the number of times time timer has ticked, measured in milliseconds */
 volatile U32 g_timer_count = 0;
+
+/* the queue containing messages which are scheduled for later dispatching */
 k_queue_t g_timeout_queue;
-U32 g_flag = 0;
+
+/* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
+U32 g_preemption_flag = 0;
 
 uint8_t g_buffer[]= "You Typed a Q\n\r";
 uint8_t *gp_buffer = g_buffer;
@@ -86,7 +92,7 @@ __asm void TIMER0_IRQHandler(void)
     IMPORT k_release_processor
     PUSH {R4-R11, LR}
     BL timer_i_process
-    LDR R4, =__cpp(&g_flag);
+    LDR R4, =__cpp(&g_preemption_flag);
     LDR R4, [R4]
     MOV R5, #0
     CMP R4, R5
@@ -106,27 +112,35 @@ void timer_i_process(void)
     
     p_msg = (msg_t *)k_non_blocking_receive_message(PID_TIMER_IPROC);
     if (p_msg != NULL) {
+        /* if there is a message waiting for us (from delayed_send), add it to our timeout queue */
+        
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
         
         queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
     }
     
-    g_flag = 0;
+    g_preemption_flag = 0;
     
     while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
+        /* while there are expired messages in our timeout queue, place them in the appropriate message queues */
+        
         k_msg_t *p_next_message = (k_msg_t *)dequeue_node(&g_timeout_queue);
+        
         U8 *p_increment = (U8 *)p_next_message;
         p_increment += MSG_HEADER_OFFSET;
         
         if (k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment) == RTOS_OK) {
             if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
-                g_flag = 1;
+                /* only preempt to the recipient if it is of equal or greater importance */
+                g_preemption_flag = 1;
             }
         } else {
+            
 #ifdef DEBUG_1
             printf("%s: Could not send message to process %d\n\r", __FUNCTION__, p_next_message->m_recipient_pid);
 #endif
+            
         }
     }
     
