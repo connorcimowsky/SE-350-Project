@@ -29,10 +29,22 @@ void null_process(void)
 __asm void TIMER0_IRQHandler(void)
 {
     PRESERVE8
+    
+    ;LDR R3, =__cpp(&gp_current_process)         ; load the address of the address of the current PCB into R3
+    ;LDR R3, [R3]                                ; load the address of the current PCB into R3
+    ;LDM R3, {R1, R2}                            ; load the first two fields into R1, R2
+    ;STR SP, [R2]                                ; store the current SP into the SP field
+
     IMPORT timer_i_process
-    PUSH {r4-r11, lr}
+    ;IMPORT k_dequeue_ready_process
+    ;PUSH {R4-R11, lr}
     BL timer_i_process
-    POP {r4-r11, pc}
+    ;BL k_dequeue_ready_process                  ; invoke the scheduler
+
+    ;LDM R0, {R1, R2}                            ; load the first two fields of the next PCB into R1, R2
+    ;MOV SP, R2                                  ; move the stack pointer field into SP
+    
+    POP {R4-R11, PC}
 }
 
 void timer_i_process(void)
