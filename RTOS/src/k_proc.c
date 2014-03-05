@@ -22,7 +22,6 @@ U32 g_preemption_flag = 0;
 
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
-uint8_t g_char_out;
 
 
 void null_process(void)
@@ -74,19 +73,19 @@ void uart_i_process(void)
         }
         
         if (*gp_cur_msg->mp_data != '\0' ) {
-            
-            g_char_out = *gp_cur_msg->mp_data;
-            
+                        
 #ifdef DEBUG_0
-            printf("UART i-process: writing %c\n\r", g_char_out);
+            printf("UART i-process: writing %c\n\r", *gp_cur_msg->mp_data);
 #endif
             
-            pUart->THR = g_char_out;
+            pUart->THR = *gp_cur_msg->mp_data;
             
             gp_cur_msg->mp_data++;
+            
         } else {
             pUart->IER ^= IER_THRE;
             pUart->THR = '\0';
+            
             k_release_memory_block(gp_cur_msg);
             gp_cur_msg = NULL;
         }
