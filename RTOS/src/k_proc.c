@@ -161,13 +161,14 @@ void timer_i_process(void)
 
 void kcd_proc(void)
 {
-    msg_t *p_msg = (msg_t *)receive_message(NULL);
-    
-    if (p_msg->mp_data[0] == '%' && p_msg->mp_data[1] == 'W' && p_msg->mp_data[2] == 'S') {
-        // wall clock
+    while (1) {
+        msg_t *p_msg = (msg_t *)receive_message(NULL);
+        if (p_msg->m_type == MSG_TYPE_KCD_REG) {
+            
+        } else {
+            k_release_memory_block(p_msg);
+        }
     }
-    
-    return;
 }
 
 void crt_proc(void)
