@@ -1,7 +1,7 @@
 #include "string.h"
 
 
-void str_cpy(char source[], char dest[])
+int str_cpy(char source[], char dest[])
 {
     int i = 0;
     
@@ -14,6 +14,8 @@ void str_cpy(char source[], char dest[])
         
         i++;
     }
+    
+    return i;
 }
 
 int str_cmp(char a[], char b[])

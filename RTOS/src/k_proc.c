@@ -230,6 +230,7 @@ void kcd_proc(void)
             int i = 0;
             k_kcd_reg_t *p_iter = NULL;
             msg_t *p_msg_display = (msg_t *)request_memory_block();
+            int str_len;
             
             /* we will isolate the command identifier in this buffer */
             char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
@@ -251,9 +252,16 @@ void kcd_proc(void)
                 p_iter = p_iter->mp_next;
             }
             
-            /* display the entered command using the CRT process */
+            /* copy the input buffer into the output message */
             p_msg_display->m_type = MSG_TYPE_CRT_DISP;
-            str_cpy(p_msg->m_data, p_msg_display->m_data);
+            str_len = str_cpy(p_msg->m_data, p_msg_display->m_data);
+            
+            /* append a newline and a carriage return to the end of the displayed string */
+            p_msg_display->m_data[str_len++] = '\n';
+            p_msg_display->m_data[str_len++] = '\r';
+            p_msg_display->m_data[str_len] = '\0';
+            
+            /* display the user input using the CRT process */
             send_message(PID_CRT, p_msg_display);
             
             /* only dispatch the command if a registry entry was found */
