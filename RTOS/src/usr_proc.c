@@ -24,6 +24,7 @@ int g_previous_pid = -1;
 int g_success_flags[6] = {1, 1, 1, 1, 1, 1};
 
 U32 g_wall_clock_start_time = 0;
+U32 g_wall_clock_start_time_offset = 0;
 
 
 void set_test_procs(void)
@@ -196,7 +197,7 @@ void wall_clock_proc(void)
             msg_t *p_display_msg = (msg_t *)request_memory_block();
             
             /* determine the elapsed hours, minutes, and seconds */
-            U32 elapsed_time = (get_system_time() - g_wall_clock_start_time);
+            U32 elapsed_time = g_wall_clock_start_time_offset + (get_system_time() - g_wall_clock_start_time);
             U32 s = (elapsed_time / 1000) % 60;
             U32 m = (elapsed_time / (1000 * 60)) % 60;
             U32 h = (elapsed_time / (1000 * 60 * 60)) % 24;
@@ -221,11 +222,47 @@ void wall_clock_proc(void)
                 
                 /* reset the start time of the clock */
                 g_wall_clock_start_time = get_system_time();
+                g_wall_clock_start_time_offset = 0;
                 
                 /* start firing updates */
                 send_message(PID_CLOCK, p_update_msg);
                 
             } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'S') {
+                
+                int s, m, h;
+                int milliseconds;
+                char buf[3] = {'\0'};
+                
+                msg_t *p_update_msg = (msg_t *)request_memory_block();
+                p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
+                p_update_msg->m_data[0] = '\0';
+                
+                buf[0] = p_msg->m_data[10];
+                buf[1] = p_msg->m_data[11];
+                buf[2] = '\0';
+                
+                s = a_to_i(buf);
+                
+                buf[0] = p_msg->m_data[7];
+                buf[1] = p_msg->m_data[8];
+                buf[2] = '\0';
+                
+                m = a_to_i(buf);
+                
+                buf[0] = p_msg->m_data[4];
+                buf[1] = p_msg->m_data[5];
+                buf[2] = '\0';
+                
+                h = a_to_i(buf);
+                
+                milliseconds = (h * 3600000) + (m * 60000) + (s * 1000);
+                
+                /* set the correct state of the clock */
+                g_wall_clock_start_time = get_system_time();
+                g_wall_clock_start_time_offset = milliseconds;
+                
+                /* start firing updates */
+                send_message(PID_CLOCK, p_update_msg);
                 
                 // set the current wall clock time to hh:mm:ss
                 // start the clock running
