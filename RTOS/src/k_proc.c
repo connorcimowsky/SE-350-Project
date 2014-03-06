@@ -121,7 +121,10 @@ void uart_i_process(void)
             g_output_buffer_index++;
             
         } else {
-            pUart->IER ^= IER_THRE;
+            if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
+                pUart->IER ^= IER_THRE;
+            }
+            
             pUart->THR = '\0';
             
             k_release_memory_block_helper(gp_cur_msg);
