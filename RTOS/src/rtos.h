@@ -127,5 +127,9 @@ extern int k_delayed_send(int, void *, int);
 #define delayed_send(recipient_pid, p_msg, delay) _delayed_send((U32)k_delayed_send, recipient_pid, p_msg, delay)
 extern int __SVC_0 _delayed_send(U32 p_func, int recipient_pid, void *p_msg, int delay);
 
+extern U32 k_get_system_time(void);
+#define get_system_time() _get_system_time((U32)k_get_system_time)
+extern U32 __SVC_0 _get_system_time(U32 p_func);
+
 
 #endif /* RTOS_H */

@@ -272,6 +272,11 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     return enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (k_node_t *)p_msg_envelope);
 }
 
+U32 k_get_system_time(void)
+{
+    return g_timer_count;
+}
+
 void *k_non_blocking_receive_message(int pid)
 {
     if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
