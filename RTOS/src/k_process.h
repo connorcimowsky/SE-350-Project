@@ -36,6 +36,7 @@ void *k_receive_message(int *p_sender_pid);
 /* non-blocking version of k_receive_message() */
 void *k_non_blocking_receive_message(int pid);
 
+/* enqueue p_msg in recipient_pid's message queue without preempting */
 int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg);
 
 /* perform a context switch from p_pcb_old to p_pcb_new */
