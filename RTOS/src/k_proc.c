@@ -224,13 +224,11 @@ void crt_proc(void)
     while (1) {
         msg_t *p_msg = (msg_t *)receive_message(NULL);
         
-        if (p_msg->m_type != MSG_TYPE_CRT_DISP) {
-            k_release_memory_block(p_msg);
-            continue;
+        if (p_msg->m_type == MSG_TYPE_CRT_DISP) {
+            send_message(PID_UART_IPROC, p_msg);
+            pUart->IER ^= IER_THRE;
+        } else {
+            release_memory_block(p_msg);
         }
-        
-        send_message(PID_UART_IPROC, p_msg);
-        
-        pUart->IER ^= IER_THRE;
     }
 }
