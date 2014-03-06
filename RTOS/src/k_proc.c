@@ -3,6 +3,7 @@
 #include "string.h"
 #include "k_proc.h"
 #include "k_rtos.h"
+#include "k_memory.h"
 #include "k_process.h"
 
 #ifdef DEBUG_0
@@ -110,7 +111,7 @@ void uart_i_process(void)
             pUart->IER ^= IER_THRE;
             pUart->THR = '\0';
             
-            k_release_memory_block(gp_cur_msg);
+            k_release_memory_block_helper(gp_cur_msg);
             gp_cur_msg = NULL;
             
             g_output_buffer_index = 0;

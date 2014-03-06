@@ -154,9 +154,28 @@ void *k_request_memory_block(void)
 
 int k_release_memory_block(void *p_mem_blk)
 {
+    if (k_release_memory_block_helper(p_mem_blk) == RTOS_OK) {
+        /* attempt to dequeue the next available process from the blocked queue */
+        k_pcb_t *p_blocked_pcb = k_dequeue_blocked_process();
+        
+        /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
+        if (p_blocked_pcb != NULL) {
+            p_blocked_pcb->m_state = READY;
+            if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
+                return k_release_processor();
+            }
+        }
+    } else {
+        return RTOS_ERR;
+    }
+    
+    return RTOS_OK;
+}
+
+int k_release_memory_block_helper(void *p_mem_blk)
+{
     U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
-    k_pcb_t *p_blocked_pcb = NULL;
     
     if (p_mem_blk == NULL ) {
         
@@ -213,17 +232,6 @@ int k_release_memory_block(void *p_mem_blk)
     /* if none of the above tests failed, insert the node into the memory heap */
     if (insert_node(gp_heap, p_node) == RTOS_ERR) {
         return RTOS_ERR;
-    }
-    
-    /* attempt to dequeue the next available process from the blocked queue */
-    p_blocked_pcb = k_dequeue_blocked_process();
-    
-    /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
-    if (p_blocked_pcb != NULL) {
-        p_blocked_pcb->m_state = READY;
-        if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-            k_release_processor();
-        }
     }
     
     return RTOS_OK;
