@@ -1,7 +1,24 @@
 #include "string.h"
 
 
-int str_cpy(char source[], char dest[])
+int str_len(char str[])
+{
+    int i = 0;
+    
+    while (1) {
+        
+        if (str[i] == '\0') {
+            break;
+        }
+        
+        i++;
+        
+    }
+    
+    return i;
+}
+
+void str_cpy(char source[], char dest[])
 {
     int i = 0;
     
@@ -14,8 +31,6 @@ int str_cpy(char source[], char dest[])
         
         i++;
     }
-    
-    return i;
 }
 
 int str_cmp(char a[], char b[])
