@@ -288,7 +288,7 @@ void kcd_proc(void)
             
         }
         
-        k_release_memory_block(p_msg);
+        release_memory_block(p_msg);
     }
 }
 
