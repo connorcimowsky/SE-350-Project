@@ -20,7 +20,10 @@ volatile U32 g_timer_count = 0;
 k_queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
-U32 g_preemption_flag = 0;
+U32 g_timer_preemption_flag = 0;
+
+/* used by UART0_IRQHandler to determine whether or not we should yield the processor */
+U32 g_uart_preemption_flag = 0;
 
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
@@ -50,7 +53,7 @@ __asm void UART0_IRQHandler(void)
     IMPORT k_release_processor
     PUSH {R4-R11, LR}
     BL uart_i_process
-    LDR R4, =__cpp(&g_preemption_flag);
+    LDR R4, =__cpp(&g_uart_preemption_flag);
     LDR R4, [R4]
     MOV R5, #0
     CMP R4, R5
@@ -66,6 +69,8 @@ void uart_i_process(void)
     LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
     
     __disable_irq();
+    
+    g_uart_preemption_flag = 0;
     
     /* reading IIR automatically acknowledges the interrupt; skip pending bit */
     IIR_IntId = ((pUart->IIR) >> 1);
@@ -88,7 +93,7 @@ void uart_i_process(void)
             k_send_message_helper(PID_UART_IPROC, PID_KCD, p_msg);
             
             /* we should preempt to the KCD process at this point */
-            g_preemption_flag = 1;
+            g_uart_preemption_flag = 1;
         }
         
     } else if (IIR_IntId & IIR_THRE) {
@@ -129,7 +134,7 @@ __asm void TIMER0_IRQHandler(void)
     IMPORT k_release_processor
     PUSH {R4-R11, LR}
     BL timer_i_process
-    LDR R4, =__cpp(&g_preemption_flag);
+    LDR R4, =__cpp(&g_timer_preemption_flag);
     LDR R4, [R4]
     MOV R5, #0
     CMP R4, R5
@@ -157,7 +162,7 @@ void timer_i_process(void)
         queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
     }
     
-    g_preemption_flag = 0;
+    g_timer_preemption_flag = 0;
     
     while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
         /* while there are expired messages in our timeout queue, place them in the appropriate message queues */
@@ -170,7 +175,7 @@ void timer_i_process(void)
         if (k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment) == RTOS_OK) {
             if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
                 /* only preempt to the recipient if it is of equal or greater importance */
-                g_preemption_flag = 1;
+                g_timer_preemption_flag = 1;
             }
         } else {
             
