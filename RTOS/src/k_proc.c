@@ -75,13 +75,13 @@ void uart_i_process(void)
             gp_cur_msg = k_non_blocking_receive_message(PID_UART_IPROC);
         }
         
-        if (gp_cur_msg->mp_data[g_output_buffer_index] != '\0' ) {
+        if (gp_cur_msg->m_data[g_output_buffer_index] != '\0' ) {
                         
 #ifdef DEBUG_0
-            printf("UART i-process: writing %c\n\r", *gp_cur_msg->mp_data);
+            printf("UART i-process: writing %c\n\r", *gp_cur_msg->m_data);
 #endif
             
-            pUart->THR = gp_cur_msg->mp_data[g_output_buffer_index];
+            pUart->THR = gp_cur_msg->m_data[g_output_buffer_index];
             
             g_output_buffer_index++;
             
@@ -177,7 +177,7 @@ void kcd_proc(void)
                 reg = reg->mp_next;
             }
             
-            str_cpy(p_msg->mp_data, reg->m_id);
+            str_cpy(p_msg->m_data, reg->m_id);
             reg->m_pid = sender;
             reg->m_active = 1;
             
