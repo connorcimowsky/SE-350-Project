@@ -257,7 +257,7 @@ void kcd_proc(void)
             p_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
             while (p_iter != NULL) {
                 
-                if (str_cmp(p_iter->m_id, keyboard_command_identifier)) {
+                if (p_iter->m_active == 1 && str_cmp(p_iter->m_id, keyboard_command_identifier)) {
                     break;
                 }
                 
