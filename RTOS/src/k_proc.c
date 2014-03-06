@@ -87,7 +87,8 @@ void uart_i_process(void)
         if (g_char_in != '\r') {
             g_input_buffer[g_input_buffer_index++] = g_char_in;
         } else {
-            g_input_buffer[g_input_buffer_index++] = '\0';
+            g_input_buffer[g_input_buffer_index++] = g_char_in;
+            g_input_buffer[g_input_buffer_index] = '\0';
             
             /* only request a memory block if we will not block */
             if (!is_list_empty(gp_heap)) {
