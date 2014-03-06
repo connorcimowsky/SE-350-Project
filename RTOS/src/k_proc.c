@@ -44,8 +44,16 @@ __asm void UART0_IRQHandler(void)
 {
     PRESERVE8
     IMPORT uart_i_process
-    PUSH {r4-r11, lr}
+    IMPORT k_release_processor
+    PUSH {R4-R11, LR}
     BL uart_i_process
+    LDR R4, =__cpp(&g_preemption_flag);
+    LDR R4, [R4]
+    MOV R5, #0
+    CMP R4, R5
+    BEQ UART_RESTORE
+    BL k_release_processor
+UART_RESTORE
     POP {r4-r11, pc}
 }
 
@@ -111,9 +119,9 @@ __asm void TIMER0_IRQHandler(void)
     LDR R4, [R4]
     MOV R5, #0
     CMP R4, R5
-    BEQ RESTORE
+    BEQ TIMER_RESTORE
     BL k_release_processor
-RESTORE
+TIMER_RESTORE
     POP {R4-R11, PC}
 }
 
