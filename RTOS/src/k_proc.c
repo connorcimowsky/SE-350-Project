@@ -63,7 +63,7 @@ UART_RESTORE
 void uart_i_process(void)
 {
     uint8_t IIR_IntId;
-	LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
+    LPC_UART_TypeDef *pUart = (LPC_UART_TypeDef *)LPC_UART0;
     
     __disable_irq();
     
