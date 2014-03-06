@@ -16,7 +16,7 @@ void str_cpy(char source[], char dest[])
     }
 }
 
-int str_cmp(char a[], char b[], int n)
+int str_cmp(char a[], char b[])
 {
     int i = 0;
     
