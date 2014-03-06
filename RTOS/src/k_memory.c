@@ -95,10 +95,15 @@ void memory_init(void)
         
         k_kcd_reg_t *p_reg = (k_kcd_reg_t *)p_end;
         
+        p_reg->mp_next = NULL;
+        
         /* make sure the keyboard command identifier is an array of null characters */
         for (j = 0; j < KCD_REG_LENGTH; j++) {
             p_reg->m_id[j] = '\0';
         }
+        
+        p_reg->m_pid = 0;
+        p_reg->m_active = 0;
         
         insert_node(&g_kcd_reg, (k_node_t *)p_reg);
         
