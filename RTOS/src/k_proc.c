@@ -84,16 +84,24 @@ void uart_i_process(void)
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
         
-        /* only request a memory block if we will not block */
-        if (!is_list_empty(gp_heap)) {
-            msg_t *p_msg = (msg_t *)k_request_memory_block();
-            p_msg->m_type = MSG_TYPE_DEFAULT;
-            p_msg->m_data[0] = g_char_in;
+        if (g_char_in != '\r') {
+            g_input_buffer[g_input_buffer_index++] = g_char_in;
+        } else {
+            g_input_buffer[g_input_buffer_index++] = '\0';
             
-            k_send_message_helper(PID_UART_IPROC, PID_KCD, p_msg);
-            
-            /* we should preempt to the KCD process at this point */
-            g_uart_preemption_flag = 1;
+            /* only request a memory block if we will not block */
+            if (!is_list_empty(gp_heap)) {
+                msg_t *p_msg = (msg_t *)k_request_memory_block();
+                p_msg->m_type = MSG_TYPE_DEFAULT;
+                str_cpy(g_input_buffer, p_msg->m_data);
+                
+                g_input_buffer_index = 0;
+                
+                k_send_message_helper(PID_UART_IPROC, PID_KCD, p_msg);
+                
+                /* we should preempt to the KCD process at this point */
+                g_uart_preemption_flag = 1;
+            }
         }
         
     } else if (IIR_IntId & IIR_THRE) {
@@ -213,58 +221,47 @@ void kcd_proc(void)
             }
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
-            if (p_msg->m_data[0] != '\r') {
                 
-                /* we are still in the process of entering a command */
-                
-                g_input_buffer[g_input_buffer_index++] = p_msg->m_data[0];
-                
-            } else {
-                
-                /* we have reached the end of a command */
-                
-                int i = 0;
-                k_kcd_reg_t *p_iter = NULL;
-                msg_t *p_msg_display = (msg_t *)request_memory_block();
-                
-                /* we will isolate the command identifier in this buffer */
-                char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
-                
-                /* terminate input buffer with the null character */
-                g_input_buffer[g_input_buffer_index++] = '\0';
-                
-                /* isolate the command identifier, i.e. the portion of the input before the first space */
-                while (g_input_buffer[i] != '\0' && g_input_buffer[i] != ' ') {
-                    keyboard_command_identifier[i] = g_input_buffer[i];
-                    i++;
-                }
-                
-                /* iterate through the keyboard command registry to see if the entered command has been registered */
-                p_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
-                while (p_iter != NULL) {
-                    
-                    if (str_cmp(p_iter->m_id, keyboard_command_identifier)) {
-                        break;
-                    }
-                    
-                    p_iter = p_iter->mp_next;
-                }
-                
-                /* display the entered command using the CRT process */
-                p_msg_display->m_type = MSG_TYPE_CRT_DISP;
-                str_cpy(g_input_buffer, p_msg_display->m_data);
-                send_message(PID_CRT, p_msg_display);
-                
-                /* only dispatch the command if a registry entry was found */
-                if (p_iter != NULL) {
-                    msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
-                    p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
-                    str_cpy(g_input_buffer, p_msg_dispatch->m_data);
-                    
-                    send_message(p_iter->m_pid, p_msg_dispatch);
-                }
-                
+            /* we have received a keyboard command */
+            
+            int i = 0;
+            k_kcd_reg_t *p_iter = NULL;
+            msg_t *p_msg_display = (msg_t *)request_memory_block();
+            
+            /* we will isolate the command identifier in this buffer */
+            char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
+            
+            /* isolate the command identifier, i.e. the portion of the input before the first space */
+            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
+                keyboard_command_identifier[i] = p_msg->m_data[i];
+                i++;
             }
+            
+            /* iterate through the keyboard command registry to see if the entered command has been registered */
+            p_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
+            while (p_iter != NULL) {
+                
+                if (str_cmp(p_iter->m_id, keyboard_command_identifier)) {
+                    break;
+                }
+                
+                p_iter = p_iter->mp_next;
+            }
+            
+            /* display the entered command using the CRT process */
+            p_msg_display->m_type = MSG_TYPE_CRT_DISP;
+            str_cpy(p_msg->m_data, p_msg_display->m_data);
+            send_message(PID_CRT, p_msg_display);
+            
+            /* only dispatch the command if a registry entry was found */
+            if (p_iter != NULL) {
+                msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
+                p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
+                str_cpy(p_msg->m_data, p_msg_dispatch->m_data);
+                
+                send_message(p_iter->m_pid, p_msg_dispatch);
+            }
+                
         }
         
         k_release_memory_block(p_msg);
