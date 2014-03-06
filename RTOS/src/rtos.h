@@ -76,7 +76,8 @@ typedef struct proc_init
 typedef enum {
     MSG_TYPE_DEFAULT = 0,
     MSG_TYPE_KCD_REG,
-    MSG_TYPE_CRT_DISP
+    MSG_TYPE_KCD_DISPATCH,
+    MSG_TYPE_CRT_DISP,
 } MSG_TYPE_E;
 
 

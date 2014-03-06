@@ -198,23 +198,72 @@ void kcd_proc(void)
         msg_t *p_msg = (msg_t *)receive_message(&sender);
         
         if (p_msg->m_type == MSG_TYPE_KCD_REG) {
-            /* pick the next unused entry from the registry and populate its fields */
             
+            /* pick the next unused entry from the registry */
             k_kcd_reg_t *reg = (k_kcd_reg_t *)g_kcd_reg.mp_first;
             while (reg != NULL && reg->m_active == 1) {
                 reg = reg->mp_next;
             }
             
-            str_cpy(p_msg->m_data, reg->m_id);
-            reg->m_pid = sender;
-            reg->m_active = 1;
+            /* if available, populate the fields of the registry entry */
+            if (reg->m_active == 0) {
+                str_cpy(p_msg->m_data, reg->m_id);
+                reg->m_pid = sender;
+                reg->m_active = 1;
+            }
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
-            if (p_msg->m_data[0] == '\r') {
-                /* end of input */
-                g_input_buffer[g_input_buffer_index++] = '\0';
-            } else {
+            if (p_msg->m_data[0] != '\r') {
+                
+                /* we are still in the process of entering a command */
+                
                 g_input_buffer[g_input_buffer_index++] = p_msg->m_data[0];
+                
+            } else {
+                
+                /* we have reached the end of a command */
+                
+                int i = 0;
+                k_kcd_reg_t *p_iter = NULL;
+                msg_t *p_msg_display = (msg_t *)request_memory_block();
+                
+                /* we will isolate the command identifier in this buffer */
+                char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
+                
+                /* terminate input buffer with the null character */
+                g_input_buffer[g_input_buffer_index++] = '\0';
+                
+                /* isolate the command identifier, i.e. the portion of the input before the first space */
+                while (g_input_buffer[i] != '\0' && g_input_buffer[i] != ' ') {
+                    keyboard_command_identifier[i] = g_input_buffer[i];
+                    i++;
+                }
+                
+                /* iterate through the keyboard command registry to see if the entered command has been registered */
+                p_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
+                while (p_iter != NULL) {
+                    
+                    if (str_cmp(p_iter->m_id, keyboard_command_identifier)) {
+                        break;
+                    }
+                    
+                    p_iter = p_iter->mp_next;
+                }
+                
+                /* display the entered command using the CRT process */
+                p_msg_display->m_type = MSG_TYPE_CRT_DISP;
+                str_cpy(g_input_buffer, p_msg_display->m_data);
+                send_message(PID_CRT, p_msg_display);
+                
+                /* only dispatch the command if a registry entry was found */
+                if (p_iter != NULL) {
+                    msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
+                    p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
+                    str_cpy(g_input_buffer, p_msg_dispatch->m_data);
+                    
+                    send_message(p_iter->m_pid, p_msg_dispatch);
+                }
+                
             }
         }
         
