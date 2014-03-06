@@ -24,6 +24,7 @@ U32 g_preemption_flag = 0;
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
 k_list_t g_kcd_reg;
+int g_output_buffer_index = 0;
 
 
 void null_process(void)
@@ -74,15 +75,15 @@ void uart_i_process(void)
             gp_cur_msg = k_non_blocking_receive_message(PID_UART_IPROC);
         }
         
-        if (*gp_cur_msg->mp_data != '\0' ) {
+        if (gp_cur_msg->mp_data[g_output_buffer_index] != '\0' ) {
                         
 #ifdef DEBUG_0
             printf("UART i-process: writing %c\n\r", *gp_cur_msg->mp_data);
 #endif
             
-            pUart->THR = *gp_cur_msg->mp_data;
+            pUart->THR = gp_cur_msg->mp_data[g_output_buffer_index];
             
-            gp_cur_msg->mp_data++;
+            g_output_buffer_index++;
             
         } else {
             pUart->IER ^= IER_THRE;
@@ -90,6 +91,8 @@ void uart_i_process(void)
             
             k_release_memory_block(gp_cur_msg);
             gp_cur_msg = NULL;
+            
+            g_output_buffer_index = 0;
         }
         
     } 

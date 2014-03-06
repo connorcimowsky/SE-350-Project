@@ -83,7 +83,7 @@ typedef enum {
 /* user-facing message envelope */
 typedef struct msg_t {
     MSG_TYPE_E m_type;
-    char *mp_data;
+    char mp_data[1];
 } msg_t;
 
 
