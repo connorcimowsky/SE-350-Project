@@ -1,5 +1,6 @@
 #include <LPC17xx.h>
 #include "uart_irq.h"
+#include "string.h"
 #include "k_proc.h"
 #include "k_rtos.h"
 #include "k_process.h"
@@ -162,13 +163,26 @@ void timer_i_process(void)
 
 void kcd_proc(void)
 {
+    int sender;
     while (1) {
-        msg_t *p_msg = (msg_t *)receive_message(NULL);
+        msg_t *p_msg = (msg_t *)receive_message(&sender);
         if (p_msg->m_type == MSG_TYPE_KCD_REG) {
+            /* pick the next unused entry from the registry and populate its fields */
             
-        } else {
-            k_release_memory_block(p_msg);
+            k_kcd_reg_t *reg = (k_kcd_reg_t *)g_kcd_reg.mp_first;
+            while (reg != NULL && reg->m_active == 1) {
+                reg = reg->mp_next;
+            }
+            
+            str_cpy(p_msg->mp_data, reg->m_id);
+            reg->m_pid = sender;
+            reg->m_active = 1;
+            
+        } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
+            
         }
+        
+        k_release_memory_block(p_msg);
     }
 }
 

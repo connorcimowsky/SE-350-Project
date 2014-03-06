@@ -71,13 +71,16 @@ typedef struct k_msg_t {
 /* keyboard command registry entry */
 typedef struct k_kcd_reg_t {
     /* pointer to the next keyboard command registry entry */
-    struct k_kcd_reg *mp_next;
+    struct k_kcd_reg_t *mp_next;
     
     /* the keyboard command identifier */
     char m_id[KCD_REG_LENGTH];
     
     /* the process identifier associated with this entry */
     U32 m_pid;
+    
+    /* indicates whether this entry is active or not */
+    U32 m_active;
 } k_kcd_reg_t;
 
 
