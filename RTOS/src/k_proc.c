@@ -99,7 +99,7 @@ void uart_i_process(void)
         if (gp_cur_msg->m_data[g_output_buffer_index] != '\0' ) {
                         
 #ifdef DEBUG_0
-            printf("UART i-process: writing %c\n\r", *gp_cur_msg->m_data);
+            printf("UART i-process: writing %c\n\r", gp_cur_msg->m_data[g_output_buffer_index]);
 #endif
             
             pUart->THR = gp_cur_msg->m_data[g_output_buffer_index];
