@@ -20,6 +20,9 @@
 /* maximum number of characters in a keyboard command identifier */
 #define KCD_REG_LENGTH 10
 
+/* the maximum number of characters we allow as input */
+#define INPUT_BUFFER_SIZE (BLOCK_SIZE - MSG_HEADER_OFFSET)
+
 
 /* process state */
 typedef enum {

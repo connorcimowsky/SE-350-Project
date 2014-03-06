@@ -24,6 +24,8 @@ U32 g_preemption_flag = 0;
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
 k_list_t g_kcd_reg;
+char g_input_buffer[INPUT_BUFFER_SIZE];
+int g_input_buffer_index = 0;
 int g_output_buffer_index = 0;
 
 
@@ -68,6 +70,7 @@ void uart_i_process(void)
     IIR_IntId = ((pUart->IIR) >> 1);
     
     if (IIR_IntId & IIR_RDA) {
+        
         /* reading RBR will clear the interrupt */
         g_char_in = pUart->RBR;
         
@@ -75,7 +78,17 @@ void uart_i_process(void)
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
         
-        /* send the character to the KCD here */
+        /* only request a memory block if we will not block */
+        if (!is_list_empty(gp_heap)) {
+            msg_t *p_msg = (msg_t *)k_request_memory_block();
+            p_msg->m_type = MSG_TYPE_DEFAULT;
+            p_msg->m_data[0] = g_char_in;
+            
+            k_send_message_helper(PID_UART_IPROC, PID_KCD, p_msg);
+            
+            /* we should preempt to the KCD process at this point */
+            g_preemption_flag = 1;
+        }
         
     } else if (IIR_IntId & IIR_THRE) {
         
@@ -177,6 +190,7 @@ void kcd_proc(void)
     int sender;
     while (1) {
         msg_t *p_msg = (msg_t *)receive_message(&sender);
+        
         if (p_msg->m_type == MSG_TYPE_KCD_REG) {
             /* pick the next unused entry from the registry and populate its fields */
             
@@ -190,7 +204,12 @@ void kcd_proc(void)
             reg->m_active = 1;
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
-            
+            if (p_msg->m_data[0] == '\r') {
+                /* end of input */
+                g_input_buffer[g_input_buffer_index++] = '\0';
+            } else {
+                g_input_buffer[g_input_buffer_index++] = p_msg->m_data[0];
+            }
         }
         
         k_release_memory_block(p_msg);
