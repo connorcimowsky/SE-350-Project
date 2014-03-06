@@ -451,6 +451,16 @@
               <FileType>1</FileType>
               <FilePath>.\src\timer.c</FilePath>
             </File>
+            <File>
+              <FileName>string.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\string.h</FilePath>
+            </File>
+            <File>
+              <FileName>string.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\string.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -999,6 +1009,16 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>string.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\string.h</FilePath>
+            </File>
+            <File>
+              <FileName>string.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\string.c</FilePath>
             </File>
           </Files>
         </Group>
