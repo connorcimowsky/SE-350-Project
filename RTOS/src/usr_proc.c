@@ -1,10 +1,7 @@
 #include "usr_proc.h"
 #include "uart_polling.h"
-#include "string.h"
-
-#ifdef DEBUG_0
 #include "printf.h"
-#endif
+#include "string.h"
 
 
 /* global variables */
@@ -59,17 +56,14 @@ void set_test_procs(void)
 
 void proc1(void)
 {
-    int ret_val;
     msg_t *p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_DEFAULT;
     str_cpy("hello", p_msg->m_data);
     
-    printf("proc1: sending a message to proc2\n\r");
-    
-    ret_val = delayed_send(PID_P2, p_msg, 50);
+    delayed_send(PID_P2, p_msg, 50);
     
 #ifdef DEBUG_1
-    printf("proc1: send_message returned %d\n\r", ret_val);
+    printf("proc1: sent a message to proc2\n\r");
 #endif
     
     while (1) {
