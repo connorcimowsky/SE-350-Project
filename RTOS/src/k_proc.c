@@ -203,6 +203,6 @@ void crt_proc(void)
         
         send_message(PID_UART_IPROC, p_msg);
         
-        pUart->IER = IER_THRE | IER_RLS | IER_RBR;
+        pUart->IER ^= IER_THRE;
     }
 }
