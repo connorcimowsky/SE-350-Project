@@ -264,11 +264,6 @@ void wall_clock_proc(void)
                 /* start firing updates */
                 send_message(PID_CLOCK, p_update_msg);
                 
-                // set the current wall clock time to hh:mm:ss
-                // start the clock running
-                // display the current clock time on the CRT
-                // update every second
-                
             } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'T') {
                 
                 // terminate the wall clock
