@@ -216,7 +216,10 @@ int k_send_message(int recipient_pid, void *p_msg)
     /* call the non-premptive version of k_send_message, preempting afterward if necessary */
     if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == RTOS_OK) {
         if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
-            return k_release_processor();
+            /* don't preempt in the case of the UART i-process */
+            if (recipient_pid != PID_UART_IPROC) {
+                return k_release_processor();
+            }
         }
     } else {
         return RTOS_ERR;
