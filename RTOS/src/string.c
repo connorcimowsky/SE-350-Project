@@ -32,3 +32,16 @@ int str_cmp(char a[], char b[])
     
     return (a[i] == '\0' && b[i] == '\0');
 }
+
+int a_to_i(char c[])
+{
+    int i = 0;
+    int k = 0;
+    
+    while (c[i] != '\0') {
+        k = ( k << 3) + (k << 1) + (c[i] - '0');
+        i++;
+    }
+    
+    return k;
+}

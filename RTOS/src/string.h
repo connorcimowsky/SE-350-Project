@@ -8,5 +8,8 @@ void str_cpy(char source[], char dest[]);
 /* returns 1 if 'a' and 'b' are equal; 0 otherwise */
 int str_cmp(char a[], char b[]);
 
+/* converts the input string to an integer */
+int a_to_i(char c[]);
+
 
 #endif /* STRING_H */
