@@ -130,7 +130,7 @@ void *k_request_memory_block(void)
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
-        printf("k_request_memory_block: no available blocks, releasing processor\n");
+        printf("k_request_memory_block: no available blocks, releasing processor\n\r");
 #endif
         
         /* add the calling process to the blocked queue and yield the processor */
@@ -143,7 +143,7 @@ void *k_request_memory_block(void)
     p_mem_blk = (U8 *)get_node(gp_heap);
     
 #ifdef DEBUG_1
-        printf("k_request_memory_block: 0x%x\n", p_mem_blk);
+        printf("k_request_memory_block: 0x%x\n\r", p_mem_blk);
 #endif
     
     /* increment the address of the node by the size of the header to get the start address of the block itself */
@@ -161,7 +161,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (p_mem_blk == NULL ) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: cannot release NULL\n");
+        printf("k_release_memory_block: cannot release NULL\n\r");
 #endif
         
         return RTOS_ERR;
@@ -177,14 +177,14 @@ int k_release_memory_block(void *p_mem_blk)
     p_node = (k_node_t *)p_decrement;
     
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x\n", p_node);
+        printf("k_release_memory_block: 0x%x\n\r", p_node);
 #endif
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is out of bounds\n", p_node);
+        printf("k_release_memory_block: 0x%x is out of bounds\n\r", p_node);
 #endif
         
         return RTOS_ERR;
@@ -194,7 +194,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (((U8 *)p_node - gp_heap_begin_addr) % BLOCK_SIZE != 0) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_node);
+        printf("k_release_memory_block: 0x%x is not a block-aligned address\n\r", p_node);
 #endif
         
         return RTOS_ERR;
@@ -204,7 +204,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is already contained in the heap\n", p_node);
+        printf("k_release_memory_block: 0x%x is already contained in the heap\n\r", p_node);
 #endif
         
         return RTOS_ERR;

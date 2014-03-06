@@ -36,7 +36,7 @@ void null_process(void)
         int ret_val = release_processor();
         
 #ifdef DEBUG_0
-        printf("null_process: ret_val = %d\n", ret_val);
+        printf("null_process: ret_val = %d\n\r", ret_val);
 #endif
         
     }

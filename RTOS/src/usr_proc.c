@@ -80,7 +80,7 @@ void proc2(void)
     msg_t *p_msg = (msg_t *)receive_message(&sender_pid);
     
 #ifdef DEBUG_1
-    printf("proc2: received a message from PID %d, message: %s\n", sender_pid, p_msg->m_data);
+    printf("proc2: received a message from PID %d, message: %s\n\r", sender_pid, p_msg->m_data);
 #endif
     
     while (1) {

@@ -11,7 +11,7 @@ int insert_node(k_list_t *p_list, k_node_t *p_node)
     if (p_list == NULL || p_node == NULL) {
         
 #ifdef DEBUG_1
-        printf("Node insertion error.\n");
+        printf("Node insertion error.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -30,7 +30,7 @@ k_node_t *get_node(k_list_t *p_list)
     if (is_list_empty(p_list)) {
         
 #ifdef DEBUG_1
-        printf("Attempted to get the top node of an empty list.\n");
+        printf("Attempted to get the top node of an empty list.\n\r");
 #endif
     
         return NULL;
@@ -49,7 +49,7 @@ int list_contains_node(k_list_t *p_list, k_node_t *p_node)
     if (is_list_empty(p_list)) {
     
 #ifdef DEBUG_1
-        printf("Attempted to check node membership for an empty list.\n");
+        printf("Attempted to check node membership for an empty list.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -71,7 +71,7 @@ int is_list_empty(k_list_t *p_list)
     if (p_list == NULL) {
 
 #ifdef DEBUG_1
-        printf("Attempted to check if a NULL list was empty.\n");
+        printf("Attempted to check if a NULL list was empty.\n\r");
 #endif
     
         return RTOS_ERR;
