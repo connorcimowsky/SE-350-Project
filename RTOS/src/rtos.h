@@ -78,6 +78,7 @@ typedef enum {
     MSG_TYPE_KCD_REG,
     MSG_TYPE_KCD_DISPATCH,
     MSG_TYPE_CRT_DISP,
+    MSG_TYPE_WALL_CLK_TICK
 } MSG_TYPE_E;
 
 

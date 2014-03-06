@@ -23,6 +23,8 @@ int g_previous_pid = -1;
 /* an array of flags indicating the result of each test case */
 int g_success_flags[6] = {1, 1, 1, 1, 1, 1};
 
+U32 g_wall_clock_start_time = 0;
+
 
 void set_test_procs(void)
 {
@@ -148,7 +150,97 @@ void proc5(void)
 void proc6(void)
 {
     while (1) {
-        printf("proc6: releasing processor\n\r");
+        // printf("proc6: releasing processor\n\r");
         release_processor();
+    }
+}
+
+void wall_clock_proc(void)
+{
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    p_msg->m_data[0] = '%';
+    p_msg->m_data[1] = 'W';
+    p_msg->m_data[2] = 'R';
+    
+    send_message(PID_KCD, p_msg);
+    
+    p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    p_msg->m_data[0] = '%';
+    p_msg->m_data[1] = 'W';
+    p_msg->m_data[2] = 'S';
+    
+    send_message(PID_KCD, p_msg);
+    
+    p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    p_msg->m_data[0] = '%';
+    p_msg->m_data[1] = 'W';
+    p_msg->m_data[2] = 'T';
+    
+    send_message(PID_KCD, p_msg);
+    
+    while (1) {
+        
+        int sender = -1;
+        
+        p_msg = (msg_t *)receive_message(&sender);
+        
+        if (sender == PID_CLOCK && p_msg->m_type == MSG_TYPE_WALL_CLK_TICK) {
+            
+            /* used for signalling ourselves to update */
+            msg_t *p_update_msg = (msg_t *)request_memory_block();
+            
+            /* used for signalling the CRT process to display the current time */
+            msg_t *p_display_msg = (msg_t *)request_memory_block();
+            
+            /* determine the elapsed hours, minutes, and seconds */
+            U32 elapsed_time = (get_system_time() - g_wall_clock_start_time);
+            U32 s = (elapsed_time / 1000) % 60;
+            U32 m = (elapsed_time / (1000 * 60)) % 60;
+            U32 h = (elapsed_time / (1000 * 60 * 60)) % 24;
+            
+            /* display the current time */
+            p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+            sprintf(p_display_msg->m_data, "%02d:%02d:%02d\n\r", h, m, s);
+            send_message(PID_CRT, p_display_msg);
+            
+            /* update the clock 1 second from now */
+            p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
+            p_update_msg->m_data[0] = '\0';
+            delayed_send(PID_CLOCK, p_update_msg, 1000);
+            
+        } else {
+            
+            if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'R') {
+            
+                msg_t *p_update_msg = (msg_t *)request_memory_block();
+                p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
+                p_update_msg->m_data[0] = '\0';
+                
+                /* reset the start time of the clock */
+                g_wall_clock_start_time = get_system_time();
+                
+                /* start firing updates */
+                send_message(PID_CLOCK, p_update_msg);
+                
+            } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'S') {
+                
+                // set the current wall clock time to hh:mm:ss
+                // start the clock running
+                // display the current clock time on the CRT
+                // update every second
+                
+            } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'T') {
+                
+                // terminate the wall clock
+                
+            }
+            
+        }
+        
+        release_memory_block(p_msg);
+
     }
 }
