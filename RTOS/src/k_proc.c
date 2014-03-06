@@ -111,7 +111,7 @@ void uart_i_process(void)
         }
         
         if (gp_cur_msg->m_data[g_output_buffer_index] != '\0' ) {
-                        
+        
 #ifdef DEBUG_0
             printf("UART i-process: writing %c\n\r", gp_cur_msg->m_data[g_output_buffer_index]);
 #endif
@@ -224,7 +224,7 @@ void kcd_proc(void)
             }
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
-                
+            
             /* we have received a keyboard command */
             
             int i = 0;
@@ -272,7 +272,7 @@ void kcd_proc(void)
                 
                 send_message(p_iter->m_pid, p_msg_dispatch);
             }
-                
+            
         }
         
         k_release_memory_block(p_msg);
