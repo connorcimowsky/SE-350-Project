@@ -172,6 +172,7 @@ void wall_clock_proc(void)
     p_msg->m_data[0] = '%';
     p_msg->m_data[1] = 'W';
     p_msg->m_data[2] = 'R';
+    p_msg->m_data[3] = '\0';
     
     send_message(PID_KCD, p_msg);
     
@@ -180,6 +181,7 @@ void wall_clock_proc(void)
     p_msg->m_data[0] = '%';
     p_msg->m_data[1] = 'W';
     p_msg->m_data[2] = 'S';
+    p_msg->m_data[3] = '\0';
     
     send_message(PID_KCD, p_msg);
     
@@ -188,6 +190,7 @@ void wall_clock_proc(void)
     p_msg->m_data[0] = '%';
     p_msg->m_data[1] = 'W';
     p_msg->m_data[2] = 'T';
+    p_msg->m_data[3] = '\0';
     
     send_message(PID_KCD, p_msg);
     
