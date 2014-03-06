@@ -19,5 +19,8 @@ void proc4(void);
 void proc5(void);
 void proc6(void);
 
+/* wall clock process */
+void wall_clock_proc(void);
+
 
 #endif /* USR_PROC_H */
