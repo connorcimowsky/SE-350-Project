@@ -91,6 +91,8 @@ void uart_i_process(void)
         /* reading RBR will clear the interrupt */
         g_char_in = pUart->RBR;
         
+        pUart->THR = g_char_in;
+        
 #ifdef DEBUG_1
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
