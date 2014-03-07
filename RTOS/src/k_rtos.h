@@ -23,6 +23,12 @@
 /* the maximum number of characters we allow as input */
 #define INPUT_BUFFER_SIZE (BLOCK_SIZE - MSG_HEADER_OFFSET)
 
+/* the number of logged messages stored in the circular message logs */
+#define MSG_LOG_SIZE 10
+
+/* the number of characters stored by message log entries */
+#define MSG_LOG_LEN 16
+
 
 /* process state */
 typedef enum {
@@ -87,6 +93,15 @@ typedef struct k_kcd_reg_t {
 } k_kcd_reg_t;
 
 
+typedef struct k_msg_log_t {
+    U32 m_sender_pid;
+    U32 m_recipient_pid;
+    MSG_TYPE_E m_type;
+    char m_text[MSG_LOG_LEN];
+    U32 m_time_stamp;
+} k_msg_log_t;
+
+
 /* external variables */
 
 /* end address of the memory image */
@@ -118,6 +133,12 @@ extern k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* the registry of keyboard command entries */
 extern k_list_t g_kcd_reg;
+
+/* circular buffer of recently sent messages */
+extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
+
+/* circular buffer of recently received messages */
+extern k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
 
 
 #endif /* K_RTOS_H */

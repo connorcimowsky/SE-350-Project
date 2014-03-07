@@ -118,6 +118,36 @@ void memory_init(void)
         
         p_end += sizeof(k_kcd_reg_t);
     }
+    
+    /* initialize the sent message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        g_sent_msg_log[i].m_sender_pid = 0;
+        g_sent_msg_log[i].m_recipient_pid = 0;
+        g_sent_msg_log[i].m_type = MSG_TYPE_DEFAULT;
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            g_sent_msg_log[i].m_text[j] = '\0';
+        }
+        
+        g_sent_msg_log[i].m_time_stamp = 0;
+    }
+    
+    /* initialize the received message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        g_received_msg_log[i].m_sender_pid = 0;
+        g_received_msg_log[i].m_recipient_pid = 0;
+        g_received_msg_log[i].m_type = MSG_TYPE_DEFAULT;
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            g_received_msg_log[i].m_text[j] = '\0';
+        }
+        
+        g_received_msg_log[i].m_time_stamp = 0;
+    }
 }
 
 U32 *alloc_stack(U32 size_b) 

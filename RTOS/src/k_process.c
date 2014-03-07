@@ -16,6 +16,10 @@ k_pcb_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
+int g_cur_sent_msg_log_index = 0;
+k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
+int g_cur_received_msg_log_index = 0;
 
 
 void process_init(void) 
