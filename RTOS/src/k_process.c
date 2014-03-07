@@ -242,16 +242,19 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    /* call the non-premptive version of k_send_message, preempting afterward if necessary */
-    if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == RTOS_OK) {
-        if ((gp_pcbs[recipient_pid]->m_state == BLOCKED_ON_RECEIVE) && (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority)) {
+    /* call the non-premptive version of k_send_message */
+    int ret_val = k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg);
+    
+    if (ret_val == 1) {
+        /* only check for preemption if we unblocked the recipient (returned 1) */
+        if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
             /* don't preempt in the case of the UART i-process */
             if (recipient_pid != PID_UART_IPROC) {
                 return k_release_processor();
             }
         }
     } else {
-        return RTOS_ERR;
+        return ret_val;
     }
     
     return RTOS_OK;
@@ -386,17 +389,25 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     p_recipient_pcb = gp_pcbs[recipient_pid];
     
     if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope) == RTOS_OK) {
-        if (p_recipient_pcb->m_state == BLOCKED_ON_RECEIVE) {
+        if (p_recipient_pcb->m_state != BLOCKED_ON_RECEIVE) {
+            /* if the recipient was not blocked, then do not unblock it */
+            return RTOS_OK;
+        } else {
             if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
                 p_recipient_pcb->m_state = READY;
-                return k_enqueue_ready_process(p_recipient_pcb);
+                if (k_enqueue_ready_process(p_recipient_pcb) == RTOS_OK) {
+                    /* if the recipient was successfully removed from the blocked queue and added to the ready queue, return 1 */
+                    return 1;
+                } else {
+                    return RTOS_ERR;
+                }
+            } else {
+                return RTOS_ERR;
             }
         }
     } else {
         return RTOS_ERR;
     }
-    
-    return RTOS_OK;
 }
 
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
