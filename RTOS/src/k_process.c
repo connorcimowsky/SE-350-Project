@@ -115,7 +115,7 @@ int k_release_processor(void)
     }
     
     /* only check the priority of the next process if the current process is not blocked */
-    if (gp_current_process->m_state != BLOCKED_ON_MEMORY && gp_current_process->m_state != WAITING_FOR_MESSAGE) {
+    if (gp_current_process->m_state != BLOCKED_ON_MEMORY && gp_current_process->m_state != BLOCKED_ON_RECEIVE) {
         /* if the next process is of lesser importance, do nothing */
         if (p_next_pcb->m_priority > gp_current_process->m_priority) {
             return RTOS_OK;
@@ -198,8 +198,15 @@ int k_set_process_priority(int pid, int priority)
                 }
             }
             break;
-        case WAITING_FOR_MESSAGE:
-            /* if the process is waiting for a message, then it is not in a queue; simply update its priority */
+        case BLOCKED_ON_RECEIVE:
+            /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
+            if (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
+                p_pcb->m_priority = (PRIORITY_E)priority;
+                if (k_enqueue_blocked_on_receive_process(p_pcb) == RTOS_ERR) {
+                    return RTOS_ERR;
+                }
+            }
+            break;
         case EXECUTING:
             /* if the process is executing, then it is not in a queue; simply update its priority */
         default:
@@ -247,8 +254,9 @@ void *k_receive_message(int *p_sender_pid)
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
-        gp_current_process->m_state = WAITING_FOR_MESSAGE;
-        k_release_processor();
+        if (k_enqueue_blocked_on_receive_process(gp_current_process) == RTOS_OK) {
+            k_release_processor();
+        }
     }
     
     p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
@@ -324,9 +332,11 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     p_recipient_pcb = gp_pcbs[recipient_pid];
     
     if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope) == RTOS_OK) {
-        if (p_recipient_pcb->m_state == WAITING_FOR_MESSAGE) {
-            p_recipient_pcb->m_state = READY;
-            return k_enqueue_ready_process(p_recipient_pcb);
+        if (p_recipient_pcb->m_state == BLOCKED_ON_RECEIVE) {
+            if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
+                p_recipient_pcb->m_state = READY;
+                return k_enqueue_ready_process(p_recipient_pcb);
+            }
         }
     } else {
         return RTOS_ERR;
@@ -350,8 +360,8 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     k_enqueue_ready_process(p_pcb_old);
                 } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
                     /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-                } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
-                    /* don't add a process to the ready queue if it is waiting for a message */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-receive queue */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_old->mp_sp = (U32 *)__get_MSP();
@@ -376,8 +386,8 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     k_enqueue_ready_process(p_pcb_old);
                 } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
                     /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-                } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
-                    /* don't add a process to the ready queue if it is waiting for a message */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_old->mp_sp = (U32 *)__get_MSP();
@@ -459,6 +469,33 @@ k_pcb_t* k_dequeue_blocked_on_memory_process(void)
     }
     
     return p_pcb;
+}
+
+int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
+{
+    k_queue_t *p_blocked_on_receive_queue = NULL;
+    
+    if (p_pcb == NULL) {
+        return RTOS_ERR;
+    }
+    
+    p_pcb->m_state = BLOCKED_ON_RECEIVE;
+    
+    /* retrieve a pointer to the blocked-on-receive queue corresponding to the priority of the process */
+    p_blocked_on_receive_queue = gp_blocked_on_receive_queue[p_pcb->m_priority];
+    
+    if (!is_queue_empty(p_blocked_on_receive_queue) && queue_contains_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb)) {
+        /* the node is already contained in the blocked-on-receive queue, so do not add it again */
+        return RTOS_OK;
+    }
+    
+    /* enqueue the PCB in the blocked-on-receive queue */
+    return (enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb));
+}
+
+int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
+{
+    return (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb));
 }
 
 #ifdef DEBUG_HOTKEYS
