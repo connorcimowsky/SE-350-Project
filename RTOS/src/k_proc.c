@@ -17,6 +17,7 @@
 #define DEBUG_HOTKEY_1 '!'
 #define DEBUG_HOTKEY_2 '@'
 #define DEBUG_HOTKEY_3 '#'
+#define DEBUG_HOTKEY_4 '$'
 
 
 /* global variables */
@@ -100,12 +101,14 @@ void uart_i_process(void)
             k_print_blocked_on_memory_queue();
         } else if (g_char_in == DEBUG_HOTKEY_3) {
             k_print_blocked_on_receive_queue();
+        } else if (g_char_in == DEBUG_HOTKEY_4) {
+            k_print_msg_logs();
         }
         
 #endif
         
         if (g_char_in != '\r') {
-            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3)) {
+            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4)) {
                 g_input_buffer[g_input_buffer_index++] = g_char_in;
             }
         } else {

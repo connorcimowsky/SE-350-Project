@@ -71,6 +71,9 @@ void k_print_blocked_on_memory_queue(void);
 /* print the blocked-on-receive queue */
 void k_print_blocked_on_receive_queue(void);
 
+/* print the sent and received message logs */
+void k_print_msg_logs(void);
+
 #endif /* DEBUG_HOTKEYS */
 
 #endif /* K_PROCESS_H */

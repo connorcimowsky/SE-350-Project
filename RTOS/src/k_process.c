@@ -600,4 +600,65 @@ void k_print_blocked_on_receive_queue(void)
     printf("\n\r");
 }
 
+void k_print_msg_logs(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** SENT MESSAGE LOG ***\n\r");
+    
+    /* iterate through the sent message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        printf("\n\r");
+        printf("Message #%d:\n\r", (i + 1));
+        printf("\tSender PID: %d\n\r", g_sent_msg_log[i].m_sender_pid);
+        printf("\tRecipient PID: %d\n\r", g_sent_msg_log[i].m_recipient_pid);
+        printf("\tType: %d\n\r", g_sent_msg_log[i].m_type);
+        printf("\tText: '");
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            if (g_sent_msg_log[i].m_text[j] == '\0') {
+                break;
+            }
+            
+            if ((g_sent_msg_log[i].m_text[j] != '\n') && (g_sent_msg_log[i].m_text[j] != '\r')) {
+                printf("%c", g_sent_msg_log[i].m_text[j]);
+            }
+        }
+        
+        printf("'\n\r");
+        printf("\tTime Stamp: %d\n\r", g_sent_msg_log[i].m_time_stamp);
+    }
+    
+    printf("\n\r\n\r*** RECEIVED MESSAGE LOG ***\n\r");
+    
+    /* iterate through the received message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        printf("\n\r");
+        printf("Message #%d:\n\r", (i + 1));
+        printf("\tSender PID: %d\n\r", g_received_msg_log[i].m_sender_pid);
+        printf("\tRecipient PID: %d\n\r", g_received_msg_log[i].m_recipient_pid);
+        printf("\tType: %d\n\r", g_received_msg_log[i].m_type);
+        printf("\tText: '");
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            if (g_received_msg_log[i].m_text[j] == '\0') {
+                break;
+            }
+            
+            if ((g_received_msg_log[i].m_text[j] != '\n') && (g_received_msg_log[i].m_text[j] != '\r')) {
+                printf("%c", g_received_msg_log[i].m_text[j]);
+            }
+        }
+        
+        printf("'\n\r");
+        printf("\tTime Stamp: %d\n\r", g_received_msg_log[i].m_time_stamp);
+    }
+    
+    printf("\n\r");
+}
+
 #endif /* DEBUG_HOTKEYS */
