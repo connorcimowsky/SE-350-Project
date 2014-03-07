@@ -119,6 +119,8 @@ void memory_init(void)
         p_end += sizeof(k_kcd_reg_t);
     }
     
+#ifdef DEBUG_HOTKEYS
+    
     /* initialize the sent message log */
     for (i = 0; i < MSG_LOG_SIZE; i++) {
         int j;
@@ -148,6 +150,9 @@ void memory_init(void)
         
         g_received_msg_log[i].m_time_stamp = 0;
     }
+    
+#endif /* DEBUG_HOTKEYS */
+    
 }
 
 U32 *alloc_stack(U32 size_b) 

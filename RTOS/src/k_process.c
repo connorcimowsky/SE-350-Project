@@ -16,10 +16,15 @@ k_pcb_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+
+#ifdef DEBUG_HOTKEYS
+
 k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
 int g_cur_sent_msg_log_index = 0;
 k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
 int g_cur_received_msg_log_index = 0;
+
+#endif /* DEBUG_HOTKEYS */
 
 
 void process_init(void) 
@@ -255,7 +260,10 @@ void *k_receive_message(int *p_sender_pid)
 {
     k_msg_t *p_msg = NULL;
     U8 *p_increment = NULL;
+    
+#ifdef DEBUG_HOTKEYS
     int i = 0;
+#endif
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
@@ -269,6 +277,8 @@ void *k_receive_message(int *p_sender_pid)
     if (p_msg == NULL) {
         return NULL;
     }
+    
+#ifdef DEBUG_HOTKEYS
     
     /* save the message information into the received message log */
     
@@ -288,6 +298,8 @@ void *k_receive_message(int *p_sender_pid)
         /* only write into the return address if one was provided */
         *p_sender_pid = p_msg->m_sender_pid;
     }
+    
+#endif /* DEBUG_HOTKEYS */
     
     p_increment = (U8 *)p_msg;
     p_increment += MSG_HEADER_OFFSET;
@@ -335,12 +347,17 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     k_pcb_t *p_recipient_pcb = NULL;
+    
+#ifdef DEBUG_HOTKEYS
     int i;
+#endif
     
     if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }
+    
+#ifdef DEBUG_HOTKEYS
     
     /* save the message information into the sent message log */
     
@@ -355,6 +372,8 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
     
     g_cur_sent_msg_log_index = (g_cur_sent_msg_log_index + 1) % MSG_LOG_SIZE;
+    
+#endif /* DEBUG_HOTKEYS */
     
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
