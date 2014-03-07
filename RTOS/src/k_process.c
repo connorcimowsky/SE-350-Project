@@ -255,6 +255,7 @@ void *k_receive_message(int *p_sender_pid)
 {
     k_msg_t *p_msg = NULL;
     U8 *p_increment = NULL;
+    int i = 0;
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
@@ -268,6 +269,20 @@ void *k_receive_message(int *p_sender_pid)
     if (p_msg == NULL) {
         return NULL;
     }
+    
+    /* save the message information into the received message log */
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_sender_pid = p_msg->m_sender_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_recipient_pid = p_msg->m_recipient_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_type = p_msg->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_received_msg_log[g_cur_received_msg_log_index].m_text[i] = p_msg->m_data[i];
+    }
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_received_msg_log_index = (g_cur_received_msg_log_index + 1) % MSG_LOG_SIZE;
     
     if (p_sender_pid != NULL) {
         /* only write into the return address if one was provided */
@@ -320,11 +335,26 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     k_pcb_t *p_recipient_pcb = NULL;
+    int i;
     
     if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
         /* pid is out-of-bounds */
         return RTOS_ERR;
     }
+    
+    /* save the message information into the sent message log */
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_sender_pid = sender_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_recipient_pid = recipient_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = ((msg_t *)p_msg)->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = ((msg_t *)p_msg)->m_data[i];
+    }
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_sent_msg_log_index = (g_cur_sent_msg_log_index + 1) % MSG_LOG_SIZE;
     
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
