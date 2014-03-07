@@ -11,13 +11,15 @@
 #endif
 
 #ifdef DEBUG_HOTKEYS
+
 #include "printf.h"
-#endif
 
 #define DEBUG_HOTKEY_1 '!'
 #define DEBUG_HOTKEY_2 '@'
 #define DEBUG_HOTKEY_3 '#'
 #define DEBUG_HOTKEY_4 '$'
+
+#endif /* DEBUG_HOTKEYS */
 
 
 /* global variables */
@@ -108,9 +110,20 @@ void uart_i_process(void)
 #endif
         
         if (g_char_in != '\r') {
+            
+#ifdef DEBUG_HOTKEYS
+            
+            /* only filter the debug hotkeys if DEBUG_HOTKEYS is defined */
             if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4)) {
                 g_input_buffer[g_input_buffer_index++] = g_char_in;
             }
+            
+#else
+            
+            g_input_buffer[g_input_buffer_index++] = g_char_in;
+            
+#endif
+            
         } else {
             g_input_buffer[g_input_buffer_index++] = '\0';
             
