@@ -45,11 +45,11 @@ void memory_init(void)
         p_end += sizeof(k_queue_t);
     }
     
-    /* create the blocked queue */
+    /* create the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_queue[i] = (k_queue_t *)p_end;
-        gp_blocked_queue[i]->mp_first = NULL;
-        gp_blocked_queue[i]->mp_last = NULL;
+        gp_blocked_on_memory_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_memory_queue[i]->mp_first = NULL;
+        gp_blocked_on_memory_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }

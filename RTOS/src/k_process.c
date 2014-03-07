@@ -14,7 +14,7 @@ PROC_INIT g_proc_table[NUM_PROCS];
 k_pcb_t **gp_pcbs = NULL;
 k_pcb_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
-k_queue_t *gp_blocked_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 
 
 void process_init(void) 
@@ -189,8 +189,8 @@ int k_set_process_priority(int pid, int priority)
             }
             break;
         case BLOCKED_ON_RESOURCE:
-            /* dequeue the process from the blocked queue, update its priority, then re-enqueue it in the blocked queue */
-            if (remove_node_from_queue(gp_blocked_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
+            /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
+            if (remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
                 p_pcb->m_priority = (PRIORITY_E)priority;
                 if (k_enqueue_blocked_process(p_pcb) == RTOS_ERR) {
                     return RTOS_ERR;
@@ -432,8 +432,8 @@ int k_enqueue_blocked_process(k_pcb_t *p_pcb)
     
     p_pcb->m_state = BLOCKED_ON_RESOURCE;
     
-    /* retrieve a pointer to the blocked queue corresponding to the priority of the process */
-    p_blocked_queue = gp_blocked_queue[p_pcb->m_priority];
+    /* retrieve a pointer to the blocked-on-memory queue corresponding to the priority of the process */
+    p_blocked_queue = gp_blocked_on_memory_queue[p_pcb->m_priority];
     
     if (!is_queue_empty(p_blocked_queue) && queue_contains_node(p_blocked_queue, (k_node_t *)p_pcb)) {
         /* the node is already contained in the blocked queue, so do not add it again */
@@ -449,10 +449,10 @@ k_pcb_t* k_dequeue_blocked_process(void)
     int i;
     k_pcb_t *p_pcb = NULL;
     
-    /* iterate through the blocked queues in priority sequence, using FIFO ordering within each queue */
+    /* iterate through the blocked-on-memory queues in priority sequence, using FIFO ordering within each queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        if (!is_queue_empty(gp_blocked_queue[i])) {
-            p_pcb = (k_pcb_t *)dequeue_node(gp_blocked_queue[i]);
+        if (!is_queue_empty(gp_blocked_on_memory_queue[i])) {
+            p_pcb = (k_pcb_t *)dequeue_node(gp_blocked_on_memory_queue[i]);
             break;
         }
     }
@@ -492,7 +492,7 @@ void k_print_blocked_on_memory_queue(void)
     
     /* iterate through the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        k_queue_t *p_cur_queue = gp_blocked_queue[i];
+        k_queue_t *p_cur_queue = gp_blocked_on_memory_queue[i];
         k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
         
         printf("Priority %d:\n\r", i);
