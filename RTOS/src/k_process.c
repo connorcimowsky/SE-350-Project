@@ -84,7 +84,6 @@ void process_init(void)
     g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
     enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_CLOCK]);
     
-    
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;
