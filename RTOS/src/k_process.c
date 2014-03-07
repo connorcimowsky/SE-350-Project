@@ -4,6 +4,10 @@
 #include "k_proc.h"
 #include "usr_proc.h"
 
+#ifdef DEBUG_HOTKEYS
+#include "printf.h"
+#endif
+
 
 /* global variables */
 PROC_INIT g_proc_table[NUM_PROCS];
@@ -455,3 +459,51 @@ k_pcb_t* k_dequeue_blocked_process(void)
     
     return p_pcb;
 }
+
+#ifdef DEBUG_HOTKEYS
+
+void k_print_ready_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** READY QUEUE ***\n\r");
+    
+    /* iterate through the ready queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_ready_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
+void k_print_blocked_on_memory_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** BLOCKED-ON-MEMORY QUEUE ***\n\r");
+    
+    /* iterate through the blocked-on-memory queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_blocked_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
+#endif /* DEBUG_HOTKEYS */

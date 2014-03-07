@@ -54,5 +54,14 @@ int k_enqueue_blocked_process(k_pcb_t *p_pcb);
 /* dequeue the next available process from the blocked queue */
 k_pcb_t *k_dequeue_blocked_process(void);
 
+#ifdef DEBUG_HOTKEYS
+
+/* print the ready queue */
+void k_print_ready_queue(void);
+
+/* print the blocked-on-memory queue */
+void k_print_blocked_on_memory_queue(void);
+
+#endif /* DEBUG_HOTKEYS */
 
 #endif /* K_PROCESS_H */

@@ -10,6 +10,13 @@
 #include "printf.h"
 #endif
 
+#ifdef DEBUG_HOTKEYS
+#include "printf.h"
+#endif
+
+#define DEBUG_HOTKEY_1 '!'
+#define DEBUG_HOTKEY_2 '@'
+
 
 /* global variables */
 
@@ -82,6 +89,16 @@ void uart_i_process(void)
         
 #ifdef DEBUG_0
         printf("UART i-process: read %c\n\r", g_char_in);
+#endif
+        
+#ifdef DEBUG_HOTKEYS
+        
+        if (g_char_in == DEBUG_HOTKEY_1) {
+            k_print_ready_queue();
+        } else if (g_char_in == DEBUG_HOTKEY_2) {
+            k_print_blocked_on_memory_queue();
+        }
+        
 #endif
         
         if (g_char_in != '\r') {
