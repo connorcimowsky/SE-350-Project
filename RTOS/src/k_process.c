@@ -114,7 +114,7 @@ int k_release_processor(void)
     }
     
     /* only check the priority of the next process if the current process is not blocked */
-    if (gp_current_process->m_state != BLOCKED_ON_RESOURCE && gp_current_process->m_state != WAITING_FOR_MESSAGE) {
+    if (gp_current_process->m_state != BLOCKED_ON_MEMORY && gp_current_process->m_state != WAITING_FOR_MESSAGE) {
         /* if the next process is of lesser importance, do nothing */
         if (p_next_pcb->m_priority > gp_current_process->m_priority) {
             return RTOS_OK;
@@ -188,7 +188,7 @@ int k_set_process_priority(int pid, int priority)
                 }
             }
             break;
-        case BLOCKED_ON_RESOURCE:
+        case BLOCKED_ON_MEMORY:
             /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
             if (remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
                 p_pcb->m_priority = (PRIORITY_E)priority;
@@ -347,8 +347,8 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* only enqueue in the ready queue if executing */
                     p_pcb_old->m_state = READY;
                     k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RESOURCE) {
-                    /* don't add a process to the ready queue if it is already in the blocked queue */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
                 } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
                     /* don't add a process to the ready queue if it is waiting for a message */
                 }
@@ -373,8 +373,8 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* only enqueue in the ready queue if executing */
                     p_pcb_old->m_state = READY;
                     k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RESOURCE) {
-                    /* don't add a process to the ready queue if it is already in the blocked queue */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
                 } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
                     /* don't add a process to the ready queue if it is waiting for a message */
                 }
@@ -430,7 +430,7 @@ int k_enqueue_blocked_process(k_pcb_t *p_pcb)
         return RTOS_ERR;
     }
     
-    p_pcb->m_state = BLOCKED_ON_RESOURCE;
+    p_pcb->m_state = BLOCKED_ON_MEMORY;
     
     /* retrieve a pointer to the blocked-on-memory queue corresponding to the priority of the process */
     p_blocked_queue = gp_blocked_on_memory_queue[p_pcb->m_priority];
