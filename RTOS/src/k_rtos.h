@@ -24,7 +24,7 @@
 #define INPUT_BUFFER_SIZE (BLOCK_SIZE - MSG_HEADER_OFFSET)
 
 /* the number of logged messages stored in the circular message logs */
-#define MSG_LOG_SIZE 10
+#define MSG_LOG_SIZE 4
 
 /* the number of characters stored by message log entries */
 #define MSG_LOG_LEN 16
