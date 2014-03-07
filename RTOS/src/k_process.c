@@ -295,12 +295,12 @@ void *k_receive_message(int *p_sender_pid)
     
     g_cur_received_msg_log_index = (g_cur_received_msg_log_index + 1) % MSG_LOG_SIZE;
     
+#endif /* DEBUG_HOTKEYS */
+    
     if (p_sender_pid != NULL) {
         /* only write into the return address if one was provided */
         *p_sender_pid = p_msg->m_sender_pid;
     }
-    
-#endif /* DEBUG_HOTKEYS */
     
     p_increment = (U8 *)p_msg;
     p_increment += MSG_HEADER_OFFSET;
