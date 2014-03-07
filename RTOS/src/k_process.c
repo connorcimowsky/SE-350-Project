@@ -544,4 +544,26 @@ void k_print_blocked_on_memory_queue(void)
     printf("\n\r");
 }
 
+void k_print_blocked_on_receive_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** BLOCKED-ON-RECEIVE QUEUE ***\n\r");
+    
+    /* iterate through the blocked-on-receive queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_blocked_on_receive_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
 #endif /* DEBUG_HOTKEYS */
