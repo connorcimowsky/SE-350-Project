@@ -113,6 +113,9 @@ extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 /* array of queues for processes that are BLOCKED_ON_MEMORY, one for each priority */
 extern k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 
+/* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
+extern k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+
 /* the registry of keyboard command entries */
 extern k_list_t g_kcd_reg;
 

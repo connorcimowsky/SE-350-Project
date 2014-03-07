@@ -15,6 +15,7 @@ k_pcb_t **gp_pcbs = NULL;
 k_pcb_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
 k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
 
 
 void process_init(void) 

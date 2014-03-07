@@ -54,6 +54,15 @@ void memory_init(void)
         p_end += sizeof(k_queue_t);
     }
     
+    /* create the blocked-on-receive queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        gp_blocked_on_receive_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_receive_queue[i]->mp_first = NULL;
+        gp_blocked_on_receive_queue[i]->mp_last = NULL;
+        
+        p_end += sizeof(k_queue_t);
+    }
+    
     /* prepare for alloc_stack() by ensuring 8-byte alignment */
     gp_stack = (U32 *)RAM_END_ADDR;
     if ((U32)gp_stack & 0x04) {
