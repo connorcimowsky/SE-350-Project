@@ -70,6 +70,8 @@ typedef struct k_msg_t {
     U32 m_expiry;
     U32 m_sender_pid;
     U32 m_recipient_pid;
+    MSG_TYPE_E m_type;
+    char m_data[1];
 } k_msg_t;
 
 
