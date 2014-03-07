@@ -105,7 +105,9 @@ void uart_i_process(void)
 #endif
         
         if (g_char_in != '\r') {
-            g_input_buffer[g_input_buffer_index++] = g_char_in;
+            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3)) {
+                g_input_buffer[g_input_buffer_index++] = g_char_in;
+            }
         } else {
             g_input_buffer[g_input_buffer_index++] = '\0';
             
