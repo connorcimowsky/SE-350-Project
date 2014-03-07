@@ -4,8 +4,8 @@
 #include "rtos.h"
 
 
-/* external functions */
-extern PROC_INIT g_test_procs[NUM_TEST_PROCS];  /* process initialization table */
+/* external variables */
+extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
 
 /* populate the table of test processes */
