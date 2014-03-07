@@ -1,6 +1,6 @@
 #include "k_memory.h"
 #include "k_process.h"
-#include "k_proc.h"
+#include "k_system_proc.h"
 
 #ifdef DEBUG_1
 #include "printf.h"

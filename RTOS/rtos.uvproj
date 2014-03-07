@@ -537,14 +537,24 @@
               <FilePath>.\src\k_process.c</FilePath>
             </File>
             <File>
-              <FileName>k_proc.h</FileName>
+              <FileName>k_system_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_proc.h</FilePath>
+              <FilePath>.\src\k_system_proc.h</FilePath>
             </File>
             <File>
-              <FileName>k_proc.c</FileName>
+              <FileName>k_system_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_proc.c</FilePath>
+              <FilePath>.\src\k_system_proc.c</FilePath>
+            </File>
+            <File>
+              <FileName>k_usr_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_usr_proc.h</FilePath>
+            </File>
+            <File>
+              <FileName>k_usr_proc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\k_usr_proc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -552,14 +562,14 @@
           <GroupName>User Code</GroupName>
           <Files>
             <File>
-              <FileName>usr_proc.h</FileName>
+              <FileName>usr_test_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\usr_proc.h</FilePath>
+              <FilePath>.\src\usr_test_proc.h</FilePath>
             </File>
             <File>
-              <FileName>usr_proc.c</FileName>
+              <FileName>usr_test_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\usr_proc.c</FilePath>
+              <FilePath>.\src\usr_test_proc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1096,14 +1106,24 @@
               <FilePath>.\src\k_process.c</FilePath>
             </File>
             <File>
-              <FileName>k_proc.h</FileName>
+              <FileName>k_system_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\k_proc.h</FilePath>
+              <FilePath>.\src\k_system_proc.h</FilePath>
             </File>
             <File>
-              <FileName>k_proc.c</FileName>
+              <FileName>k_system_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\k_proc.c</FilePath>
+              <FilePath>.\src\k_system_proc.c</FilePath>
+            </File>
+            <File>
+              <FileName>k_usr_proc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\k_usr_proc.h</FilePath>
+            </File>
+            <File>
+              <FileName>k_usr_proc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\k_usr_proc.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1111,14 +1131,14 @@
           <GroupName>User Code</GroupName>
           <Files>
             <File>
-              <FileName>usr_proc.h</FileName>
+              <FileName>usr_test_proc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\src\usr_proc.h</FilePath>
+              <FilePath>.\src\usr_test_proc.h</FilePath>
             </File>
             <File>
-              <FileName>usr_proc.c</FileName>
+              <FileName>usr_test_proc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\usr_proc.c</FilePath>
+              <FilePath>.\src\usr_test_proc.c</FilePath>
             </File>
           </Files>
         </Group>

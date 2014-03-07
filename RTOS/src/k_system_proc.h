@@ -1,5 +1,5 @@
-#ifndef K_PROC_H
-#define K_PROC_H
+#ifndef K_SYSTEM_PROC_H
+#define K_SYSTEM_PROC_H
 
 #include "k_queue.h"
 
@@ -25,4 +25,4 @@ void kcd_proc(void);
 void crt_proc(void);
 
 
-#endif /* K_PROC_H */
+#endif /* K_SYSTEM_PROC_H */

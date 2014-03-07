@@ -1,5 +1,5 @@
-#ifndef USR_PROC_H
-#define USR_PROC_H
+#ifndef USR_TEST_PROC_H
+#define USR_TEST_PROC_H
 
 #include "rtos.h"
 
@@ -19,8 +19,5 @@ void proc4(void);
 void proc5(void);
 void proc6(void);
 
-/* wall clock process */
-void wall_clock_proc(void);
 
-
-#endif /* USR_PROC_H */
+#endif /* USR_TEST_PROC_H */

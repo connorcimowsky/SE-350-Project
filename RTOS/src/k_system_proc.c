@@ -1,7 +1,7 @@
 #include <LPC17xx.h>
 #include "uart_irq.h"
 #include "string.h"
-#include "k_proc.h"
+#include "k_system_proc.h"
 #include "k_rtos.h"
 #include "k_memory.h"
 #include "k_process.h"

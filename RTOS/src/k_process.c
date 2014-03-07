@@ -1,8 +1,9 @@
 #include <LPC17xx.h>
 
 #include "k_process.h"
-#include "k_proc.h"
-#include "usr_proc.h"
+#include "k_system_proc.h"
+#include "k_usr_proc.h"
+#include "usr_test_proc.h"
 
 #ifdef DEBUG_HOTKEYS
 #include "printf.h"
