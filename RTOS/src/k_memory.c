@@ -139,7 +139,7 @@ void *k_request_memory_block(void)
 #endif
         
         /* add the calling process to the blocked queue and yield the processor */
-        if (k_enqueue_blocked_process(gp_current_process) == RTOS_OK) {
+        if (k_enqueue_blocked_on_memory_process(gp_current_process) == RTOS_OK) {
             k_release_processor();
         }
     }
@@ -161,7 +161,7 @@ int k_release_memory_block(void *p_mem_blk)
 {
     if (k_release_memory_block_helper(p_mem_blk) == RTOS_OK) {
         /* attempt to dequeue the next available process from the blocked queue */
-        k_pcb_t *p_blocked_pcb = k_dequeue_blocked_process();
+        k_pcb_t *p_blocked_pcb = k_dequeue_blocked_on_memory_process();
         
         /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
         if (p_blocked_pcb != NULL) {

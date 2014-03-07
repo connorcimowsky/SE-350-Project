@@ -192,7 +192,7 @@ int k_set_process_priority(int pid, int priority)
             /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
             if (remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
                 p_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_blocked_process(p_pcb) == RTOS_ERR) {
+                if (k_enqueue_blocked_on_memory_process(p_pcb) == RTOS_ERR) {
                     return RTOS_ERR;
                 }
             }
@@ -422,9 +422,9 @@ k_pcb_t *k_dequeue_ready_process(void)
     return p_pcb;
 }
 
-int k_enqueue_blocked_process(k_pcb_t *p_pcb)
+int k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
 {
-    k_queue_t *p_blocked_queue = NULL;
+    k_queue_t *p_blocked_on_memory_queue = NULL;
     
     if (p_pcb == NULL) {
         return RTOS_ERR;
@@ -433,18 +433,18 @@ int k_enqueue_blocked_process(k_pcb_t *p_pcb)
     p_pcb->m_state = BLOCKED_ON_MEMORY;
     
     /* retrieve a pointer to the blocked-on-memory queue corresponding to the priority of the process */
-    p_blocked_queue = gp_blocked_on_memory_queue[p_pcb->m_priority];
+    p_blocked_on_memory_queue = gp_blocked_on_memory_queue[p_pcb->m_priority];
     
-    if (!is_queue_empty(p_blocked_queue) && queue_contains_node(p_blocked_queue, (k_node_t *)p_pcb)) {
-        /* the node is already contained in the blocked queue, so do not add it again */
+    if (!is_queue_empty(p_blocked_on_memory_queue) && queue_contains_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb)) {
+        /* the node is already contained in the blocked-on-memory queue, so do not add it again */
         return RTOS_OK;
     }
     
-    /* enqueue the PCB in the blocked queue */
-    return (enqueue_node(p_blocked_queue, (k_node_t *)p_pcb));
+    /* enqueue the PCB in the blocked-on-memory queue */
+    return (enqueue_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb));
 }
 
-k_pcb_t* k_dequeue_blocked_process(void)
+k_pcb_t* k_dequeue_blocked_on_memory_process(void)
 {
     int i;
     k_pcb_t *p_pcb = NULL;

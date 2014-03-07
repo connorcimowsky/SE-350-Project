@@ -48,11 +48,11 @@ int k_enqueue_ready_process(k_pcb_t *p_pcb);
 /* dequeue the highest-priority process from the ready queue */
 k_pcb_t *k_dequeue_ready_process(void);
 
-/* set the state of p_pcb to BLOCKED_ON_RESOURCE and enqueue it in the blocked queue */
-int k_enqueue_blocked_process(k_pcb_t *p_pcb);
+/* set the state of p_pcb to BLOCKED_ON_MEMORY and enqueue it in the blocked-on-memory queue */
+int k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb);
 
-/* dequeue the next available process from the blocked queue */
-k_pcb_t *k_dequeue_blocked_process(void);
+/* dequeue the next available process from the blocked-on-memory queue */
+k_pcb_t *k_dequeue_blocked_on_memory_process(void);
 
 #ifdef DEBUG_HOTKEYS
 

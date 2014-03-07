@@ -149,9 +149,9 @@ void uart_i_process(void)
             k_release_memory_block_helper(gp_cur_msg);
             gp_cur_msg = NULL;
             
-            p_blocked_pcb = k_dequeue_blocked_process();
+            p_blocked_pcb = k_dequeue_blocked_on_memory_process();
             
-            /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
+            /* if there is a blocked-on-memory process, set its state to READY and enqueue it in the ready queue */
             if (p_blocked_pcb != NULL) {
                 p_blocked_pcb->m_state = READY;
                 if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
