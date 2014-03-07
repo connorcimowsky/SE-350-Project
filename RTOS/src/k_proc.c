@@ -248,16 +248,16 @@ void kcd_proc(void)
         if (p_msg->m_type == MSG_TYPE_KCD_REG) {
             
             /* pick the next unused entry from the registry */
-            k_kcd_reg_t *reg = (k_kcd_reg_t *)g_kcd_reg.mp_first;
-            while (reg != NULL && reg->m_active == 1) {
-                reg = reg->mp_next;
+            k_kcd_reg_t *p_reg = (k_kcd_reg_t *)g_kcd_reg.mp_first;
+            while (p_reg != NULL && p_reg->m_active == 1) {
+                p_reg = p_reg->mp_next;
             }
             
             /* if available, populate the fields of the registry entry */
-            if (reg->m_active == 0) {
-                str_cpy(p_msg->m_data, reg->m_id);
-                reg->m_pid = sender;
-                reg->m_active = 1;
+            if (p_reg->m_active == 0) {
+                str_cpy(p_msg->m_data, p_reg->m_id);
+                p_reg->m_pid = sender;
+                p_reg->m_active = 1;
             }
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
