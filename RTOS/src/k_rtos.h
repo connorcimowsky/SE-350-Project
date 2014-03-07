@@ -76,7 +76,7 @@ typedef struct k_msg_t {
 
 
 /* size of message envelope header */
-#define MSG_HEADER_OFFSET sizeof(k_msg_t)
+#define MSG_HEADER_OFFSET (sizeof(k_msg_t) - sizeof(msg_t))
 
 
 /* keyboard command registry entry */
