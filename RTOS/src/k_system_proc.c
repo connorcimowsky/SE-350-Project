@@ -87,8 +87,9 @@ void uart_i_process(void)
     IIR_IntId = ((pUart->IIR) >> 1);
     
     if (IIR_IntId & IIR_RDA) {
+        /* a character has been entered */
         
-        /* reading RBR will clear the interrupt */
+        /* read the character from the receiver buffer register and acknowledge the interrupt */
         g_char_in = pUart->RBR;
         
         pUart->THR = g_char_in;
@@ -145,12 +146,14 @@ void uart_i_process(void)
         }
         
     } else if (IIR_IntId & IIR_THRE) {
+        /* a character is ready to be transmitted */
         
         if (gp_cur_msg == NULL) {
             gp_cur_msg = k_non_blocking_receive_message(PID_UART_IPROC);
         }
         
         if (gp_cur_msg->m_data[g_output_buffer_index] != '\0' ) {
+            /* write the character to the transmit holding register if non-null */
         
 #ifdef DEBUG_1
             printf("UART i-process: writing %c\n\r", gp_cur_msg->m_data[g_output_buffer_index]);
@@ -161,6 +164,8 @@ void uart_i_process(void)
             g_output_buffer_index++;
             
         } else {
+            /* otherwise, clear the current message being displayed and toggle the transmit holding register empty bit */
+            
             k_pcb_t *p_blocked_pcb;
             
             if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
