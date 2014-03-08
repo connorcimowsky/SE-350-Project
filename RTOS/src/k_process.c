@@ -337,10 +337,10 @@ void *k_non_blocking_receive_message(int pid)
     if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
         k_msg_t *p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
         
-        U8 *p_decrement = (U8 *)p_msg;
-        p_decrement += MSG_HEADER_OFFSET;
+        U8 *p_increment = (U8 *)p_msg;
+        p_increment += MSG_HEADER_OFFSET;
         
-        return (void *)p_decrement;
+        return (void *)p_increment;
     } else {
         return NULL;
     }
