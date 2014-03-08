@@ -289,7 +289,7 @@ void kcd_proc(void)
             /* we have received a keyboard command */
             
             int i = 0;
-            k_kcd_reg_t *p_iter = NULL;
+            k_kcd_reg_t *p_kcd_reg_iter = NULL;
             msg_t *p_msg_display = (msg_t *)request_memory_block();
             int msg_str_len;
             
@@ -303,14 +303,14 @@ void kcd_proc(void)
             }
             
             /* iterate through the keyboard command registry to see if the entered command has been registered */
-            p_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
-            while (p_iter != NULL) {
+            p_kcd_reg_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
+            while (p_kcd_reg_iter != NULL) {
                 
-                if (p_iter->m_active == 1 && str_cmp(p_iter->m_id, keyboard_command_identifier)) {
+                if (p_kcd_reg_iter->m_active == 1 && str_cmp(p_kcd_reg_iter->m_id, keyboard_command_identifier)) {
                     break;
                 }
                 
-                p_iter = p_iter->mp_next;
+                p_kcd_reg_iter = p_kcd_reg_iter->mp_next;
             }
             
             /* copy the input buffer into the output message */
@@ -327,12 +327,12 @@ void kcd_proc(void)
             send_message(PID_CRT, p_msg_display);
             
             /* only dispatch the command if a registry entry was found */
-            if (p_iter != NULL) {
+            if (p_kcd_reg_iter != NULL) {
                 msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
                 p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
                 str_cpy(p_msg->m_data, p_msg_dispatch->m_data);
                 
-                send_message(p_iter->m_pid, p_msg_dispatch);
+                send_message(p_kcd_reg_iter->m_pid, p_msg_dispatch);
             }
             
         }
