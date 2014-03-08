@@ -175,8 +175,13 @@ int k_set_process_priority(int pid, int priority)
         return RTOS_ERR;
     }
     
-    if (pid == 0 || priority == LOWEST) {
-        /* these values are reserved for the null process */
+    if (pid == PID_NULL || pid == PID_KCD || pid == PID_CRT) {
+        /* disallow changing the priorities of system processes */
+        return RTOS_ERR;
+    }
+    
+    if (priority == LOWEST) {
+        /* this priority is reserved for the null process */
         return RTOS_ERR;
     }
     
