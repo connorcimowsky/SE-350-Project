@@ -278,7 +278,7 @@ void kcd_proc(void)
             }
             
             /* if available, populate the fields of the registry entry */
-            if (p_reg->m_active == 0) {
+            if (p_reg != NULL && p_reg->m_active == 0) {
                 str_cpy(p_msg->m_data, p_reg->m_id);
                 p_reg->m_pid = sender;
                 p_reg->m_active = 1;
