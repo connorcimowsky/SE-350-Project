@@ -249,7 +249,11 @@ void timer_i_process(void)
         }
     }
     
-    g_timer_count++;
+#ifdef DEBUG_TIMER
+    g_timer_count += 35;
+#else
+    g_timer_count += 1;
+#endif
     
     __enable_irq();
 }
