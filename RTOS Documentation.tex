@@ -1,11 +1,19 @@
 \documentclass[12pt]{report}
 
-\usepackage{listings}
-\usepackage{courier}
-\usepackage{underscore}
-\usepackage{authblk}
+\usepackage{
+    courier,
+    listings,
+    underscore,
+    authblk,
+    hyperref
+}
 
-\lstset{basicstyle=\ttfamily,breaklines=true,aboveskip=20pt,belowskip=20pt}
+\lstset{
+    basicstyle=\ttfamily,
+    breaklines=true,
+    aboveskip=20pt,
+    belowskip=20pt,
+}
 
 \begin{document}
 
@@ -27,93 +35,149 @@
 
 \maketitle
 
+\tableofcontents
+
 \part{Design Description}
 
-\chapter{Structure}
+\chapter{Structural Overview}
 
-\section{Initialization}
+\section{Operating System Initialization}
 
 \subsection{Memory Initialization}
 
-Lorem ipsum.
+After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
 \subsection{Process Initialization}
 
-Lorem ipsum.
+Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform two tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID), priority, and so on. Next, we allocate an exception stack frame for each process and store the resulting stack pointer in the PCB. At this point, our operating system is ready to begin scheduling processes.
 
 \section{Memory Management}
 
 \subsection{Heap Data Structure}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Generic linked list ADT; uses generic node type
+    \item Nodes represent memory blocks
+    \item Spaced apart at \texttt{BLOCK_SIZE} intervals
+\end{itemize}
 
 \subsection{Requesting Memory Blocks}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Place in the blocked-on-memory queue if necessary
+    \item Push block back onto the heap
+\end{itemize}
 
 \subsection{Releasing Memory Blocks}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Bounds checking, over-release checking
+    \item Pop the front of the linked list
+    \item If a process was blocked, dequeue from blocked-on-memory queue and enqueue in ready queue; release the processor to preempt the caller if necessary
+\end{itemize}
 
 \section{Process Management}
 
 \subsection{Process Control Structures}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Process control blocks
+    \item Queue ADT; also uses generic node type
+    \item Ready queue (one for each priority)
+    \item Blocked-on-memory queue (one for each priority)
+    \item Blocked-on-receive queue (one for each priority)
+\end{itemize}
 
 \subsection{Releasing the Processor}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Invoke the scheduler; iterate through ready queues in order of priority, and through each ready queue in FIFO (round-robin) order
+    \item If the chosen process is of lesser priority, do nothing
+    \item Save the context of the current process (set PCB's stack pointer to current stack pointer)
+    \item Restore the context of the new process (set stack pointer to PCB's stack pointer)
+\end{itemize}
 
 \subsection{Process Priority}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Each PCB has a priority for scheduling and preemption purposes
+    \item When changing the priority, move it to the process control queue for its new priority (if currently in a queue), then release the processor to preempt the caller if necessary
+\end{itemize}
 
 \subsection{Interprocess Communication}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Message envelope fields; hide kernel plumbing from the user
+    \item Each PCB has a `mailbox' --- queue of messages
+    \item Highlight how our generic queue ADT came in handy
+    \item Sending a message: fill in the kernel-facing portion of the provided envelope; enqueue it in the recipient's message queue; if the recipient is blocked, dequeue from the blocked-on-receive queue, enqueue in the ready queue, release processor to preempt the sender if necessary
+    \item Delayed message sending: fill in the kernel-facing portion of the provided envelope, including an expiration time; enqueue the envelope in the timer i-Process's message queue
+    \item Receiving a message: if the caller's message queue is empty, place it in the blocked-on-receive queue and release the processor; otherwise, dequeue the next message from its message queue and return it
+\end{itemize}
 
 \section{System Processes}
 
 \subsection{Null Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item The processor always needs to be doing something
+    \item Null process acts as a fail-safe for situations where all other processes are blocked
+    \item Releases the processor in an infinite loop
+\end{itemize}
 
 \subsection{KCD Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item For Connor
+\end{itemize}
 
 \subsection{CRT Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item For Connor
+\end{itemize}
 
 \section{Interrupt Processes}
 
 \subsection{Timer I-Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Executed by the timer interrupt handler each time a hardware timer interrupt occurs (once per millisecond)
+    \item Maintains a global counter to keep track of system time
+    \item Enables delayed message sending
+    \item Places received messages in a special queue called the timeout queue, maintaining sorted order with respect to message expiration time
+    \item When messages in the timeout queue have passed their expiration time, dispatch them to the recipient's message queue and preempt the current process if necessary
+\end{itemize}
 
 \subsection{UART I-Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item For Connor
+\end{itemize}
 
 \section{User Processes}
 
 \subsection{Wall Clock Process}
 
-Lorem ipsum.
+\begin{itemize}
+    \item Makes use of the delayed message dispatching services provided by the timer i-process to display a digital clock
+    \item Registers itself with the KCD process to handle commands for setting the time, resetting the time, and stopping the clock
+\end{itemize}
 
 \subsection{Test Processes}
 
-Lorem ipsum.
+\begin{itemize}
+    \item We use six user-level test processes to ensure correct behavior of our operating system
+    \item They call user-facing kernel APIs and use global variables to coordinate tests with each other and to keep track of test results
+\end{itemize}
 
 \chapter{Procedures}
 
-Lorem ipsum.
+To be written later.
 
 \chapter{Implementation and Testing}
 
-Lorem ipsum.
+To be written later.
 
 \part{Time Measurements}
 
