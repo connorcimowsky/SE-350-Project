@@ -310,10 +310,10 @@ void proc4(void)
     }
     
 #ifdef DEBUG_0
-    printf("G019_test: %d/%d tests OK\n", num_successes, 6);
-    printf("G019_test: %d/%d tests FAIL\n", (6 - num_successes), 6);
+    printf("G019_test: %d/%d tests OK\n\r", num_successes, 6);
+    printf("G019_test: %d/%d tests FAIL\n\r", (6 - num_successes), 6);
     
-    printf("G019_test: END\n");
+    printf("G019_test: END\n\r");
 #endif
     
     
