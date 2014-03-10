@@ -61,7 +61,7 @@ void wall_clock_proc(void)
                 
                 /* display the current time */
                 p_display_msg->m_type = MSG_TYPE_CRT_DISP;
-                sprintf(p_display_msg->m_data, "%02d:%02d:%02d\n\r", h, m, s);
+                sprintf(p_display_msg->m_data, "%c[s%c[%dA%c[%dC%c[%dD%c[36;1m%02d%c[37m:%c[36;1m%02d%c[37m:%c[36;1m%02d%c[u%c[0m", 0x1B, 0x1B, 2000, 0x1B, 2000, 0x1B, 7, 0x1B, h, 0x1B, 0x1B, m, 0x1B, 0x1B, s, 0x1B, 0x1B);
                 send_message(PID_CRT, p_display_msg);
                 
                 /* update the clock 1 second from now */
