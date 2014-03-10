@@ -11,7 +11,7 @@ int enqueue_node(k_queue_t *p_queue, k_node_t *p_node)
     if (p_queue == NULL || p_node == NULL) {
     
 #ifdef DEBUG_1
-        printf("Node insertion error.\n");
+        printf("Node insertion error.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -38,7 +38,7 @@ int queue_sorted_insert(k_queue_t *p_queue, k_node_t *p_node)
     if (p_queue == NULL || p_node == NULL) {
         
 #ifdef DEBUG_1
-        printf("Sorted node insertion error.\n");
+        printf("Sorted node insertion error.\n\r");
 #endif
         
         return RTOS_ERR;
@@ -82,7 +82,7 @@ k_node_t *queue_peek(k_queue_t *p_queue)
     if (is_queue_empty(p_queue)) {
     
 #ifdef DEBUG_1
-        printf("Attempted to peek at an empty queue.\n");
+        printf("Attempted to peek at an empty queue.\n\r");
 #endif
     
         return NULL;
@@ -98,7 +98,7 @@ k_node_t *dequeue_node(k_queue_t *p_queue)
     if (is_queue_empty(p_queue)) {
     
 #ifdef DEBUG_1
-        printf("Attempted to dequeue a node from an empty queue.\n");
+        printf("Attempted to dequeue a node from an empty queue.\n\r");
 #endif
     
         return NULL;
@@ -124,7 +124,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
     if (is_queue_empty(p_queue)) {
     
 #ifdef DEBUG_1
-        printf("Attempted to remove a node from an empty queue.\n");
+        printf("Attempted to remove a node from an empty queue.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -156,7 +156,7 @@ int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node)
     }
     
 #ifdef DEBUG_1
-        printf("Node not found.\n");
+        printf("Node not found.\n\r");
 #endif
     
     return RTOS_ERR;
@@ -169,7 +169,7 @@ int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node)
     if (is_queue_empty(p_queue)) {
     
 #ifdef DEBUG_1
-        printf("Attempted to check node membership for an empty queue.\n");
+        printf("Attempted to check node membership for an empty queue.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -191,7 +191,7 @@ int is_queue_empty(k_queue_t *p_queue)
     if (p_queue == NULL) {
     
 #ifdef DEBUG_1
-        printf("Attempted to check if a NULL queue was empty.\n");
+        printf("Attempted to check if a NULL queue was empty.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -211,10 +211,10 @@ int print_queue(k_queue_t *p_queue)
     }
     
     p_iter = p_queue->mp_first;
-    printf("queue: 0x%x\n\tfirst:0x%x\n\tlast:0x%x\n", p_queue, p_queue->mp_first, p_queue->mp_last);
-    printf("nodes:\n");
+    printf("queue: 0x%x\n\r\tfirst:0x%x\n\r\tlast:0x%x\n\r", p_queue, p_queue->mp_first, p_queue->mp_last);
+    printf("nodes:\n\r");
     while (p_iter != NULL) {
-        printf("\t0x%x, next: 0x%x\n", p_iter, p_iter->mp_next);
+        printf("\t0x%x, next: 0x%x\n\r", p_iter, p_iter->mp_next);
         p_iter = p_iter->mp_next;
     }
     

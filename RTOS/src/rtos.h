@@ -9,7 +9,6 @@
 
 #define NULL 0
 #define NUM_TEST_PROCS 6
-#define NUM_PROCS (NUM_TEST_PROCS + 1)
 
 #ifdef DEBUG_0
 #define USR_SZ_STACK 0x200 /* 512 bytes */
@@ -21,6 +20,28 @@
 /* integer types */
 typedef unsigned char U8;
 typedef unsigned int U32;
+
+
+/* process identifiers */
+typedef enum {
+    PID_NULL = 0,
+    PID_P1,
+    PID_P2,
+    PID_P3,
+    PID_P4,
+    PID_P5,
+    PID_P6,
+    PID_A,
+    PID_B,
+    PID_C,
+    PID_SET_PRIO,
+    PID_CLOCK,
+    PID_KCD,
+    PID_CRT,
+    PID_TIMER_IPROC,
+    PID_UART_IPROC,
+    NUM_PROCS
+} PID_E;
 
 
 /* process priority */
@@ -53,15 +74,18 @@ typedef struct proc_init
 
 /* message type */
 typedef enum {
-    DEFAULT = 0,
-    KCD_REG
+    MSG_TYPE_DEFAULT = 0,
+    MSG_TYPE_KCD_REG,
+    MSG_TYPE_KCD_DISPATCH,
+    MSG_TYPE_CRT_DISP,
+    MSG_TYPE_WALL_CLK_TICK
 } MSG_TYPE_E;
 
 
 /* user-facing message envelope */
 typedef struct msg_t {
     MSG_TYPE_E m_type;
-    char *mp_data;
+    char m_data[1];
 } msg_t;
 
 
@@ -100,6 +124,14 @@ extern int __SVC_0 _send_message(U32 p_func, int recipient_pid, void *p_msg);
 extern void *k_receive_message(int *);
 #define receive_message(p_sender_pid) _receive_message((U32)k_receive_message, p_sender_pid)
 extern void *_receive_message(U32 p_func, int *p_sender_pid) __SVC_0;
+
+extern int k_delayed_send(int, void *, int);
+#define delayed_send(recipient_pid, p_msg, delay) _delayed_send((U32)k_delayed_send, recipient_pid, p_msg, delay)
+extern int __SVC_0 _delayed_send(U32 p_func, int recipient_pid, void *p_msg, int delay);
+
+extern U32 k_get_system_time(void);
+#define get_system_time() _get_system_time((U32)k_get_system_time)
+extern U32 __SVC_0 _get_system_time(U32 p_func);
 
 
 #endif /* RTOS_H */

@@ -13,8 +13,11 @@ U32 *alloc_stack(U32 size_b);
 /* request a pointer to the next available memory block */
 void *k_request_memory_block(void);
 
-/* return p_mem_blk to the heap */
+/* return p_mem_blk to the heap and yield the processor if necessary */
 int k_release_memory_block(void *p_mem_blk);
+
+/* return p_mem_blk to the heap */
+int k_release_memory_block_helper(void *p_mem_blk);
 
 
 #endif /* K_MEM_H */

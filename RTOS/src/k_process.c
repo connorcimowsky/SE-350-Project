@@ -1,8 +1,13 @@
 #include <LPC17xx.h>
 
 #include "k_process.h"
-#include "k_proc.h"
-#include "usr_proc.h"
+#include "k_system_proc.h"
+#include "k_usr_proc.h"
+#include "usr_test_proc.h"
+
+#ifdef DEBUG_HOTKEYS
+#include "printf.h"
+#endif
 
 
 /* global variables */
@@ -10,7 +15,17 @@ PROC_INIT g_proc_table[NUM_PROCS];
 k_pcb_t **gp_pcbs = NULL;
 k_pcb_t *gp_current_process = NULL;
 k_queue_t *gp_ready_queue[NUM_PRIORITIES];
-k_queue_t *gp_blocked_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+
+#ifdef DEBUG_HOTKEYS
+
+k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
+int g_cur_sent_msg_log_index = 0;
+k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
+int g_cur_received_msg_log_index = 0;
+
+#endif /* DEBUG_HOTKEYS */
 
 
 void process_init(void) 
@@ -19,11 +34,11 @@ void process_init(void)
     U32 *p_sp;
     
     /* configure the null process */
-    g_proc_table[NULL_PROC_PID].m_pid = NULL_PROC_PID;
-    g_proc_table[NULL_PROC_PID].m_priority = LOWEST;
-    g_proc_table[NULL_PROC_PID].m_stack_size = USR_SZ_STACK;
-    g_proc_table[NULL_PROC_PID].mpf_start_pc = &null_process;
-    enqueue_node(gp_ready_queue[LOWEST], (k_node_t *)gp_pcbs[NULL_PROC_PID]);
+    g_proc_table[PID_NULL].m_pid = PID_NULL;
+    g_proc_table[PID_NULL].m_priority = LOWEST;
+    g_proc_table[PID_NULL].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_NULL].mpf_start_pc = &null_process;
+    enqueue_node(gp_ready_queue[LOWEST], (k_node_t *)gp_pcbs[PID_NULL]);
     
     /* populate the test process table */
     set_test_procs();
@@ -41,7 +56,40 @@ void process_init(void)
         /* add the PCB corresponding to this process to the ready queue */
         enqueue_node(p_queue, (k_node_t *)gp_pcbs[i + 1]);
     }
-  
+    
+    /* configure the timer i-process */
+    g_proc_table[PID_TIMER_IPROC].m_pid = PID_TIMER_IPROC;
+    g_proc_table[PID_TIMER_IPROC].m_priority = HIGHEST;
+    g_proc_table[PID_TIMER_IPROC].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_TIMER_IPROC].mpf_start_pc = &timer_i_process;
+    
+    /* configure the UART i-process */
+    g_proc_table[PID_UART_IPROC].m_pid = PID_UART_IPROC;
+    g_proc_table[PID_UART_IPROC].m_priority = HIGHEST;
+    g_proc_table[PID_UART_IPROC].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_UART_IPROC].mpf_start_pc = &uart_i_process;
+    
+    /* configure the KCD process */
+    g_proc_table[PID_KCD].m_pid = PID_KCD;
+    g_proc_table[PID_KCD].m_priority = HIGHEST;
+    g_proc_table[PID_KCD].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_KCD].mpf_start_pc = &kcd_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_KCD]);
+    
+    /* configure the CRT process */
+    g_proc_table[PID_CRT].m_pid = PID_CRT;
+    g_proc_table[PID_CRT].m_priority = HIGHEST;
+    g_proc_table[PID_CRT].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_CRT].mpf_start_pc = &crt_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_CRT]);
+    
+    /* configure the wall clock process */
+    g_proc_table[PID_CLOCK].m_pid = PID_CLOCK;
+    g_proc_table[PID_CLOCK].m_priority = HIGHEST;
+    g_proc_table[PID_CLOCK].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_CLOCK]);
+    
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;
@@ -77,7 +125,7 @@ int k_release_processor(void)
     }
     
     /* only check the priority of the next process if the current process is not blocked */
-    if (gp_current_process->m_state != BLOCKED_ON_RESOURCE && gp_current_process->m_state != WAITING_FOR_MESSAGE) {
+    if (gp_current_process->m_state != BLOCKED_ON_MEMORY && gp_current_process->m_state != BLOCKED_ON_RECEIVE) {
         /* if the next process is of lesser importance, do nothing */
         if (p_next_pcb->m_priority > gp_current_process->m_priority) {
             return RTOS_OK;
@@ -127,8 +175,13 @@ int k_set_process_priority(int pid, int priority)
         return RTOS_ERR;
     }
     
-    if (pid == 0 || priority == LOWEST) {
-        /* these values are reserved for the null process */
+    if (pid == PID_NULL || pid == PID_KCD || pid == PID_CRT) {
+        /* disallow changing the priorities of system processes */
+        return RTOS_ERR;
+    }
+    
+    if (priority == LOWEST) {
+        /* this priority is reserved for the null process */
         return RTOS_ERR;
     }
     
@@ -151,17 +204,24 @@ int k_set_process_priority(int pid, int priority)
                 }
             }
             break;
-        case BLOCKED_ON_RESOURCE:
-            /* dequeue the process from the blocked queue, update its priority, then re-enqueue it in the blocked queue */
-            if (remove_node_from_queue(gp_blocked_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
+        case BLOCKED_ON_MEMORY:
+            /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
+            if (remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
                 p_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_blocked_process(p_pcb) == RTOS_ERR) {
+                if (k_enqueue_blocked_on_memory_process(p_pcb) == RTOS_ERR) {
                     return RTOS_ERR;
                 }
             }
             break;
-        case WAITING_FOR_MESSAGE:
-            /* if the process is waiting for a message, then it is not in a queue; simply update its priority */
+        case BLOCKED_ON_RECEIVE:
+            /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
+            if (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
+                p_pcb->m_priority = (PRIORITY_E)priority;
+                if (k_enqueue_blocked_on_receive_process(p_pcb) == RTOS_ERR) {
+                    return RTOS_ERR;
+                }
+            }
+            break;
         case EXECUTING:
             /* if the process is executing, then it is not in a queue; simply update its priority */
         default:
@@ -187,65 +247,172 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    U8 *p_decrement = NULL;
-    k_msg_t *p_msg_envelope = NULL;
-    k_pcb_t *p_recipient_pcb = NULL;
-    int ret_val;
+    /* call the non-premptive version of k_send_message */
+    int ret_val = k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg);
     
-    /* disable interrupt requests */
-    __disable_irq();
-    
-    /* get the address of the actual message envelope */
-    p_decrement = (U8 *)p_msg;
-    p_decrement -= MSG_HEADER_OFFSET;
-    
-    p_msg_envelope = (k_msg_t *)p_decrement;
-    p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
-    p_msg_envelope->m_recipient_pid = recipient_pid;
-    
-    p_recipient_pcb = gp_pcbs[recipient_pid];
-    
-    ret_val = enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
-    
-    if (ret_val == RTOS_OK) {
-        if (p_recipient_pcb->m_state == WAITING_FOR_MESSAGE) {
-            p_recipient_pcb->m_state = READY;
-            ret_val = k_enqueue_ready_process(p_recipient_pcb);
+    if (ret_val == 1) {
+        /* only check for preemption if we unblocked the recipient (returned 1) */
+        if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
+            /* don't preempt in the case of the UART i-process */
+            if (recipient_pid != PID_UART_IPROC) {
+                return k_release_processor();
+            }
         }
+    } else {
+        return ret_val;
     }
     
-    /* enable interrupt requests */
-    __enable_irq();
-    
-    return ret_val;
+    return RTOS_OK;
 }
 
 void *k_receive_message(int *p_sender_pid)
 {
     k_msg_t *p_msg = NULL;
+    U8 *p_increment = NULL;
     
-    /* disable interrupt requests */
-    __disable_irq();
+#ifdef DEBUG_HOTKEYS
+    int i = 0;
+#endif
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
-        gp_current_process->m_state = WAITING_FOR_MESSAGE;
-        release_processor();
+        /* if there are no messages, block ourselves and yield the processor */
+        if (k_enqueue_blocked_on_receive_process(gp_current_process) == RTOS_OK) {
+            k_release_processor();
+        }
     }
     
     p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
-
-    if (p_msg != NULL) {
-        *p_sender_pid = p_msg->m_sender_pid;
-    }
-    
-    /* enable interrupt requests */
-    __enable_irq();
     
     if (p_msg == NULL) {
         return NULL;
     }
     
-    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
+#ifdef DEBUG_HOTKEYS
+    
+    /* save the message information into the received message log */
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_sender_pid = p_msg->m_sender_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_recipient_pid = p_msg->m_recipient_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_type = p_msg->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_received_msg_log[g_cur_received_msg_log_index].m_text[i] = p_msg->m_data[i];
+    }
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_received_msg_log_index = (g_cur_received_msg_log_index + 1) % MSG_LOG_SIZE;
+    
+#endif /* DEBUG_HOTKEYS */
+    
+    if (p_sender_pid != NULL) {
+        /* only write into the return address if one was provided */
+        *p_sender_pid = p_msg->m_sender_pid;
+    }
+    
+    p_increment = (U8 *)p_msg;
+    p_increment += MSG_HEADER_OFFSET;
+    
+    return (void *)p_increment;
+}
+
+int k_delayed_send(int recipient_pid, void *p_msg, int delay)
+{
+    U8 *p_decrement = NULL;
+    k_msg_t *p_msg_envelope = NULL;
+    
+    p_decrement = (U8 *)p_msg;
+    p_decrement -= MSG_HEADER_OFFSET;
+    
+    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope->m_expiry = g_timer_count + delay;
+    p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
+    p_msg_envelope->m_recipient_pid = recipient_pid;
+    
+    return enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (k_node_t *)p_msg_envelope);
+}
+
+U32 k_get_system_time(void)
+{
+    return g_timer_count;
+}
+
+void *k_non_blocking_receive_message(int pid)
+{
+    if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
+        k_msg_t *p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
+        
+        U8 *p_increment = (U8 *)p_msg;
+        p_increment += MSG_HEADER_OFFSET;
+        
+        return (void *)p_increment;
+    } else {
+        return NULL;
+    }
+}
+
+int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
+{
+    U8 *p_decrement = NULL;
+    k_msg_t *p_msg_envelope = NULL;
+    k_pcb_t *p_recipient_pcb = NULL;
+    
+#ifdef DEBUG_HOTKEYS
+    int i;
+#endif
+    
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
+        return RTOS_ERR;
+    }
+    
+#ifdef DEBUG_HOTKEYS
+    
+    /* save the message information into the sent message log */
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_sender_pid = sender_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_recipient_pid = recipient_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = ((msg_t *)p_msg)->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = ((msg_t *)p_msg)->m_data[i];
+    }
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_sent_msg_log_index = (g_cur_sent_msg_log_index + 1) % MSG_LOG_SIZE;
+    
+#endif /* DEBUG_HOTKEYS */
+    
+    p_decrement = (U8 *)p_msg;
+    p_decrement -= MSG_HEADER_OFFSET;
+    
+    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope->m_sender_pid = sender_pid;
+    p_msg_envelope->m_recipient_pid = recipient_pid;
+    
+    p_recipient_pcb = gp_pcbs[recipient_pid];
+    
+    if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope) == RTOS_OK) {
+        if (p_recipient_pcb->m_state != BLOCKED_ON_RECEIVE) {
+            /* if the recipient was not blocked, then do not unblock it */
+            return RTOS_OK;
+        } else {
+            if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
+                p_recipient_pcb->m_state = READY;
+                if (k_enqueue_ready_process(p_recipient_pcb) == RTOS_OK) {
+                    /* if the recipient was successfully removed from the blocked queue and added to the ready queue, return 1 */
+                    return 1;
+                } else {
+                    return RTOS_ERR;
+                }
+            } else {
+                return RTOS_ERR;
+            }
+        }
+    } else {
+        return RTOS_ERR;
+    }
 }
 
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
@@ -261,10 +428,10 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* only enqueue in the ready queue if executing */
                     p_pcb_old->m_state = READY;
                     k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RESOURCE) {
-                    /* don't add a process to the ready queue if it is already in the blocked queue */
-                } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
-                    /* don't add a process to the ready queue if it is waiting for a message */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-receive queue */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_old->mp_sp = (U32 *)__get_MSP();
@@ -287,10 +454,10 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
                     /* only enqueue in the ready queue if executing */
                     p_pcb_old->m_state = READY;
                     k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RESOURCE) {
-                    /* don't add a process to the ready queue if it is already in the blocked queue */
-                } else if (p_pcb_old->m_state == WAITING_FOR_MESSAGE) {
-                    /* don't add a process to the ready queue if it is waiting for a message */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
+                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
+                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
                 }
                 /* save the main stack pointer of the previous process */
                 p_pcb_old->mp_sp = (U32 *)__get_MSP();
@@ -336,40 +503,198 @@ k_pcb_t *k_dequeue_ready_process(void)
     return p_pcb;
 }
 
-int k_enqueue_blocked_process(k_pcb_t *p_pcb)
+int k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
 {
-    k_queue_t *p_blocked_queue = NULL;
+    k_queue_t *p_blocked_on_memory_queue = NULL;
     
     if (p_pcb == NULL) {
         return RTOS_ERR;
     }
     
-    p_pcb->m_state = BLOCKED_ON_RESOURCE;
+    p_pcb->m_state = BLOCKED_ON_MEMORY;
     
-    /* retrieve a pointer to the blocked queue corresponding to the priority of the process */
-    p_blocked_queue = gp_blocked_queue[p_pcb->m_priority];
+    /* retrieve a pointer to the blocked-on-memory queue corresponding to the priority of the process */
+    p_blocked_on_memory_queue = gp_blocked_on_memory_queue[p_pcb->m_priority];
     
-    if (!is_queue_empty(p_blocked_queue) && queue_contains_node(p_blocked_queue, (k_node_t *)p_pcb)) {
-        /* the node is already contained in the blocked queue, so do not add it again */
+    if (!is_queue_empty(p_blocked_on_memory_queue) && queue_contains_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb)) {
+        /* the node is already contained in the blocked-on-memory queue, so do not add it again */
         return RTOS_OK;
     }
     
-    /* enqueue the PCB in the blocked queue */
-    return (enqueue_node(p_blocked_queue, (k_node_t *)p_pcb));
+    /* enqueue the PCB in the blocked-on-memory queue */
+    return (enqueue_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb));
 }
 
-k_pcb_t* k_dequeue_blocked_process(void)
+k_pcb_t* k_dequeue_blocked_on_memory_process(void)
 {
     int i;
     k_pcb_t *p_pcb = NULL;
     
-    /* iterate through the blocked queues in priority sequence, using FIFO ordering within each queue */
+    /* iterate through the blocked-on-memory queues in priority sequence, using FIFO ordering within each queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        if (!is_queue_empty(gp_blocked_queue[i])) {
-            p_pcb = (k_pcb_t *)dequeue_node(gp_blocked_queue[i]);
+        if (!is_queue_empty(gp_blocked_on_memory_queue[i])) {
+            p_pcb = (k_pcb_t *)dequeue_node(gp_blocked_on_memory_queue[i]);
             break;
         }
     }
     
     return p_pcb;
 }
+
+int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
+{
+    k_queue_t *p_blocked_on_receive_queue = NULL;
+    
+    if (p_pcb == NULL) {
+        return RTOS_ERR;
+    }
+    
+    p_pcb->m_state = BLOCKED_ON_RECEIVE;
+    
+    /* retrieve a pointer to the blocked-on-receive queue corresponding to the priority of the process */
+    p_blocked_on_receive_queue = gp_blocked_on_receive_queue[p_pcb->m_priority];
+    
+    if (!is_queue_empty(p_blocked_on_receive_queue) && queue_contains_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb)) {
+        /* the node is already contained in the blocked-on-receive queue, so do not add it again */
+        return RTOS_OK;
+    }
+    
+    /* enqueue the PCB in the blocked-on-receive queue */
+    return (enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb));
+}
+
+int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
+{
+    return (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb));
+}
+
+#ifdef DEBUG_HOTKEYS
+
+void k_print_ready_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** READY QUEUE ***\n\r");
+    
+    /* iterate through the ready queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_ready_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
+void k_print_blocked_on_memory_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** BLOCKED-ON-MEMORY QUEUE ***\n\r");
+    
+    /* iterate through the blocked-on-memory queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_blocked_on_memory_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
+void k_print_blocked_on_receive_queue(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** BLOCKED-ON-RECEIVE QUEUE ***\n\r");
+    
+    /* iterate through the blocked-on-receive queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        k_queue_t *p_cur_queue = gp_blocked_on_receive_queue[i];
+        k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
+        
+        printf("Priority %d:\n\r", i);
+        
+        while (p_cur_pcb != NULL) {
+            printf("\tPID %d\n\r", p_cur_pcb->m_pid);
+            p_cur_pcb = p_cur_pcb->mp_next;
+        }
+    }
+    
+    printf("\n\r");
+}
+
+void k_print_msg_logs(void)
+{
+    int i;
+    
+    printf("\n\r\n\r*** SENT MESSAGE LOG ***\n\r");
+    
+    /* iterate through the sent message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        printf("\n\r");
+        printf("Message #%d:\n\r", (i + 1));
+        printf("\tSender PID: %d\n\r", g_sent_msg_log[i].m_sender_pid);
+        printf("\tRecipient PID: %d\n\r", g_sent_msg_log[i].m_recipient_pid);
+        printf("\tType: %d\n\r", g_sent_msg_log[i].m_type);
+        printf("\tText: '");
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            if (g_sent_msg_log[i].m_text[j] == '\0') {
+                break;
+            }
+            
+            if ((g_sent_msg_log[i].m_text[j] != '\n') && (g_sent_msg_log[i].m_text[j] != '\r')) {
+                printf("%c", g_sent_msg_log[i].m_text[j]);
+            }
+        }
+        
+        printf("'\n\r");
+        printf("\tTime Stamp: %d\n\r", g_sent_msg_log[i].m_time_stamp);
+    }
+    
+    printf("\n\r\n\r*** RECEIVED MESSAGE LOG ***\n\r");
+    
+    /* iterate through the received message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        printf("\n\r");
+        printf("Message #%d:\n\r", (i + 1));
+        printf("\tSender PID: %d\n\r", g_received_msg_log[i].m_sender_pid);
+        printf("\tRecipient PID: %d\n\r", g_received_msg_log[i].m_recipient_pid);
+        printf("\tType: %d\n\r", g_received_msg_log[i].m_type);
+        printf("\tText: '");
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            if (g_received_msg_log[i].m_text[j] == '\0') {
+                break;
+            }
+            
+            if ((g_received_msg_log[i].m_text[j] != '\n') && (g_received_msg_log[i].m_text[j] != '\r')) {
+                printf("%c", g_received_msg_log[i].m_text[j]);
+            }
+        }
+        
+        printf("'\n\r");
+        printf("\tTime Stamp: %d\n\r", g_received_msg_log[i].m_time_stamp);
+    }
+    
+    printf("\n\r");
+}
+
+#endif /* DEBUG_HOTKEYS */

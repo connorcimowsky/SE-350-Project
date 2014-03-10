@@ -1,0 +1,337 @@
+\documentclass[12pt]{report}
+
+\usepackage{
+    courier,
+    listings,
+    underscore,
+    authblk,
+    hyperref
+}
+
+\lstset{
+    basicstyle=\ttfamily,
+    breaklines=true,
+    aboveskip=20pt,
+    belowskip=20pt,
+}
+
+\begin{document}
+
+\title{RTOS Documentation}
+
+\author{
+    Kathleen Chung\\
+    \texttt{kklchung@uwaterloo.ca}
+    \and
+    Connor Cimowsky\\
+    \texttt{ccimowsky@uwaterloo.ca}
+    \and
+    Christian De Angelis\\
+    \texttt{cdeangel@uwaterloo.ca}
+    \and
+    Jaclyne Ooi\\
+    \texttt{jpooi@uwaterloo.ca}
+}
+
+\maketitle
+
+\tableofcontents
+
+\part{Design Description}
+
+\chapter{Structural Overview}
+
+\section{Operating System Initialization}
+
+\subsection{Memory Initialization}
+
+After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+
+\subsection{Process Initialization}
+
+Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform two tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID), priority, and so on. Next, we allocate an exception stack frame for each process and store the resulting stack pointer in the PCB. At this point, our operating system is ready to begin scheduling processes.
+
+\section{Memory Management}
+
+\subsection{Heap Data Structure}
+
+\begin{itemize}
+    \item Generic linked list ADT; uses generic node type
+    \item Nodes represent memory blocks
+    \item Spaced apart at \texttt{BLOCK_SIZE} intervals
+\end{itemize}
+
+\subsection{Requesting Memory Blocks}
+
+\begin{itemize}
+    \item Place in the blocked-on-memory queue if necessary
+    \item Push block back onto the heap
+\end{itemize}
+
+\subsection{Releasing Memory Blocks}
+
+\begin{itemize}
+    \item Bounds checking, over-release checking
+    \item Pop the front of the linked list
+    \item If a process was blocked, dequeue from blocked-on-memory queue and enqueue in ready queue; release the processor to preempt the caller if necessary
+\end{itemize}
+
+\section{Process Management}
+
+\subsection{Process Control Structures}
+
+\begin{itemize}
+    \item Process control blocks
+    \item Queue ADT; also uses generic node type
+    \item Ready queue (one for each priority)
+    \item Blocked-on-memory queue (one for each priority)
+    \item Blocked-on-receive queue (one for each priority)
+\end{itemize}
+
+\subsection{Releasing the Processor}
+
+\begin{itemize}
+    \item Invoke the scheduler; iterate through ready queues in order of priority, and through each ready queue in FIFO (round-robin) order
+    \item If the chosen process is of lesser priority, do nothing
+    \item Save the context of the current process (set PCB's stack pointer to current stack pointer)
+    \item Restore the context of the new process (set stack pointer to PCB's stack pointer)
+\end{itemize}
+
+\subsection{Process Priority}
+
+\begin{itemize}
+    \item Each PCB has a priority for scheduling and preemption purposes
+    \item When changing the priority, move it to the process control queue for its new priority (if currently in a queue), then release the processor to preempt the caller if necessary
+\end{itemize}
+
+\subsection{Interprocess Communication}
+
+\begin{itemize}
+    \item Message envelope fields; hide kernel plumbing from the user
+    \item Each PCB has a `mailbox' --- queue of messages
+    \item Highlight how our generic queue ADT came in handy
+    \item Sending a message: fill in the kernel-facing portion of the provided envelope; enqueue it in the recipient's message queue; if the recipient is blocked, dequeue from the blocked-on-receive queue, enqueue in the ready queue, release processor to preempt the sender if necessary
+    \item Delayed message sending: fill in the kernel-facing portion of the provided envelope, including an expiration time; enqueue the envelope in the timer i-Process's message queue
+    \item Receiving a message: if the caller's message queue is empty, place it in the blocked-on-receive queue and release the processor; otherwise, dequeue the next message from its message queue and return it
+\end{itemize}
+
+\section{System Processes}
+
+\subsection{Null Process}
+
+\begin{itemize}
+    \item The processor always needs to be doing something
+    \item Null process acts as a fail-safe for situations where all other processes are blocked
+    \item Releases the processor in an infinite loop
+\end{itemize}
+
+\subsection{KCD Process}
+
+\begin{itemize}
+    \item For Connor
+\end{itemize}
+
+\subsection{CRT Process}
+
+\begin{itemize}
+    \item For Connor
+\end{itemize}
+
+\section{Interrupt Processes}
+
+\subsection{Timer I-Process}
+
+\begin{itemize}
+    \item Executed by the timer interrupt handler each time a hardware timer interrupt occurs (once per millisecond)
+    \item Maintains a global counter to keep track of system time
+    \item Enables delayed message sending
+    \item Places received messages in a special queue called the timeout queue, maintaining sorted order with respect to message expiration time
+    \item When messages in the timeout queue have passed their expiration time, dispatch them to the recipient's message queue and preempt the current process if necessary
+\end{itemize}
+
+\subsection{UART I-Process}
+
+\begin{itemize}
+    \item For Connor
+\end{itemize}
+
+\section{User Processes}
+
+\subsection{Wall Clock Process}
+
+\begin{itemize}
+    \item Makes use of the delayed message dispatching services provided by the timer i-process to display a digital clock
+    \item Registers itself with the KCD process to handle commands for setting the time, resetting the time, and stopping the clock
+\end{itemize}
+
+\subsection{Test Processes}
+
+\begin{itemize}
+    \item We use six user-level test processes to ensure correct behavior of our operating system
+    \item They call user-facing kernel APIs and use global variables to coordinate tests with each other and to keep track of test results
+\end{itemize}
+
+\chapter{Procedures}
+
+To be written later.
+
+\chapter{Implementation and Testing}
+
+To be written later.
+
+\part{Time Measurements}
+
+\part{Lessons Learned}
+
+\chapter{Bugs and Design Decisions}
+
+\section{Data storage in our linked structures}
+
+From the beginning of our project, we knew that we would need to store different types of data in linked structures for different use cases. For example, we knew that nodes in our memory heap structure would have different data storage requirements compared to nodes in our process control structures (e.g. ready queue, blocked queue).\\
+
+Since we wanted to avoid creating linked structures that were coupled with the type of data they were storing, we needed to devise a way to make them as generic as possible.\\
+
+We chose to make a generic node structure, \texttt{k_node_t}, with only one member: a pointer to the next \texttt{k_node_t}:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct k_node_t {
+    struct k_node_t *p_next;
+} k_node_t;
+\end{lstlisting}
+\end{minipage}
+
+We then designed our linked structures to accommodate nodes of this type:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct k_list_t {
+    k_node_t *p_first;
+} k_list_t;
+
+typedef struct k_queue_t {
+    k_node_t *p_first;
+    k_node_t *p_last;
+} k_queue_t;
+\end{lstlisting}
+\end{minipage}
+
+This way, if a certain use case necessitates having additional storage in each node, we can simply declare a new type with the additional required members. For example, here is a node that can store a pointer to a process control block:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct k_pcb_node_t {
+    struct k_pcb_node_t *p_next;
+    k_pcb_t *p_pcb;
+} k_pcb_node_t;
+\end{lstlisting}
+\end{minipage}
+
+As long as the first member remains a pointer to the next node, the structure members will line up in memory and our linked structures will accommodate these nodes (assuming we cast \texttt{k_pcb_node_t} pointers to \texttt{k_node_t} pointers on insertion, and vice versa on removal).
+
+\section{Modeling blocks in our memory heap}
+
+During the planning phase, we chose to implement our memory heap as a linked list. However, we were not sure how nodes in this linked list should keep track of the blocks that they would represent.\\
+
+In addition to having a pointer to the next node, our first thought was that each node structure should have a pointer to the beginning address of the memory block that it represents:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct k_mem_blk_node_t {
+    struct k_mem_blk_node_t *p_next;
+    void *p_mem_blk_start_addr;
+} k_mem_blk_node_t;
+\end{lstlisting}
+\end{minipage}
+
+After further thought, we realized that since the size of each memory block is known at compile time, we can simply space the nodes apart at \texttt{(sizeof(k_node_t) + BLOCK_SIZE)} intervals, obviating the need for a member such as \texttt{void *p_mem_blk_start_addr}. Thus, we were able to use the unmodified node structure (\texttt{k_node_t}, outlined in the previous section) for our memory heap.
+
+\section{Pointer arithmetic}
+
+For our memory heap, we chose to structure blocks with the header in front of the block itself. This means that when we remove a node from our heap in \texttt{k_request_memory_block()}, we need to increment \texttt{node}'s address by 4 bytes (the size of the header, \texttt{sizeof(k_node_t)}) before returning the address to the user. Similarly, in \texttt{k_release_memory_block(void *p_mem_blk)}, we need to decrement the address of \texttt{p_mem_blk} by 4 bytes in order to get the correct pointer to the node for re-insertion into the heap.\\
+
+When we originally implemented this pointer arithmetic in \texttt{k_request_memory_block()}, we did the following:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+k_node_t *p_mem_blk = get_node(gp_heap);
+p_mem_blk += sizeof(k_node_t);
+\end{lstlisting}
+\end{minipage}
+
+If the value of \texttt{p_mem_blk} is, for example, \texttt{0x10000000}, we would expect the resulting value to be \texttt{0x10000004}. However, the above code produces a result of \texttt{0x10000010}. This is because the compiler knows the size of \texttt{k_node_t}, and is multiplying the addend by \texttt{sizeof(k_node_t)}, resulting in an addend of 16 instead of 4. Therefore, we revised the addend to 1 instead of 4:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+k_node_t *p_mem_blk = get_node(gp_heap);
+p_mem_blk += 1;
+\end{lstlisting}
+\end{minipage}
+
+Since the block pointer we receive in \texttt{k_request_memory_block(void *p_mem_blk)} is not typed as a \texttt{k_node_t}, the compiler does not multiply the subtrahend by \texttt{sizeof(k_node_t)} for us. Instead of doing this multiplication ourselves, we chose to cast \texttt{p_mem_blk} as a pointer to a \texttt{k_node_t} and simply use a subtrahend of 1:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+k_node_t *p_blk = p_mem_blk;
+p_blk -= 1;
+\end{lstlisting}
+\end{minipage}
+
+This will correctly subtract the size of our header from the address of the returned block.
+
+\section{Context switching}
+
+In order to context-switch to processes that have not yet executed, it is necessary to pop a pre-made exception stack frame off of the stack (by calling the inline assembly function \texttt{__rte()}) so that the new process has an initial context.\\
+
+Since we only want to call \texttt{__rte()} if a process has not executed before, we needed to add another process state, \texttt{NEW}. This gives us more fine-grained process control behavior for \texttt{NEW} vs. \texttt{READY} processes.
+
+\section{Process control blocks}
+
+At the beginning of our \texttt{memory_init()} function, we allocate an array of process control block (PCB) nodes (\texttt{k_pcb_node_t}), one for each process (\texttt{NUM_TEST_PROCS}). Since this is an array, it is indexed in array notation (\texttt{0} to \texttt{NUM_TEST_PROCS-1}).\\
+
+When we need to access a PCB node for an arbitrary process, \texttt{p_process}, it makes sense to access this array using the process identifier (\texttt{p_process->m_pid}). However, in our original implementation, process identifiers did not begin at 0; they began at 1. So, in order to access the PCB node for \texttt{p_process}, we needed to access our array of PCB nodes at index \texttt{(p_process->m_pid-1)}. We have since changed our indexing of PIDs (so that the null process can always have a PID of 0), so this is no longer a problem. Although this is a simple concept, it took an extraordinary amount of time to debug.
+
+\section{Dequeuing from the ready queue}
+
+In \texttt{request_memory_block()}, it is expected that the calling process may become blocked in the case that there is no available memory in the heap.\\
+
+Originally, our implementation of \texttt{k_request_memory_block()} would attempt to dequeue the calling process from the ready queue and enqueue it in the blocked queue. This conceptually made sense, as it should be in the \texttt{BLOCKED_ON_RESOURCE} state, not the \texttt{READY} state, next time we call \texttt{k_release_processor()}.\\
+
+However, we know that if a process is able to call \texttt{request_memory_block()}, then it must currently be in the \texttt{EXECUTING} state. Thus, it must have already been dequeued from the ready queue in order to have been scheduled in the first place. So, all we need to do when out of memory is add the calling process to the blocked queue:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+while (is_list_empty(gp_heap)) {
+    // no available memory in the heap
+    if (k_enqueue_blocked_process(gp_current_process) == RTX_OK) {
+        k_release_processor();
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+\section{Dynamic allocation in the kernel}
+
+In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For naïve test processes, this was not a problem.\\
+
+Once we started to request memory blocks in our test processes, we noticed a fatal flaw in this approach. If a process attempted to request a memory block when there was no available memory in the heap, we would attempt to add it to the blocked queue, as shown in the previous section.\\
+
+However, since we were dynamically requesting heap memory for PCB nodes to be enqueued in the blocked queue (by calling \texttt{k_request_memory_block()}), we would never succeed in enqueueing the process in the blocked queue. Instead, we would infinitely recurse into \texttt{k_request_memory_block()}.\\
+
+To solve this problem, we decided to statically allocate all of our PCB nodes in \texttt{memory_init()}, obviating the need to dynamically request memory in the kernel:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+/* allocate memory for pcb node pointers */
+gp_pcb_nodes = (k_pcb_node_t **)p_end;
+p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
+
+/* allocate memory for each pcb node */
+for (i = 0; i < NUM_TEST_PROCS; i++) {
+    gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
+    p_end += sizeof(k_pcb_node_t); 
+}
+\end{lstlisting}
+\end{minipage}
+
+\end{document}

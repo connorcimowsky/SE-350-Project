@@ -1,5 +1,6 @@
 #include "k_memory.h"
 #include "k_process.h"
+#include "k_system_proc.h"
 
 #ifdef DEBUG_1
 #include "printf.h"
@@ -44,11 +45,20 @@ void memory_init(void)
         p_end += sizeof(k_queue_t);
     }
     
-    /* create the blocked queue */
+    /* create the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_queue[i] = (k_queue_t *)p_end;
-        gp_blocked_queue[i]->mp_first = NULL;
-        gp_blocked_queue[i]->mp_last = NULL;
+        gp_blocked_on_memory_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_memory_queue[i]->mp_first = NULL;
+        gp_blocked_on_memory_queue[i]->mp_last = NULL;
+        
+        p_end += sizeof(k_queue_t);
+    }
+    
+    /* create the blocked-on-receive queue */
+    for (i = 0; i < NUM_PRIORITIES; i++) {
+        gp_blocked_on_receive_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_receive_queue[i]->mp_first = NULL;
+        gp_blocked_on_receive_queue[i]->mp_last = NULL;
         
         p_end += sizeof(k_queue_t);
     }
@@ -80,6 +90,69 @@ void memory_init(void)
     
     /* save the end address of the heap for error-checking later on */
     gp_heap_end_addr = p_end;
+    
+    /* initialize the timeout queue for the timer i-process */
+    g_timeout_queue.mp_first = NULL;
+    g_timeout_queue.mp_last = NULL;
+    
+    /* initialize the keyboard command registry for the KCD process */
+    g_kcd_reg.mp_first = NULL;
+    
+    /* populate the keyboard command registry with NUM_KCD_REG empty entries */
+    for (i = 0; i < NUM_KCD_REG; i++) {
+        int j;
+        
+        k_kcd_reg_t *p_reg = (k_kcd_reg_t *)p_end;
+        
+        p_reg->mp_next = NULL;
+        
+        /* make sure the keyboard command identifier is an array of null characters */
+        for (j = 0; j < KCD_REG_LENGTH; j++) {
+            p_reg->m_id[j] = '\0';
+        }
+        
+        p_reg->m_pid = 0;
+        p_reg->m_active = 0;
+        
+        insert_node(&g_kcd_reg, (k_node_t *)p_reg);
+        
+        p_end += sizeof(k_kcd_reg_t);
+    }
+    
+#ifdef DEBUG_HOTKEYS
+    
+    /* initialize the sent message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        g_sent_msg_log[i].m_sender_pid = 0;
+        g_sent_msg_log[i].m_recipient_pid = 0;
+        g_sent_msg_log[i].m_type = MSG_TYPE_DEFAULT;
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            g_sent_msg_log[i].m_text[j] = '\0';
+        }
+        
+        g_sent_msg_log[i].m_time_stamp = 0;
+    }
+    
+    /* initialize the received message log */
+    for (i = 0; i < MSG_LOG_SIZE; i++) {
+        int j;
+        
+        g_received_msg_log[i].m_sender_pid = 0;
+        g_received_msg_log[i].m_recipient_pid = 0;
+        g_received_msg_log[i].m_type = MSG_TYPE_DEFAULT;
+        
+        for (j = 0; j < MSG_LOG_LEN; j++) {
+            g_received_msg_log[i].m_text[j] = '\0';
+        }
+        
+        g_received_msg_log[i].m_time_stamp = 0;
+    }
+    
+#endif /* DEBUG_HOTKEYS */
+    
 }
 
 U32 *alloc_stack(U32 size_b) 
@@ -106,11 +179,11 @@ void *k_request_memory_block(void)
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
-        printf("k_request_memory_block: no available blocks, releasing processor\n");
+        printf("k_request_memory_block: no available blocks, releasing processor\n\r");
 #endif
         
         /* add the calling process to the blocked queue and yield the processor */
-        if (k_enqueue_blocked_process(gp_current_process) == RTOS_OK) {
+        if (k_enqueue_blocked_on_memory_process(gp_current_process) == RTOS_OK) {
             k_release_processor();
         }
     }
@@ -119,7 +192,7 @@ void *k_request_memory_block(void)
     p_mem_blk = (U8 *)get_node(gp_heap);
     
 #ifdef DEBUG_1
-        printf("k_request_memory_block: 0x%x\n", p_mem_blk);
+        printf("k_request_memory_block: 0x%x\n\r", p_mem_blk);
 #endif
     
     /* increment the address of the node by the size of the header to get the start address of the block itself */
@@ -130,14 +203,33 @@ void *k_request_memory_block(void)
 
 int k_release_memory_block(void *p_mem_blk)
 {
+    if (k_release_memory_block_helper(p_mem_blk) == RTOS_OK) {
+        /* attempt to dequeue the next available process from the blocked queue */
+        k_pcb_t *p_blocked_pcb = k_dequeue_blocked_on_memory_process();
+        
+        /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
+        if (p_blocked_pcb != NULL) {
+            p_blocked_pcb->m_state = READY;
+            if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
+                return k_release_processor();
+            }
+        }
+    } else {
+        return RTOS_ERR;
+    }
+    
+    return RTOS_OK;
+}
+
+int k_release_memory_block_helper(void *p_mem_blk)
+{
     U8 *p_decrement = NULL;
     k_node_t *p_node = NULL;
-    k_pcb_t *p_blocked_pcb = NULL;
     
     if (p_mem_blk == NULL ) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: cannot release NULL\n");
+        printf("k_release_memory_block: cannot release NULL\n\r");
 #endif
         
         return RTOS_ERR;
@@ -153,14 +245,14 @@ int k_release_memory_block(void *p_mem_blk)
     p_node = (k_node_t *)p_decrement;
     
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x\n", p_node);
+        printf("k_release_memory_block: 0x%x\n\r", p_node);
 #endif
     
     /* make sure the pointer is not out of bounds */
     if ((U8 *)p_node < gp_heap_begin_addr || (U8 *)p_node > gp_heap_end_addr) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is out of bounds\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is out of bounds\n\r", p_node);
 #endif
         
         return RTOS_ERR;
@@ -170,7 +262,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (((U8 *)p_node - gp_heap_begin_addr) % BLOCK_SIZE != 0) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is not a block-aligned address\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is not a block-aligned address\n\r", p_node);
 #endif
         
         return RTOS_ERR;
@@ -180,7 +272,7 @@ int k_release_memory_block(void *p_mem_blk)
     if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
         
 #ifdef DEBUG_1
-        printf("k_release_memory_block: 0x%x is already contained in the heap\n", p_mem_blk);
+        printf("k_release_memory_block: 0x%x is already contained in the heap\n\r", p_node);
 #endif
         
         return RTOS_ERR;
@@ -189,17 +281,6 @@ int k_release_memory_block(void *p_mem_blk)
     /* if none of the above tests failed, insert the node into the memory heap */
     if (insert_node(gp_heap, p_node) == RTOS_ERR) {
         return RTOS_ERR;
-    }
-    
-    /* attempt to dequeue the next available process from the blocked queue */
-    p_blocked_pcb = k_dequeue_blocked_process();
-    
-    /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
-    if (p_blocked_pcb != NULL) {
-        p_blocked_pcb->m_state = READY;
-        if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-            k_release_processor();
-        }
     }
     
     return RTOS_OK;

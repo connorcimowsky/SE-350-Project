@@ -1,11 +1,11 @@
-#ifndef USR_PROC_H
-#define USR_PROC_H
+#ifndef USR_TEST_PROC_H
+#define USR_TEST_PROC_H
 
 #include "rtos.h"
 
 
-/* external functions */
-extern PROC_INIT g_test_procs[NUM_TEST_PROCS];  /* process initialization table */
+/* external variables */
+extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
 
 /* populate the table of test processes */
@@ -20,4 +20,4 @@ void proc5(void);
 void proc6(void);
 
 
-#endif /* USR_PROC_H */
+#endif /* USR_TEST_PROC_H */
