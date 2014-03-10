@@ -96,6 +96,26 @@ void uart_i_process(void)
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
         
+        /* echo the entered character to the CRT process; only request memory if we will not block */
+        if (!is_list_empty(gp_heap)) {
+            msg_t *p_msg = (msg_t *)k_request_memory_block();
+            p_msg->m_type = MSG_TYPE_CRT_DISP;
+            
+            if (g_char_in != '\r') {
+                p_msg->m_data[0] = g_char_in;
+                p_msg->m_data[1] = '\0';
+            } else {
+                p_msg->m_data[0] = '\n';
+                p_msg->m_data[1] = g_char_in;
+                p_msg->m_data[2] = '\0';
+            }
+            
+            k_send_message_helper(PID_UART_IPROC, PID_CRT, p_msg);
+            
+            /* we should preempt to the CRT process at this point */
+            g_uart_preemption_flag = 1;
+        }
+        
 #ifdef DEBUG_HOTKEYS
         
         if (g_char_in == DEBUG_HOTKEY_1) {
@@ -126,9 +146,11 @@ void uart_i_process(void)
 #endif
             
         } else {
+            /* copy the input buffer into a message envelope and send it to the KCD */
+            
             g_input_buffer[g_input_buffer_index++] = '\0';
             
-            /* only request a memory block if we will not block */
+            /* only request memory if we will not block */
             if (!is_list_empty(gp_heap)) {
                 msg_t *p_msg = (msg_t *)k_request_memory_block();
                 p_msg->m_type = MSG_TYPE_DEFAULT;
