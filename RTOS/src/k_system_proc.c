@@ -92,11 +92,29 @@ void uart_i_process(void)
         /* read the character from the receiver buffer register and acknowledge the interrupt */
         g_char_in = pUart->RBR;
         
-        pUart->THR = g_char_in;
-        
 #ifdef DEBUG_1
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
+        
+        /* echo the entered character to the CRT process; only request memory if we will not block */
+        if (!is_list_empty(gp_heap)) {
+            msg_t *p_msg = (msg_t *)k_request_memory_block();
+            p_msg->m_type = MSG_TYPE_CRT_DISP;
+            
+            if (g_char_in != '\r') {
+                p_msg->m_data[0] = g_char_in;
+                p_msg->m_data[1] = '\0';
+            } else {
+                p_msg->m_data[0] = '\n';
+                p_msg->m_data[1] = g_char_in;
+                p_msg->m_data[2] = '\0';
+            }
+            
+            k_send_message_helper(PID_UART_IPROC, PID_CRT, p_msg);
+            
+            /* we should preempt to the CRT process at this point */
+            g_uart_preemption_flag = 1;
+        }
         
 #ifdef DEBUG_HOTKEYS
         
@@ -128,9 +146,11 @@ void uart_i_process(void)
 #endif
             
         } else {
+            /* copy the input buffer into a message envelope and send it to the KCD */
+            
             g_input_buffer[g_input_buffer_index++] = '\0';
             
-            /* only request a memory block if we will not block */
+            /* only request memory if we will not block */
             if (!is_list_empty(gp_heap)) {
                 msg_t *p_msg = (msg_t *)k_request_memory_block();
                 p_msg->m_type = MSG_TYPE_DEFAULT;
@@ -290,8 +310,6 @@ void kcd_proc(void)
             
             int i = 0;
             k_kcd_reg_t *p_kcd_reg_iter = NULL;
-            msg_t *p_msg_display = (msg_t *)request_memory_block();
-            int msg_str_len;
             
             /* we will isolate the command identifier in this buffer */
             char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
@@ -312,19 +330,6 @@ void kcd_proc(void)
                 
                 p_kcd_reg_iter = p_kcd_reg_iter->mp_next;
             }
-            
-            /* copy the input buffer into the output message */
-            p_msg_display->m_type = MSG_TYPE_CRT_DISP;
-            str_cpy(p_msg->m_data, p_msg_display->m_data);
-            
-            /* append a newline and a carriage return to the end of the displayed string */
-            msg_str_len = str_len(p_msg_display->m_data);
-            p_msg_display->m_data[msg_str_len++] = '\n';
-            p_msg_display->m_data[msg_str_len++] = '\r';
-            p_msg_display->m_data[msg_str_len] = '\0';
-            
-            /* display the user input using the CRT process */
-            send_message(PID_CRT, p_msg_display);
             
             /* only dispatch the command if a registry entry was found */
             if (p_kcd_reg_iter != NULL) {
