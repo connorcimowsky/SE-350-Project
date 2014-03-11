@@ -260,7 +260,7 @@ void timer_i_process(void)
         U8 *p_increment = (U8 *)p_next_message;
         p_increment += MSG_HEADER_OFFSET;
         
-        if (k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment) == RTOS_OK) {
+        if (k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment) != RTOS_ERR) {
             if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
                 /* only preempt to the recipient if it is of equal or greater importance */
                 g_timer_preemption_flag = 1;
