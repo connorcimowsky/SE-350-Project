@@ -87,7 +87,7 @@ In order to perform a context switch, the context of the current process (i.e., 
 
 \subsection{Process Priority}
 
-Each process has a priority which is stored in its PCB. This priority is used to enforce correct precedence during scheduling, preemption, and blocking operations.\\
+Each process has a priority which is stored in its PCB. This priority is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
 Our operating system allows processes to retrieve and modify the scheduling priority of themselves or other processes by providing two primitives: \texttt{get_process_priority} and \texttt{set_process_priority}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \texttt{release_processor} primitive is then invoked to ensure that preemption will occur if necessary.
 
