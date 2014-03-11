@@ -8,6 +8,8 @@
     hyperref
 }
 
+\setlength{\parindent}{0pt}
+
 \lstset{
     basicstyle=\ttfamily,
     breaklines=true,
@@ -49,137 +51,100 @@ After initializing the hardware components of the MCB1700 board, such as timers 
 
 \subsection{Process Initialization}
 
-Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform two tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID), priority, and so on. Next, we allocate an exception stack frame for each process and store the resulting stack pointer in the PCB. At this point, our operating system is ready to begin scheduling processes.
+Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \texttt{release_processor}.
 
 \section{Memory Management}
 
 \subsection{Heap Data Structure}
 
-\begin{itemize}
-    \item Generic linked list ADT; uses generic node type
-    \item Nodes represent memory blocks
-    \item Spaced apart at \texttt{BLOCK_SIZE} intervals
-\end{itemize}
+Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \texttt{request_memory_block} primitive and released by invoking the \texttt{release_memory_block} primitive. Nodes in the memory heap are spaced apart using a predefined block size.
 
 \subsection{Requesting Memory Blocks}
 
-\begin{itemize}
-    \item Place in the blocked-on-memory queue if necessary
-    \item Push block back onto the heap
-\end{itemize}
+When a process invokes \texttt{request_memory_block}, the operating system first checks if any blocks are available in the heap. If the heap is empty, the kernel enqueues the caller in the blocked-on-memory queue and invokes \texttt{release_processor} so that preemption may occur. Otherwise, a pointer to the next available memory block is popped from the heap. This pointer is then incremented by a predefined offset to compensate for message envelope headers and then returned to the caller.
 
 \subsection{Releasing Memory Blocks}
 
-\begin{itemize}
-    \item Bounds checking, over-release checking
-    \item Pop the front of the linked list
-    \item If a process was blocked, dequeue from blocked-on-memory queue and enqueue in ready queue; release the processor to preempt the caller if necessary
-\end{itemize}
+When a process invokes \texttt{release_memory_block}, the operating system first ensures that the provided address corresponds to a valid memory block. If valid, the block is then pushed onto the heap. Next, if the blocked-on-memory queue is non-empty, the highest-priority process that is blocked on memory is moved to the ready queue. Finally, \texttt{release_processor} is invoked so that the caller can be preempted if necessary.
 
 \section{Process Management}
 
 \subsection{Process Control Structures}
 
-\begin{itemize}
-    \item Process control blocks
-    \item Queue ADT; also uses generic node type
-    \item Ready queue (one for each priority)
-    \item Blocked-on-memory queue (one for each priority)
-    \item Blocked-on-receive queue (one for each priority)
-\end{itemize}
+In order to fairly manage resource usage, each process in the operating system is modelled by a process control block. Each PCB contains the stack pointer, PID, priority, state, and message queue of the process it represents. Using PIDs as indices, a global array stores a pointer to each PCB for constant time access by process control primitives.\\
+
+Our operating system maintains three queues in which PCBs are stored according to their scheduling priority. The first is the ready queue, which contains processes in the \texttt{NEW} and \texttt{READY} states. The second is the blocked-on-memory queue, which contains processes that are waiting on a memory block and are thus in the \texttt{BLOCKED_ON_MEMORY} state. The third is the blocked-on-receive queue, which contains processes that are waiting to receive a message and are thus in the \texttt{BLOCKED_ON_RECEIVE} state.
 
 \subsection{Releasing the Processor}
 
-\begin{itemize}
-    \item Invoke the scheduler; iterate through ready queues in order of priority, and through each ready queue in FIFO (round-robin) order
-    \item If the chosen process is of lesser priority, do nothing
-    \item Save the context of the current process (set PCB's stack pointer to current stack pointer)
-    \item Restore the context of the new process (set stack pointer to PCB's stack pointer)
-\end{itemize}
+Since our operating system does not employ time slicing, it is often necessary for a process to relinquish usage of the processor. This mechanism is provided by our operating system and can be employed by invoking the \texttt{release_processor} primitive.\\
+
+When invoked, this primitive uses the scheduler to determine which process should be executed next. To do this, the scheduler iterates through the ready queue in order of decreasing priority, exercising a first-in first-out (round-robin) scheduling policy for processes of the same priority.\\
+
+Once a process has been selected by the scheduler, a context switch will only occur if its priority is greater than or equal to that of the currently executing process. Otherwise, the caller will resume execution.\\
+
+In order to perform a context switch, the context of the current process (i.e., the current stack pointer) must be saved to its process control block. Next, the context of the selected process is restored (i.e., its stack pointer is restored). When the saved registers are popped from the stack pointer of the selected process, execution will resume at the point where it left off.
 
 \subsection{Process Priority}
 
-\begin{itemize}
-    \item Each PCB has a priority for scheduling and preemption purposes
-    \item When changing the priority, move it to the process control queue for its new priority (if currently in a queue), then release the processor to preempt the caller if necessary
-\end{itemize}
+Each process has a priority which is stored in its PCB. This priority is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
+
+Our operating system allows processes to retrieve and modify the scheduling priority of themselves or other processes by providing two primitives: \texttt{get_process_priority} and \texttt{set_process_priority}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \texttt{release_processor} primitive is then invoked to ensure that preemption will occur if necessary.
 
 \subsection{Interprocess Communication}
 
-\begin{itemize}
-    \item Message envelope fields; hide kernel plumbing from the user
-    \item Each PCB has a `mailbox' --- queue of messages
-    \item Highlight how our generic queue ADT came in handy
-    \item Sending a message: fill in the kernel-facing portion of the provided envelope; enqueue it in the recipient's message queue; if the recipient is blocked, dequeue from the blocked-on-receive queue, enqueue in the ready queue, release processor to preempt the sender if necessary
-    \item Delayed message sending: fill in the kernel-facing portion of the provided envelope, including an expiration time; enqueue the envelope in the timer i-Process's message queue
-    \item Receiving a message: if the caller's message queue is empty, place it in the blocked-on-receive queue and release the processor; otherwise, dequeue the next message from its message queue and return it
-\end{itemize}
+Messages are sent between processes using message envelopes. Each PCB has a `mailbox', implemented as a queue of message envelopes.\\
+
+There are two structures used to represent messages: a kernel-facing message header containing the information required for communication, and a user-facing message envelope which contains only the data that is relevant to the sender and recipient. The header includes the PID of the sender, the PID of the recipient, and an expiry time. The user-facing envelope only contains the message type and the message data itself.\\
+
+When a process wishes to send a message, it will first invoke \texttt{request_memory_block} for the envelope. It then populates the message envelope fields and invokes \texttt{send_message}. This primitive populates the message header fields and enqueues the message in the recipient's message queue. If necessary, the recipient will be unblocked and \texttt{release_processor} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
+
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. Instead of directly enqueueing the message in the recipient's message queue, \texttt{delayed_send} enqueues the message in the timer i-process's message queue. As described in Section \ref{subsec:Timer I-Process}, the timer i-process will then take care of dispatching the message at the correct time.\\
+
+When a process invokes \texttt{receive_message}, the next message will be dequeued from its message queue and returned, as long as there is at least one pending message in the queue. Otherwise, the process is placed in the blocked-on-receive queue and preempted using \texttt{release_processor}.
 
 \section{System Processes}
 
 \subsection{Null Process}
 
-\begin{itemize}
-    \item The processor always needs to be doing something
-    \item Null process acts as a fail-safe for situations where all other processes are blocked
-    \item Releases the processor in an infinite loop
-\end{itemize}
+The null process has the lowest priority of any process in our operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be scheduled for execution. As such, the null process simply invokes \texttt{release_processor} in an infinite loop, allowing other processes to be scheduled as soon as they are ready.
 
 \subsection{KCD Process}
 
-\begin{itemize}
-    \item For Connor
-\end{itemize}
+The Keyboard Command Decoder (KCD) process provides a console-like mechanism to users of our operating system. Upon receipt of a command registration message from another process (retrieved using \texttt{receive_message}), it uses a global registry to associate the specified command with the message sender. This registry is implemented as a linked list of structures which contain a command identifier string and the PID of the registered process. Each time a line of input is entered through the console, the KCD process uses the registry to determine if it is prefixed with a registered command; if so, the input is forwarded to the process specified in the registry entry using \texttt{send_message} so that it may act upon the command.
 
 \subsection{CRT Process}
 
-\begin{itemize}
-    \item For Connor
-\end{itemize}
+The purpose of the CRT process is to print text to the system console. In order to achieve this, it repeatedly invokes \texttt{receive_message} and forwards received messages to the UART i-process using \texttt{send_message}. After it does this, it triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in Section \ref{subsec:UART I-Process}.
 
 \section{Interrupt Processes}
 
 \subsection{Timer I-Process}
+\label{subsec:Timer I-Process}
 
-\begin{itemize}
-    \item Executed by the timer interrupt handler each time a hardware timer interrupt occurs (once per millisecond)
-    \item Maintains a global counter to keep track of system time
-    \item Enables delayed message sending
-    \item Places received messages in a special queue called the timeout queue, maintaining sorted order with respect to message expiration time
-    \item When messages in the timeout queue have passed their expiration time, dispatch them to the recipient's message queue and preempt the current process if necessary
-\end{itemize}
+The timer i-process provides timing services to our operating system and is primarily responsible for dispatching delayed messages (sent using \texttt{delayed_send}) to other processes. This is achieved through the use of message queues and a global counter, which is used for keeping track of the system time.\\
+
+When a timer interrupt occurs (once every millisecond), the timer i-process is invoked by the timer interrupt handler. First, it checks if there are any messages in its message queue. If there is a message, it is added to the timeout queue, which maintains sorted order with respect to the expiry times of contained messages. Next, it iterates through the timeout queue and places any expired messages in the message queues of the appropriate recipients. If a message was delivered to a process of equal or greater priority than the current process, the operating system will preempt to the recipient by invoking \texttt{release_processor}.
 
 \subsection{UART I-Process}
+\label{subsec:UART I-Process}
 
-\begin{itemize}
-    \item For Connor
-\end{itemize}
+The UART i-process acts as an interface between the system console and other processes in our operating system. It is triggered by two types of interrupts, each corresponding to one of the two tasks performed by this process.\\
+
+The first responsibility of the UART i-process is handling user input. To facilitate this, a global input buffer is used. When the user presses the return key, this buffer is copied into a message which is then sent to the KCD process for interpretation using a non-preemptive version of \texttt{send_message}.\\
+
+When an output interrupt occurs, the UART i-process retrieves the next message in its queue using a non-blocking version of \texttt{receive_message}. It then uses repeated interrupts to sequentially print characters of the message until it reaches the end.
 
 \section{User Processes}
 
 \subsection{Wall Clock Process}
 
-\begin{itemize}
-    \item Makes use of the delayed message dispatching services provided by the timer i-process to display a digital clock
-    \item Registers itself with the KCD process to handle commands for setting the time, resetting the time, and stopping the clock
-\end{itemize}
+The wall clock process uses \texttt{delayed_send} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
+triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \texttt{send_message} to display the current wall clock time. On startup, the wall clock process registers keyboard commands with the KCD process which allow the time to be set, reset, and stopped.
 
 \subsection{Test Processes}
 
-\begin{itemize}
-    \item We use six user-level test processes to ensure correct behavior of our operating system
-    \item They call user-facing kernel APIs and use global variables to coordinate tests with each other and to keep track of test results
-\end{itemize}
-
-\chapter{Procedures}
-
-To be written later.
-
-\chapter{Implementation and Testing}
-
-To be written later.
-
-\part{Time Measurements}
+In order to ensure the correct behaviour of our operating system, we use six user-­level test processes to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that  our operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
 
 \part{Lessons Learned}
 
@@ -312,7 +277,7 @@ while (is_list_empty(gp_heap)) {
 
 \section{Dynamic allocation in the kernel}
 
-In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For naïve test processes, this was not a problem.\\
+In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For na\"{i}ve test processes, this was not a problem.\\
 
 Once we started to request memory blocks in our test processes, we noticed a fatal flaw in this approach. If a process attempted to request a memory block when there was no available memory in the heap, we would attempt to add it to the blocked queue, as shown in the previous section.\\
 
