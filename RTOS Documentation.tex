@@ -5,7 +5,8 @@
     listings,
     underscore,
     authblk,
-    hyperref
+    hyperref,
+    parskip
 }
 
 \lstset{
@@ -71,7 +72,7 @@ When a process invokes \texttt{release_memory_block}, the operating system first
 
 In order to fairly manage resource usage, each process in the operating system is modelled by a process control block. Each PCB contains the stack pointer, PID, priority, state, and message queue of the process it represents. Using PIDs as indices, a global array stores a pointer to each PCB for constant time access by process control primitives.\\
 
-Our operating system maintains three queues in which PCBs are stored according to their scheduling priority. The ready queue contains processes in the \texttt{NEW} and \texttt{READY} states; the blocked-on-memory queue contains processes that are waiting on a memory block and are thus in the \texttt{BLOCKED_ON_MEMORY} state; and the blocked-on-receive queue contains processes that are waiting to receive a message and are thus in the \texttt{BLOCKED_ON_RECEIVE} state.
+Our operating system maintains three queues in which PCBs are stored according to their scheduling priority. The first is the ready queue, which contains processes in the \texttt{NEW} and \texttt{READY} states. The second is the blocked-on-memory queue, which contains processes that are waiting on a memory block and are thus in the \texttt{BLOCKED_ON_MEMORY} state. The third is the blocked-on-receive queue, which contains processes that are waiting to receive a message and are thus in the \texttt{BLOCKED_ON_RECEIVE} state.
 
 \subsection{Releasing the Processor}
 
@@ -109,7 +110,7 @@ The null process has the lowest priority of any process in our operating system.
 
 \subsection{KCD Process}
 
-The Keyboard Command Decoder (KCD) process provides a console-like mechanism to users of our operating system. Upon receipt of a command registration message from another process (retrieved using \texttt{receive_message}), it uses a global registry to associate the specified command with the message sender. This registry is implemented as a linked list of structures which contain a command identifier string and the PID of the registered process. Each time a line is entered through the console, the KCD process uses the registry to determine if it is prefixed with a registered command; if so, the input is forwarded to the process specified in the registry entry using \texttt{send_message} so that it may act upon the command.
+The Keyboard Command Decoder (KCD) process provides a console-like mechanism to users of our operating system. Upon receipt of a command registration message from another process (retrieved using \texttt{receive_message}), it uses a global registry to associate the specified command with the message sender. This registry is implemented as a linked list of structures which contain a command identifier string and the PID of the registered process. Each time a line of input is entered through the console, the KCD process uses the registry to determine if it is prefixed with a registered command; if so, the input is forwarded to the process specified in the registry entry using \texttt{send_message} so that it may act upon the command.
 
 \subsection{CRT Process}
 
@@ -275,7 +276,7 @@ while (is_list_empty(gp_heap)) {
 
 \section{Dynamic allocation in the kernel}
 
-In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For naïve test processes, this was not a problem.\\
+In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For na\"{i}ve test processes, this was not a problem.\\
 
 Once we started to request memory blocks in our test processes, we noticed a fatal flaw in this approach. If a process attempted to request a memory block when there was no available memory in the heap, we would attempt to add it to the blocked queue, as shown in the previous section.\\
 
