@@ -15,6 +15,8 @@ int g_previous_pid = -1;
 /* an array of flags indicating the result of each test case */
 int g_success_flags[6] = {1, 1, 1, 1, 1, 1};
 
+int g_tests_completed_flag = 0;
+
 
 void set_test_procs(void)
 {
@@ -167,11 +169,36 @@ void proc2(void)
     
     while (1) {
         
+#ifdef DEBUG_DEMO
+        
+        if (g_tests_completed_flag == 1) {
+            
+#ifdef DEBUG_0
+            printf("proc2: attempting to receive a message\n\r");
+#endif
+        
+            receive_message(NULL);
+            
+        } else {
+            
+#ifdef DEBUG_1
+            printf("proc2: releasing processor\n\r");
+#endif
+        
+            release_processor();
+            
+        }
+        
+#else
+        
 #ifdef DEBUG_1
         printf("proc2: releasing processor\n\r");
 #endif
         
         release_processor();
+        
+#endif
+        
     }
 }
 
@@ -316,14 +343,40 @@ void proc4(void)
     printf("G019_test: END\n\r");
 #endif
     
+    g_tests_completed_flag = 1;
     
     while (1) {
+        
+#ifdef DEBUG_DEMO
+        
+        if (g_tests_completed_flag == 1) {
+            
+#ifdef DEBUG_0
+            printf("proc4: requesting a memory block\n\r");
+#endif
+        
+            request_memory_block();
+            
+        } else {
+            
+#ifdef DEBUG_1
+            printf("proc4: releasing processor\n\r");
+#endif
+        
+            release_processor();
+            
+        }
+        
+#else
         
 #ifdef DEBUG_1
         printf("proc4: releasing processor\n\r");
 #endif
         
         release_processor();
+        
+#endif
+        
     }
 }
 

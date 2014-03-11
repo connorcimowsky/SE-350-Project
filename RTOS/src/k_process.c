@@ -574,7 +574,9 @@ void k_print_ready_queue(void)
 {
     int i;
     
-    printf("\n\r\n\r*** READY QUEUE ***\n\r");
+    printf("\n\r\n\r*** READY QUEUE ***\n\r\n\r");
+    
+    printf("Executing:\n\r\tPID %d\n\r\n\r", gp_current_process->m_pid);
     
     /* iterate through the ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
@@ -596,7 +598,7 @@ void k_print_blocked_on_memory_queue(void)
 {
     int i;
     
-    printf("\n\r\n\r*** BLOCKED-ON-MEMORY QUEUE ***\n\r");
+    printf("\n\r\n\r*** BLOCKED-ON-MEMORY QUEUE ***\n\r\n\r");
     
     /* iterate through the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
@@ -618,7 +620,7 @@ void k_print_blocked_on_receive_queue(void)
 {
     int i;
     
-    printf("\n\r\n\r*** BLOCKED-ON-RECEIVE QUEUE ***\n\r");
+    printf("\n\r\n\r*** BLOCKED-ON-RECEIVE QUEUE ***\n\r\n\r");
     
     /* iterate through the blocked-on-receive queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
