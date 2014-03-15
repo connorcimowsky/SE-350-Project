@@ -343,6 +343,11 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     k_log_sent_message(sender_pid, recipient_pid, (msg_t *)p_msg);
 #endif
     
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
+        return RTOS_ERR;
+    }
+    
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
     
