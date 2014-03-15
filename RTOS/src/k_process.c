@@ -244,19 +244,24 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    /* call the non-premptive version of k_send_message */
-    int ret_val = k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg);
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
+        return RTOS_ERR;
+    }
     
-    if (ret_val == 1) {
-        /* only check for preemption if we unblocked the recipient (returned 1) */
+    if (p_msg == NULL) {
+        return RTOS_ERR;
+    }
+    
+    /* call the non-premptive version of k_send_message */
+    if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == 1) {
+        /* only check for preemption if we unblocked the recipient (helper returned 1) */
         if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
             /* don't preempt in the case of the UART i-process */
             if (recipient_pid != PID_UART_IPROC) {
                 return k_release_processor();
             }
         }
-    } else {
-        return ret_val;
     }
     
     return RTOS_OK;
@@ -358,14 +363,6 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     
 #ifdef DEBUG_HOTKEYS
     int i;
-#endif
-    
-    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
-        /* pid is out-of-bounds */
-        return RTOS_ERR;
-    }
-    
-#ifdef DEBUG_HOTKEYS
     
     /* save the message information into the sent message log */
     
@@ -393,21 +390,17 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     p_recipient_pcb = gp_pcbs[recipient_pid];
     
     enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
-    if (p_recipient_pcb->m_state != BLOCKED_ON_RECEIVE) {
-        /* if the recipient was not blocked, then do not unblock it */
-        return RTOS_OK;
+    
+    if (p_recipient_pcb->m_state == BLOCKED_ON_RECEIVE) {
+        /* if the recipient was blocked, then unblock it */
+        k_remove_blocked_on_receive_process(p_recipient_pcb);
+        p_recipient_pcb->m_state = READY;
+        k_enqueue_ready_process(p_recipient_pcb);
+        
+        /* return 1 to indicate that the recipient was unblocked */
+        return 1;
     } else {
-        if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
-            p_recipient_pcb->m_state = READY;
-            if (k_enqueue_ready_process(p_recipient_pcb) == RTOS_OK) {
-                /* if the recipient was successfully removed from the blocked queue and added to the ready queue, return 1 */
-                return 1;
-            } else {
-                return RTOS_ERR;
-            }
-        } else {
-            return RTOS_ERR;
-        }
+        return 0;
     }
 }
 
