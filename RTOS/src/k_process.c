@@ -197,29 +197,26 @@ int k_set_process_priority(int pid, int priority)
             /* processes in the ready queue can be NEW or READY; follow the same procedure for both states */
         case READY:
             /* dequeue the process from the ready queue, update its priority, then re-enqueue it in the ready queue */
-            if (remove_node_from_queue(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
-                p_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_ready_process(p_pcb) == RTOS_ERR) {
-                    return RTOS_ERR;
-                }
+            remove_node_from_queue(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
+            p_pcb->m_priority = (PRIORITY_E)priority;
+            if (k_enqueue_ready_process(p_pcb) == RTOS_ERR) {
+                return RTOS_ERR;
             }
             break;
         case BLOCKED_ON_MEMORY:
             /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
-            if (remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
-                p_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_blocked_on_memory_process(p_pcb) == RTOS_ERR) {
-                    return RTOS_ERR;
-                }
+            remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
+            p_pcb->m_priority = (PRIORITY_E)priority;
+            if (k_enqueue_blocked_on_memory_process(p_pcb) == RTOS_ERR) {
+                return RTOS_ERR;
             }
             break;
         case BLOCKED_ON_RECEIVE:
             /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
-            if (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb) == RTOS_OK) {
-                p_pcb->m_priority = (PRIORITY_E)priority;
-                if (k_enqueue_blocked_on_receive_process(p_pcb) == RTOS_ERR) {
-                    return RTOS_ERR;
-                }
+            remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
+            p_pcb->m_priority = (PRIORITY_E)priority;
+            if (k_enqueue_blocked_on_receive_process(p_pcb) == RTOS_ERR) {
+                return RTOS_ERR;
             }
             break;
         case EXECUTING:
@@ -329,7 +326,9 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
-    return enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (k_node_t *)p_msg_envelope);
+    enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (k_node_t *)p_msg_envelope);
+    
+    return RTOS_OK;
 }
 
 U32 k_get_system_time(void)
@@ -393,25 +392,22 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     
     p_recipient_pcb = gp_pcbs[recipient_pid];
     
-    if (enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope) == RTOS_OK) {
-        if (p_recipient_pcb->m_state != BLOCKED_ON_RECEIVE) {
-            /* if the recipient was not blocked, then do not unblock it */
-            return RTOS_OK;
-        } else {
-            if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
-                p_recipient_pcb->m_state = READY;
-                if (k_enqueue_ready_process(p_recipient_pcb) == RTOS_OK) {
-                    /* if the recipient was successfully removed from the blocked queue and added to the ready queue, return 1 */
-                    return 1;
-                } else {
-                    return RTOS_ERR;
-                }
+    enqueue_node(&(p_recipient_pcb->m_msg_queue), (k_node_t *)p_msg_envelope);
+    if (p_recipient_pcb->m_state != BLOCKED_ON_RECEIVE) {
+        /* if the recipient was not blocked, then do not unblock it */
+        return RTOS_OK;
+    } else {
+        if (k_remove_blocked_on_receive_process(p_recipient_pcb) == RTOS_OK) {
+            p_recipient_pcb->m_state = READY;
+            if (k_enqueue_ready_process(p_recipient_pcb) == RTOS_OK) {
+                /* if the recipient was successfully removed from the blocked queue and added to the ready queue, return 1 */
+                return 1;
             } else {
                 return RTOS_ERR;
             }
+        } else {
+            return RTOS_ERR;
         }
-    } else {
-        return RTOS_ERR;
     }
 }
 
@@ -484,7 +480,9 @@ int k_enqueue_ready_process(k_pcb_t *p_pcb)
     }
     
     /* enqueue the PCB in the ready queue corresponding to its priority */
-    return (enqueue_node(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb));
+    enqueue_node(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
+    
+    return RTOS_OK;
 }
 
 k_pcb_t *k_dequeue_ready_process(void)
@@ -522,7 +520,9 @@ int k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
     }
     
     /* enqueue the PCB in the blocked-on-memory queue */
-    return (enqueue_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb));
+    enqueue_node(p_blocked_on_memory_queue, (k_node_t *)p_pcb);
+    
+    return RTOS_OK;
 }
 
 k_pcb_t* k_dequeue_blocked_on_memory_process(void)
@@ -560,12 +560,16 @@ int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
     }
     
     /* enqueue the PCB in the blocked-on-receive queue */
-    return (enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb));
+    enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb);
+    
+    return RTOS_OK;
 }
 
 int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
-    return (remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb));
+    remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
+    
+    return RTOS_OK;
 }
 
 #ifdef DEBUG_HOTKEYS
