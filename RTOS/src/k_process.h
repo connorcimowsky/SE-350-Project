@@ -57,8 +57,8 @@ k_pcb_t *k_dequeue_blocked_on_memory_process(void);
 /* set the state of p_pcb to BLOCKED_ON_RECEIVE and enqueue it in the blocked-on-receive queue */
 void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb);
 
-/* remove 'p_pcb' from the blocked-on-receive queue */
-int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb);
+/* remove p_pcb from the blocked-on-receive queue */
+void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb);
 
 #ifdef DEBUG_HOTKEYS
 

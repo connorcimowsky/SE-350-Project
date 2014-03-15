@@ -529,11 +529,9 @@ void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
     enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb);
 }
 
-int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
+void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
     remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
-    
-    return RTOS_OK;
 }
 
 #ifdef DEBUG_HOTKEYS
