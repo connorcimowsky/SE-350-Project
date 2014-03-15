@@ -209,9 +209,7 @@ int k_set_process_priority(int pid, int priority)
             /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
             remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
             p_pcb->m_priority = (PRIORITY_E)priority;
-            if (k_enqueue_blocked_on_receive_process(p_pcb) == RTOS_ERR) {
-                return RTOS_ERR;
-            }
+            k_enqueue_blocked_on_receive_process(p_pcb);
             break;
         case EXECUTING:
             /* if the process is executing, then it is not in a queue; simply update its priority */
@@ -272,9 +270,8 @@ void *k_receive_message(int *p_sender_pid)
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
-        if (k_enqueue_blocked_on_receive_process(gp_current_process) == RTOS_OK) {
-            k_release_processor();
-        }
+        k_enqueue_blocked_on_receive_process(gp_current_process);
+        k_release_processor();
     }
     
     p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
@@ -514,13 +511,9 @@ k_pcb_t* k_dequeue_blocked_on_memory_process(void)
     return p_pcb;
 }
 
-int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
+void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
     k_queue_t *p_blocked_on_receive_queue = NULL;
-    
-    if (p_pcb == NULL) {
-        return RTOS_ERR;
-    }
     
     p_pcb->m_state = BLOCKED_ON_RECEIVE;
     
@@ -529,13 +522,11 @@ int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
     
     if (!is_queue_empty(p_blocked_on_receive_queue) && queue_contains_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb)) {
         /* the node is already contained in the blocked-on-receive queue, so do not add it again */
-        return RTOS_OK;
+        return;
     }
     
     /* enqueue the PCB in the blocked-on-receive queue */
     enqueue_node(p_blocked_on_receive_queue, (k_node_t *)p_pcb);
-    
-    return RTOS_OK;
 }
 
 int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
