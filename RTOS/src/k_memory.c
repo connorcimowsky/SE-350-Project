@@ -183,9 +183,8 @@ void *k_request_memory_block(void)
 #endif
         
         /* add the calling process to the blocked queue and yield the processor */
-        if (k_enqueue_blocked_on_memory_process(gp_current_process) == RTOS_OK) {
-            k_release_processor();
-        }
+        k_enqueue_blocked_on_memory_process(gp_current_process);
+        k_release_processor();
     }
 
     /* retrieve the next available node from the heap */
