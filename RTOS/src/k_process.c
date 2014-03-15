@@ -197,9 +197,7 @@ int k_set_process_priority(int pid, int priority)
             /* dequeue the process from the ready queue, update its priority, then re-enqueue it in the ready queue */
             remove_node_from_queue(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
             p_pcb->m_priority = (PRIORITY_E)priority;
-            if (k_enqueue_ready_process(p_pcb) == RTOS_ERR) {
-                return RTOS_ERR;
-            }
+            k_enqueue_ready_process(p_pcb);
             break;
         case BLOCKED_ON_MEMORY:
             /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
@@ -462,16 +460,10 @@ void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
     }
 }
 
-int k_enqueue_ready_process(k_pcb_t *p_pcb)
+void k_enqueue_ready_process(k_pcb_t *p_pcb)
 {
-    if (p_pcb == NULL) {
-        return RTOS_ERR;
-    }
-    
     /* enqueue the PCB in the ready queue corresponding to its priority */
     enqueue_node(gp_ready_queue[p_pcb->m_priority], (k_node_t *)p_pcb);
-    
-    return RTOS_OK;
 }
 
 k_pcb_t *k_dequeue_ready_process(void)

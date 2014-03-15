@@ -202,9 +202,8 @@ void uart_i_process(void)
             /* if there is a blocked-on-memory process, set its state to READY and enqueue it in the ready queue */
             if (p_blocked_pcb != NULL) {
                 p_blocked_pcb->m_state = READY;
-                if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-                    g_uart_preemption_flag = 1;
-                }
+                k_enqueue_ready_process(p_blocked_pcb);
+                g_uart_preemption_flag = 1;
             }
             
             g_output_buffer_index = 0;

@@ -43,7 +43,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg);
 void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
 
 /* enqueue p_pcb in the ready queue */
-int k_enqueue_ready_process(k_pcb_t *p_pcb);
+void k_enqueue_ready_process(k_pcb_t *p_pcb);
 
 /* dequeue the highest-priority process from the ready queue */
 k_pcb_t *k_dequeue_ready_process(void);

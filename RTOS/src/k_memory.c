@@ -210,9 +210,8 @@ int k_release_memory_block(void *p_mem_blk)
         /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
         if (p_blocked_pcb != NULL) {
             p_blocked_pcb->m_state = READY;
-            if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-                return k_release_processor();
-            }
+            k_enqueue_ready_process(p_blocked_pcb);
+            return k_release_processor();
         }
     } else {
         return RTOS_ERR;
