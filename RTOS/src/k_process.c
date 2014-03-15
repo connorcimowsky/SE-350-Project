@@ -138,9 +138,7 @@ int k_release_processor(void)
     gp_current_process = k_dequeue_ready_process();
     
     /* perform a context switch from the previous process to the next process */
-    if (context_switch(p_previous_pcb, gp_current_process) == RTOS_ERR) {
-        return RTOS_ERR;
-    }
+    context_switch(p_previous_pcb, gp_current_process);
     
     return RTOS_OK;
 }
@@ -404,7 +402,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     }
 }
 
-int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
+void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
 {
     PROC_STATE_E new_state = p_pcb_new->m_state;
     
@@ -460,10 +458,8 @@ int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new)
             break;
             
         default:
-            return RTOS_ERR;
+            break;
     }
-    
-    return RTOS_OK;
 }
 
 int k_enqueue_ready_process(k_pcb_t *p_pcb)

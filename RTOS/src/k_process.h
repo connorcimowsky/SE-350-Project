@@ -40,7 +40,7 @@ void *k_non_blocking_receive_message(int pid);
 int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg);
 
 /* perform a context switch from p_pcb_old to p_pcb_new */
-int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
+void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
 
 /* enqueue p_pcb in the ready queue */
 int k_enqueue_ready_process(k_pcb_t *p_pcb);
