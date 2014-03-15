@@ -270,10 +270,6 @@ void *k_receive_message(int *p_sender_pid)
     k_msg_t *p_msg = NULL;
     U8 *p_increment = NULL;
     
-#ifdef DEBUG_HOTKEYS
-    int i = 0;
-#endif
-    
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
         if (k_enqueue_blocked_on_receive_process(gp_current_process) == RTOS_OK) {
@@ -288,22 +284,8 @@ void *k_receive_message(int *p_sender_pid)
     }
     
 #ifdef DEBUG_HOTKEYS
-    
-    /* save the message information into the received message log */
-    
-    g_received_msg_log[g_cur_received_msg_log_index].m_sender_pid = p_msg->m_sender_pid;
-    g_received_msg_log[g_cur_received_msg_log_index].m_recipient_pid = p_msg->m_recipient_pid;
-    g_received_msg_log[g_cur_received_msg_log_index].m_type = p_msg->m_type;
-    
-    for (i = 0; i < MSG_LOG_LEN; i++) {
-        g_received_msg_log[g_cur_received_msg_log_index].m_text[i] = p_msg->m_data[i];
-    }
-    
-    g_received_msg_log[g_cur_received_msg_log_index].m_time_stamp = k_get_system_time();
-    
-    g_cur_received_msg_log_index = (g_cur_received_msg_log_index + 1) % MSG_LOG_SIZE;
-    
-#endif /* DEBUG_HOTKEYS */
+    k_log_received_message(p_msg);
+#endif
     
     if (p_sender_pid != NULL) {
         /* only write into the return address if one was provided */
@@ -358,31 +340,8 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     k_pcb_t *p_recipient_pcb = NULL;
     
 #ifdef DEBUG_HOTKEYS
-    int i;
+    k_log_sent_message(sender_pid, recipient_pid, (msg_t *)p_msg);
 #endif
-    
-    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
-        /* pid is out-of-bounds */
-        return RTOS_ERR;
-    }
-    
-#ifdef DEBUG_HOTKEYS
-    
-    /* save the message information into the sent message log */
-    
-    g_sent_msg_log[g_cur_sent_msg_log_index].m_sender_pid = sender_pid;
-    g_sent_msg_log[g_cur_sent_msg_log_index].m_recipient_pid = recipient_pid;
-    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = ((msg_t *)p_msg)->m_type;
-    
-    for (i = 0; i < MSG_LOG_LEN; i++) {
-        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = ((msg_t *)p_msg)->m_data[i];
-    }
-    
-    g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
-    
-    g_cur_sent_msg_log_index = (g_cur_sent_msg_log_index + 1) % MSG_LOG_SIZE;
-    
-#endif /* DEBUG_HOTKEYS */
     
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
@@ -414,6 +373,44 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
         return RTOS_ERR;
     }
 }
+
+#ifdef DEBUG_HOTKEYS
+
+void k_log_sent_message(int sender_pid, int recipient_pid, msg_t *p_msg)
+{
+    int i;
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_sender_pid = sender_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_recipient_pid = recipient_pid;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = ((msg_t *)p_msg)->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = ((msg_t *)p_msg)->m_data[i];
+    }
+    
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_sent_msg_log_index = (g_cur_sent_msg_log_index + 1) % MSG_LOG_SIZE;
+}
+
+void k_log_received_message(k_msg_t *p_msg)
+{
+    int i = 0;
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_sender_pid = p_msg->m_sender_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_recipient_pid = p_msg->m_recipient_pid;
+    g_received_msg_log[g_cur_received_msg_log_index].m_type = p_msg->m_type;
+    
+    for (i = 0; i < MSG_LOG_LEN; i++) {
+        g_received_msg_log[g_cur_received_msg_log_index].m_text[i] = p_msg->m_data[i];
+    }
+    
+    g_received_msg_log[g_cur_received_msg_log_index].m_time_stamp = k_get_system_time();
+    
+    g_cur_received_msg_log_index = (g_cur_received_msg_log_index + 1) % MSG_LOG_SIZE;
+}
+
+#endif /* DEBUG_HOTKEYS */
 
 int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
 {
