@@ -279,9 +279,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* if none of the above tests failed, insert the node into the memory heap */
-    if (insert_node(gp_heap, p_node) == RTOS_ERR) {
-        return RTOS_ERR;
-    }
+    insert_node(gp_heap, p_node);
     
     return RTOS_OK;
 }
