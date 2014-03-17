@@ -197,7 +197,7 @@ void stress_test_c(void)
     msg_t *p_msg = NULL;
     U8* p_arithmetic = NULL;
     
-    k_queue_t hibernate_queue;
+    queue_t hibernate_queue;
     hibernate_queue.mp_first = NULL;
     hibernate_queue.mp_last = NULL;
     

@@ -14,9 +14,9 @@
 PROC_INIT g_proc_table[NUM_PROCS];
 k_pcb_t **gp_pcbs = NULL;
 k_pcb_t *gp_current_process = NULL;
-k_queue_t *gp_ready_queue[NUM_PRIORITIES];
-k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
-k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+queue_t *gp_ready_queue[NUM_PRIORITIES];
+queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
 
 #ifdef DEBUG_HOTKEYS
 
@@ -46,7 +46,7 @@ void process_init(void)
     /* add the test processes to the initialization table */
     for (i = 0; i < NUM_TEST_PROCS; i++) {
         /* get a pointer to the correct ready queue for this process */
-        k_queue_t *p_queue = gp_ready_queue[g_test_procs[i].m_priority];
+        queue_t *p_queue = gp_ready_queue[g_test_procs[i].m_priority];
         
         g_proc_table[i + 1].m_pid = g_test_procs[i].m_pid;
         g_proc_table[i + 1].m_priority = g_test_procs[i].m_priority;
@@ -510,7 +510,7 @@ k_pcb_t *k_dequeue_ready_process(void)
 
 void k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
 {
-    k_queue_t *p_blocked_on_memory_queue = NULL;
+    queue_t *p_blocked_on_memory_queue = NULL;
     
     if (p_pcb == NULL) {
         return;
@@ -548,7 +548,7 @@ k_pcb_t* k_dequeue_blocked_on_memory_process(void)
 
 void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
-    k_queue_t *p_blocked_on_receive_queue = NULL;
+    queue_t *p_blocked_on_receive_queue = NULL;
     
     if (p_pcb == NULL) {
         return;
@@ -585,7 +585,7 @@ void k_print_ready_queue(void)
     
     /* iterate through the ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        k_queue_t *p_cur_queue = gp_ready_queue[i];
+        queue_t *p_cur_queue = gp_ready_queue[i];
         k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
         
         printf("Priority %d:\n\r", i);
@@ -607,7 +607,7 @@ void k_print_blocked_on_memory_queue(void)
     
     /* iterate through the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        k_queue_t *p_cur_queue = gp_blocked_on_memory_queue[i];
+        queue_t *p_cur_queue = gp_blocked_on_memory_queue[i];
         k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
         
         printf("Priority %d:\n\r", i);
@@ -629,7 +629,7 @@ void k_print_blocked_on_receive_queue(void)
     
     /* iterate through the blocked-on-receive queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        k_queue_t *p_cur_queue = gp_blocked_on_receive_queue[i];
+        queue_t *p_cur_queue = gp_blocked_on_receive_queue[i];
         k_pcb_t *p_cur_pcb = (k_pcb_t *)p_cur_queue->mp_first;
         
         printf("Priority %d:\n\r", i);

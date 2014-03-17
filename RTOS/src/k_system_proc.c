@@ -28,7 +28,7 @@
 volatile U32 g_timer_count = 0;
 
 /* the queue containing messages which are scheduled for later dispatching */
-k_queue_t g_timeout_queue;
+queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_timer_preemption_flag = 0;

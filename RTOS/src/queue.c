@@ -6,7 +6,7 @@
 #endif
 
 
-int enqueue_node(k_queue_t *p_queue, node_t *p_node)
+int enqueue_node(queue_t *p_queue, node_t *p_node)
 {
     if (p_queue == NULL || p_node == NULL) {
     
@@ -30,7 +30,7 @@ int enqueue_node(k_queue_t *p_queue, node_t *p_node)
     return RTOS_OK;
 }
 
-int queue_sorted_insert(k_queue_t *p_queue, node_t *p_node)
+int queue_sorted_insert(queue_t *p_queue, node_t *p_node)
 {
     node_t *p_current_iter = NULL;
     node_t *p_previous_iter = NULL;
@@ -77,7 +77,7 @@ int queue_sorted_insert(k_queue_t *p_queue, node_t *p_node)
     return RTOS_OK;
 }
 
-node_t *queue_peek(k_queue_t *p_queue)
+node_t *queue_peek(queue_t *p_queue)
 {
     if (is_queue_empty(p_queue)) {
     
@@ -91,7 +91,7 @@ node_t *queue_peek(k_queue_t *p_queue)
     return p_queue->mp_first;
 }
 
-node_t *dequeue_node(k_queue_t *p_queue)
+node_t *dequeue_node(queue_t *p_queue)
 {
     node_t *p_first = NULL;
     
@@ -116,7 +116,7 @@ node_t *dequeue_node(k_queue_t *p_queue)
     return p_first;
 }
 
-int remove_node_from_queue(k_queue_t *p_queue, node_t *p_node)
+int remove_node_from_queue(queue_t *p_queue, node_t *p_node)
 {
     node_t *p_current_iter = NULL;
     node_t *p_previous_iter = NULL;
@@ -162,7 +162,7 @@ int remove_node_from_queue(k_queue_t *p_queue, node_t *p_node)
     return RTOS_ERR;
 }
 
-int queue_contains_node(k_queue_t *p_queue, node_t *p_node)
+int queue_contains_node(queue_t *p_queue, node_t *p_node)
 {
     node_t *p_iter = NULL;
     
@@ -186,7 +186,7 @@ int queue_contains_node(k_queue_t *p_queue, node_t *p_node)
     return 0;
 }
 
-int is_queue_empty(k_queue_t *p_queue)
+int is_queue_empty(queue_t *p_queue)
 {
     if (p_queue == NULL) {
     
@@ -202,7 +202,7 @@ int is_queue_empty(k_queue_t *p_queue)
 
 #ifdef DEBUG_1
 
-int print_queue(k_queue_t *p_queue)
+int print_queue(queue_t *p_queue)
 {
     node_t *p_iter = NULL;
     
