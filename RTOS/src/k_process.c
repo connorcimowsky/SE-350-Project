@@ -481,6 +481,10 @@ void k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
 {
     k_queue_t *p_blocked_on_memory_queue = NULL;
     
+    if (p_pcb == NULL) {
+        return;
+    }
+    
     p_pcb->m_state = BLOCKED_ON_MEMORY;
     
     /* retrieve a pointer to the blocked-on-memory queue corresponding to the priority of the process */
@@ -514,6 +518,10 @@ k_pcb_t* k_dequeue_blocked_on_memory_process(void)
 void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
     k_queue_t *p_blocked_on_receive_queue = NULL;
+    
+    if (p_pcb == NULL) {
+        return;
+    }
     
     p_pcb->m_state = BLOCKED_ON_RECEIVE;
     
