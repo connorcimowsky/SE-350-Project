@@ -146,6 +146,11 @@ void wall_clock_proc(void)
     }
 }
 
+void set_priority_proc(void)
+{
+    
+}
+
 void stress_test_a(void)
 {
     int counter = 0;

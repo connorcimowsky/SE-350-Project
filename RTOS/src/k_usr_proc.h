@@ -7,6 +7,9 @@
 /* wall clock process */
 void wall_clock_proc(void);
 
+/* set priority process */
+void set_priority_proc(void);
+
 /* stress test A */
 void stress_test_a(void);
 

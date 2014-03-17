@@ -90,6 +90,13 @@ void process_init(void)
     g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
     enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_CLOCK]);
     
+    /* configure set priority process */
+    g_proc_table[PID_SET_PRIO].m_pid = PID_SET_PRIO;
+    g_proc_table[PID_SET_PRIO].m_priority = HIGHEST;
+    g_proc_table[PID_SET_PRIO].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_SET_PRIO].mpf_start_pc = &set_priority_proc;
+    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_SET_PRIO]);
+    
     /* configure stress test A */
     g_proc_table[PID_A].m_pid = PID_A;
     g_proc_table[PID_A].m_priority = HIGHEST;
