@@ -148,7 +148,81 @@ void wall_clock_proc(void)
 
 void set_priority_proc(void)
 {
+    int i = 0;
+    int j = 0;
+    char buf[3] = {'0'};
+    int pid = 0;
+    int priority = 0;
     
+    /* register ourselves for the %C command */
+    
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    str_cpy("%C", p_msg->m_data);
+    
+    send_message(PID_KCD, p_msg);
+    
+    /* start receiving and parsing messages */
+    
+    while (1) {
+        p_msg = receive_message(NULL);
+        
+        if (p_msg->m_data[2] == ' ') {
+            /* start at the first character after the space */
+            i = 3;
+            
+            /* parse the specified process identifier */
+            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
+                if (p_msg->m_data[i] < '0' || p_msg->m_data[i] > '9') {
+                    printf("ERROR\n\r");
+                }
+                
+                if (j >= 2) {
+                    printf("ERROR\n\r");
+                }
+                
+                buf[j++] = p_msg->m_data[i++];
+            }
+            
+            buf[j] = '\0';
+            
+            pid = a_to_i(buf);
+            
+            printf("Parsed PID %d\n\r", pid);
+            
+            j = 0;
+            
+            if (p_msg->m_data[i] != ' ') {
+                printf("ERROR\n\r");
+            }
+            
+            i++;
+            
+            /* parse the specified priority */
+            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
+                if (p_msg->m_data[i] < '0' || p_msg->m_data[i] > '9') {
+                    printf("ERROR\n\r");
+                }
+                
+                if (j >= 1) {
+                    printf("ERROR\n\r");
+                }
+                
+                buf[j++] = p_msg->m_data[i++];
+            }
+            
+            priority = a_to_i(buf);
+            
+            printf("Parsed priority %d\n\r", priority);
+            
+        } else {
+            printf("ERROR\n\r");
+        }
+        
+        release_memory_block(p_msg);
+    }
+        
+        
 }
 
 void stress_test_a(void)
