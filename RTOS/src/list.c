@@ -6,7 +6,7 @@
 #endif
 
 
-int insert_node(k_list_t *p_list, k_node_t *p_node)
+int insert_node(k_list_t *p_list, node_t *p_node)
 {
     if (p_list == NULL || p_node == NULL) {
         
@@ -23,9 +23,9 @@ int insert_node(k_list_t *p_list, k_node_t *p_node)
     return RTOS_OK;
 }
 
-k_node_t *get_node(k_list_t *p_list)
+node_t *get_node(k_list_t *p_list)
 {
-    k_node_t *p_first = NULL;
+    node_t *p_first = NULL;
     
     if (is_list_empty(p_list)) {
         
@@ -42,9 +42,9 @@ k_node_t *get_node(k_list_t *p_list)
     return p_first;
 }
 
-int list_contains_node(k_list_t *p_list, k_node_t *p_node)
+int list_contains_node(k_list_t *p_list, node_t *p_node)
 {
-    k_node_t *p_iter = NULL;
+    node_t *p_iter = NULL;
     
     if (is_list_empty(p_list)) {
     

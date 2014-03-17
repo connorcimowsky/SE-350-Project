@@ -79,10 +79,10 @@ void memory_init(void)
     
     for (i = 0; i < NUM_BLOCKS; i++) {
         /* create a node to represent a memory block */
-        k_node_t *p_node = (k_node_t *)p_end;
+        node_t *p_node = (node_t *)p_end;
         
         /* insert the node into the memory heap structure */
-        insert_node(gp_heap, (k_node_t *)p_node);
+        insert_node(gp_heap, (node_t *)p_node);
 
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
@@ -114,7 +114,7 @@ void memory_init(void)
         p_reg->m_pid = 0;
         p_reg->m_active = 0;
         
-        insert_node(&g_kcd_reg, (k_node_t *)p_reg);
+        insert_node(&g_kcd_reg, (node_t *)p_reg);
         
         p_end += sizeof(k_kcd_reg_t);
     }
@@ -222,7 +222,7 @@ int k_release_memory_block(void *p_mem_blk)
 int k_release_memory_block_helper(void *p_mem_blk)
 {
     U8 *p_decrement = NULL;
-    k_node_t *p_node = NULL;
+    node_t *p_node = NULL;
     
     if (p_mem_blk == NULL ) {
         
@@ -239,8 +239,8 @@ int k_release_memory_block_helper(void *p_mem_blk)
     /* decrement the address of the block by the size of the header to get the start address of the node */
     p_decrement -= MSG_HEADER_OFFSET;
         
-    /* cast the start address of the node to a k_node_t */
-    p_node = (k_node_t *)p_decrement;
+    /* cast the start address of the node to a node_t */
+    p_node = (node_t *)p_decrement;
     
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x\n\r", p_node);

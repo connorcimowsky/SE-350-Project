@@ -232,7 +232,7 @@ void stress_test_c(void)
                     } else {
                         p_arithmetic = (U8 *)p_msg;
                         p_arithmetic -= MSG_HEADER_OFFSET;
-                        enqueue_node(&hibernate_queue, (k_node_t *)p_arithmetic);
+                        enqueue_node(&hibernate_queue, (node_t *)p_arithmetic);
                     }
                 }
             }

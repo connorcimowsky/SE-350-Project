@@ -246,7 +246,7 @@ void timer_i_process(void)
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
         
-        queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
+        queue_sorted_insert(&g_timeout_queue, (node_t *)p_decrement);
     }
     
     g_timer_preemption_flag = 0;

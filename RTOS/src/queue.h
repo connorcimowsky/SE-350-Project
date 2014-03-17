@@ -5,22 +5,22 @@
 
 
 typedef struct k_queue_t {
-    k_node_t *mp_first;
-    k_node_t *mp_last;
+    node_t *mp_first;
+    node_t *mp_last;
 } k_queue_t;
 
 
-int enqueue_node(k_queue_t *p_queue, k_node_t *p_node);
+int enqueue_node(k_queue_t *p_queue, node_t *p_node);
 
-int queue_sorted_insert(k_queue_t *p_queue, k_node_t *p_node);
+int queue_sorted_insert(k_queue_t *p_queue, node_t *p_node);
 
-k_node_t *queue_peek(k_queue_t *p_queue);
+node_t *queue_peek(k_queue_t *p_queue);
 
-k_node_t *dequeue_node(k_queue_t *p_queue);
+node_t *dequeue_node(k_queue_t *p_queue);
 
-int remove_node_from_queue(k_queue_t *p_queue, k_node_t *p_node);
+int remove_node_from_queue(k_queue_t *p_queue, node_t *p_node);
 
-int queue_contains_node(k_queue_t *p_queue, k_node_t *p_node);
+int queue_contains_node(k_queue_t *p_queue, node_t *p_node);
 
 int is_queue_empty(k_queue_t *p_queue);
 
