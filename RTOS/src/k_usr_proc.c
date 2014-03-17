@@ -1,5 +1,5 @@
 #include "k_usr_proc.h"
-#include "k_queue.h"
+#include "queue.h"
 #include "printf.h"
 #include "string.h"
 

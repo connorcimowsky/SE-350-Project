@@ -1,7 +1,7 @@
 #ifndef K_SYSTEM_PROC_H
 #define K_SYSTEM_PROC_H
 
-#include "k_queue.h"
+#include "queue.h"
 
 
 /* external variables */

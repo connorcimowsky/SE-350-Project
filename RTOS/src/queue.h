@@ -1,7 +1,7 @@
 #ifndef K_QUEUE_H
 #define K_QUEUE_H
 
-#include "k_node.h"
+#include "node.h"
 
 
 typedef struct queue_t {

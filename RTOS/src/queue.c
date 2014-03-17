@@ -1,4 +1,4 @@
-#include "k_queue.h"
+#include "queue.h"
 #include "rtos.h"
 
 #ifdef DEBUG_1

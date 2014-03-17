@@ -2,8 +2,8 @@
 #define K_RTOS_H
 
 #include "rtos.h"
-#include "k_list.h"
-#include "k_queue.h"
+#include "list.h"
+#include "queue.h"
 
 
 /* definitions */
