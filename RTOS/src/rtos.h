@@ -78,7 +78,9 @@ typedef enum {
     MSG_TYPE_KCD_REG,
     MSG_TYPE_KCD_DISPATCH,
     MSG_TYPE_CRT_DISP,
-    MSG_TYPE_WALL_CLK_TICK
+    MSG_TYPE_WALL_CLK_TICK,
+    MSG_TYPE_COUNT_REPORT,
+    MSG_TYPE_WAKEUP_10
 } MSG_TYPE_E;
 
 
@@ -87,6 +89,10 @@ typedef struct msg_t {
     MSG_TYPE_E m_type;
     char m_data[1];
 } msg_t;
+
+
+/* size of message envelope header */
+#define MSG_HEADER_OFFSET 16
 
 
 /* user-facing api */

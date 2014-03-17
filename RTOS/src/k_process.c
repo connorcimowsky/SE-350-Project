@@ -90,6 +90,27 @@ void process_init(void)
     g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
     enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_CLOCK]);
     
+    /* configure stress test A */
+    g_proc_table[PID_A].m_pid = PID_A;
+    g_proc_table[PID_A].m_priority = HIGHEST;
+    g_proc_table[PID_A].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_A].mpf_start_pc = &stress_test_a;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_A]);
+    
+    /* configure stress test B */
+    g_proc_table[PID_B].m_pid = PID_B;
+    g_proc_table[PID_B].m_priority = HIGHEST;
+    g_proc_table[PID_B].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_B].mpf_start_pc = &stress_test_b;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_B]);
+    
+    /* configure stress test C */
+    g_proc_table[PID_C].m_pid = PID_C;
+    g_proc_table[PID_C].m_priority = HIGHEST;
+    g_proc_table[PID_C].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_C].mpf_start_pc = &stress_test_c;
+    enqueue_node(gp_ready_queue[HIGHEST], (k_node_t *)gp_pcbs[PID_C]);
+    
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;

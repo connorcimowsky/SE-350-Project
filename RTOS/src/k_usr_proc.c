@@ -1,4 +1,5 @@
 #include "k_usr_proc.h"
+#include "k_queue.h"
 #include "printf.h"
 #include "string.h"
 
@@ -142,5 +143,103 @@ void wall_clock_proc(void)
         
         release_memory_block(p_msg);
 
+    }
+}
+
+void stress_test_a(void)
+{
+    int counter = 0;
+    
+    /* register ourselves for the %Z command */
+    
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    str_cpy("%Z", p_msg->m_data);
+    
+    send_message(PID_KCD, p_msg);
+    
+    while (1) {
+        p_msg = receive_message(NULL);
+        
+        if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'Z') {
+            release_memory_block(p_msg);
+            break;
+        } else {
+            release_memory_block(p_msg);
+        }
+    }
+    
+    while (1) {
+        p_msg = (msg_t *)request_memory_block();
+        p_msg->m_type = MSG_TYPE_COUNT_REPORT;
+        p_msg->m_data[0] = counter;
+        
+        send_message(PID_B, p_msg);
+        
+        counter += 1;
+        
+        release_processor();
+    }
+}
+
+void stress_test_b(void)
+{
+    msg_t *p_msg = NULL;
+    
+    while (1) {
+        p_msg = receive_message(NULL);
+        send_message(PID_C, p_msg);
+    }
+}
+
+void stress_test_c(void)
+{
+    msg_t *p_msg = NULL;
+    U8* p_arithmetic = NULL;
+    
+    k_queue_t hibernate_queue;
+    hibernate_queue.mp_first = NULL;
+    hibernate_queue.mp_last = NULL;
+    
+    while (1) {
+        if (is_queue_empty(&hibernate_queue)) {
+            p_msg = receive_message(NULL);
+        } else {
+            p_arithmetic = (U8 *)dequeue_node(&hibernate_queue);
+            p_arithmetic += MSG_HEADER_OFFSET;
+            p_msg = (msg_t *)p_arithmetic;
+        }
+        
+        if (p_msg->m_type == MSG_TYPE_COUNT_REPORT) {
+            if (p_msg->m_data[0] % 20 == 0) {
+                msg_t *p_wakeup_msg = NULL;
+                
+                p_msg->m_type = MSG_TYPE_CRT_DISP;
+                str_cpy("Process C\n\r", p_msg->m_data);
+                send_message(PID_CRT, p_msg);
+                
+                p_wakeup_msg = (msg_t *)request_memory_block();
+                p_wakeup_msg->m_type = MSG_TYPE_WAKEUP_10;
+                p_wakeup_msg->m_data[0] = '\0';
+                
+                delayed_send(PID_C, p_wakeup_msg, 10000);
+                
+                while (1) {
+                    p_msg = receive_message(NULL);
+                    
+                    if (p_msg->m_type == MSG_TYPE_WAKEUP_10) {
+                        break;
+                    } else {
+                        p_arithmetic = (U8 *)p_msg;
+                        p_arithmetic -= MSG_HEADER_OFFSET;
+                        enqueue_node(&hibernate_queue, (k_node_t *)p_arithmetic);
+                    }
+                }
+            }
+        }
+        
+        release_memory_block(p_msg);
+        
+        release_processor();
     }
 }
