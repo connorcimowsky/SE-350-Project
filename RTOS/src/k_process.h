@@ -50,25 +50,25 @@ void k_log_received_message(k_msg_t *p_msg);
 #endif /* DEBUG_HOTKEYS */
 
 /* perform a context switch from p_pcb_old to p_pcb_new */
-int context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
+void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
 
 /* enqueue p_pcb in the ready queue */
-int k_enqueue_ready_process(k_pcb_t *p_pcb);
+void k_enqueue_ready_process(k_pcb_t *p_pcb);
 
 /* dequeue the highest-priority process from the ready queue */
 k_pcb_t *k_dequeue_ready_process(void);
 
 /* set the state of p_pcb to BLOCKED_ON_MEMORY and enqueue it in the blocked-on-memory queue */
-int k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb);
+void k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb);
 
 /* dequeue the next available process from the blocked-on-memory queue */
 k_pcb_t *k_dequeue_blocked_on_memory_process(void);
 
 /* set the state of p_pcb to BLOCKED_ON_RECEIVE and enqueue it in the blocked-on-receive queue */
-int k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb);
+void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb);
 
-/* remove 'p_pcb' from the blocked-on-receive queue */
-int k_remove_blocked_on_receive_process(k_pcb_t *p_pcb);
+/* remove p_pcb from the blocked-on-receive queue */
+void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb);
 
 #ifdef DEBUG_HOTKEYS
 
