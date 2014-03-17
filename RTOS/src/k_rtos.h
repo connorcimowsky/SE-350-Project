@@ -105,7 +105,7 @@ typedef struct k_msg_log_t {
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit;
 
 /* current bottom of (incrementing) heap */
-extern k_list_t *gp_heap;
+extern list_t *gp_heap;
 
 /* current top of (decrementing) stack, 8-byte aligned */
 extern U32 *gp_stack;
@@ -129,7 +129,7 @@ extern k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 extern k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* registry of keyboard command entries */
-extern k_list_t g_kcd_reg;
+extern list_t g_kcd_reg;
 
 /* circular buffer of recently sent messages */
 extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];

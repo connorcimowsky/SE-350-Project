@@ -4,18 +4,18 @@
 #include "k_node.h"
 
 
-typedef struct k_list_t {
+typedef struct list_t {
     node_t *mp_first;
-} k_list_t;
+} list_t;
 
 
-int insert_node(k_list_t *p_list, node_t *p_node);
+int insert_node(list_t *p_list, node_t *p_node);
 
-node_t *get_node(k_list_t *p_list);
+node_t *get_node(list_t *p_list);
 
-int list_contains_node(k_list_t *p_list, node_t *p_node);
+int list_contains_node(list_t *p_list, node_t *p_node);
 
-int is_list_empty(k_list_t *p_list);
+int is_list_empty(list_t *p_list);
 
 
 #endif /* K_LIST_H */

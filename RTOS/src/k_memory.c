@@ -8,7 +8,7 @@
 
 
 /* global variables */
-k_list_t *gp_heap;
+list_t *gp_heap;
 U8 *gp_heap_begin_addr;
 U8 *gp_heap_end_addr;
 U32 *gp_stack;
@@ -70,9 +70,9 @@ void memory_init(void)
     }
     
     /* create the memory heap */
-    gp_heap = (k_list_t *)p_end;
+    gp_heap = (list_t *)p_end;
     gp_heap->mp_first = NULL;
-    p_end += sizeof(k_list_t);
+    p_end += sizeof(list_t);
     
     /* save the beginning address of the heap for error-checking later on */
     gp_heap_begin_addr = p_end;
