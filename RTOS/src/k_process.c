@@ -387,10 +387,10 @@ void k_log_sent_message(int sender_pid, int recipient_pid, msg_t *p_msg)
     
     g_sent_msg_log[g_cur_sent_msg_log_index].m_sender_pid = sender_pid;
     g_sent_msg_log[g_cur_sent_msg_log_index].m_recipient_pid = recipient_pid;
-    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = ((msg_t *)p_msg)->m_type;
+    g_sent_msg_log[g_cur_sent_msg_log_index].m_type = p_msg->m_type;
     
     for (i = 0; i < MSG_LOG_LEN; i++) {
-        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = ((msg_t *)p_msg)->m_data[i];
+        g_sent_msg_log[g_cur_sent_msg_log_index].m_text[i] = p_msg->m_data[i];
     }
     
     g_sent_msg_log[g_cur_sent_msg_log_index].m_time_stamp = k_get_system_time();
