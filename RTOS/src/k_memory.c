@@ -183,9 +183,8 @@ void *k_request_memory_block(void)
 #endif
         
         /* add the calling process to the blocked queue and yield the processor */
-        if (k_enqueue_blocked_on_memory_process(gp_current_process) == RTOS_OK) {
-            k_release_processor();
-        }
+        k_enqueue_blocked_on_memory_process(gp_current_process);
+        k_release_processor();
     }
 
     /* retrieve the next available node from the heap */
@@ -210,9 +209,8 @@ int k_release_memory_block(void *p_mem_blk)
         /* if there is a blocked process, set its state to READY and enqueue it in the ready queue */
         if (p_blocked_pcb != NULL) {
             p_blocked_pcb->m_state = READY;
-            if (k_enqueue_ready_process(p_blocked_pcb) == RTOS_OK) {
-                return k_release_processor();
-            }
+            k_enqueue_ready_process(p_blocked_pcb);
+            return k_release_processor();
         }
     } else {
         return RTOS_ERR;
@@ -279,9 +277,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* if none of the above tests failed, insert the node into the memory heap */
-    if (insert_node(gp_heap, p_node) == RTOS_ERR) {
-        return RTOS_ERR;
-    }
+    insert_node(gp_heap, p_node);
     
     return RTOS_OK;
 }
