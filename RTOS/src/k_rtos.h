@@ -2,8 +2,8 @@
 #define K_RTOS_H
 
 #include "rtos.h"
-#include "k_list.h"
-#include "k_queue.h"
+#include "list.h"
+#include "queue.h"
 
 
 /* definitions */
@@ -59,7 +59,7 @@ typedef struct k_pcb_t
     PROC_STATE_E m_state;
     
     /* message queue */
-    k_queue_t m_msg_queue;
+    queue_t m_msg_queue;
 } k_pcb_t;
 
 
@@ -72,10 +72,6 @@ typedef struct k_msg_t {
     MSG_TYPE_E m_type;
     char m_data[1];
 } k_msg_t;
-
-
-/* size of message envelope header */
-#define MSG_HEADER_OFFSET 16
 
 
 /* keyboard command registry entry */
@@ -109,7 +105,7 @@ typedef struct k_msg_log_t {
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit;
 
 /* current bottom of (incrementing) heap */
-extern k_list_t *gp_heap;
+extern list_t *gp_heap;
 
 /* current top of (decrementing) stack, 8-byte aligned */
 extern U32 *gp_stack;
@@ -124,16 +120,16 @@ extern k_pcb_t **gp_pcbs;
 extern k_pcb_t *gp_current_process;
 
 /* array of queues for processes that are READY, one for each priority */
-extern k_queue_t *gp_ready_queue[NUM_PRIORITIES];
+extern queue_t *gp_ready_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_MEMORY, one for each priority */
-extern k_queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+extern queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
-extern k_queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+extern queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* registry of keyboard command entries */
-extern k_list_t g_kcd_reg;
+extern list_t g_kcd_reg;
 
 /* circular buffer of recently sent messages */
 extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];

@@ -8,7 +8,7 @@
 
 
 /* global variables */
-k_list_t *gp_heap;
+list_t *gp_heap;
 U8 *gp_heap_begin_addr;
 U8 *gp_heap_end_addr;
 U32 *gp_stack;
@@ -38,29 +38,29 @@ void memory_init(void)
     
     /* create the ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_ready_queue[i] = (k_queue_t *)p_end;
+        gp_ready_queue[i] = (queue_t *)p_end;
         gp_ready_queue[i]->mp_first = NULL;
         gp_ready_queue[i]->mp_last = NULL;
         
-        p_end += sizeof(k_queue_t);
+        p_end += sizeof(queue_t);
     }
     
     /* create the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_memory_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_memory_queue[i] = (queue_t *)p_end;
         gp_blocked_on_memory_queue[i]->mp_first = NULL;
         gp_blocked_on_memory_queue[i]->mp_last = NULL;
         
-        p_end += sizeof(k_queue_t);
+        p_end += sizeof(queue_t);
     }
     
     /* create the blocked-on-receive queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_receive_queue[i] = (k_queue_t *)p_end;
+        gp_blocked_on_receive_queue[i] = (queue_t *)p_end;
         gp_blocked_on_receive_queue[i]->mp_first = NULL;
         gp_blocked_on_receive_queue[i]->mp_last = NULL;
         
-        p_end += sizeof(k_queue_t);
+        p_end += sizeof(queue_t);
     }
     
     /* prepare for alloc_stack() by ensuring 8-byte alignment */
@@ -70,19 +70,19 @@ void memory_init(void)
     }
     
     /* create the memory heap */
-    gp_heap = (k_list_t *)p_end;
+    gp_heap = (list_t *)p_end;
     gp_heap->mp_first = NULL;
-    p_end += sizeof(k_list_t);
+    p_end += sizeof(list_t);
     
     /* save the beginning address of the heap for error-checking later on */
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
         /* create a node to represent a memory block */
-        k_node_t *p_node = (k_node_t *)p_end;
+        node_t *p_node = (node_t *)p_end;
         
         /* insert the node into the memory heap structure */
-        insert_node(gp_heap, (k_node_t *)p_node);
+        insert_node(gp_heap, (node_t *)p_node);
 
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
@@ -114,7 +114,7 @@ void memory_init(void)
         p_reg->m_pid = 0;
         p_reg->m_active = 0;
         
-        insert_node(&g_kcd_reg, (k_node_t *)p_reg);
+        insert_node(&g_kcd_reg, (node_t *)p_reg);
         
         p_end += sizeof(k_kcd_reg_t);
     }
@@ -222,7 +222,7 @@ int k_release_memory_block(void *p_mem_blk)
 int k_release_memory_block_helper(void *p_mem_blk)
 {
     U8 *p_decrement = NULL;
-    k_node_t *p_node = NULL;
+    node_t *p_node = NULL;
     
     if (p_mem_blk == NULL ) {
         
@@ -239,8 +239,8 @@ int k_release_memory_block_helper(void *p_mem_blk)
     /* decrement the address of the block by the size of the header to get the start address of the node */
     p_decrement -= MSG_HEADER_OFFSET;
         
-    /* cast the start address of the node to a k_node_t */
-    p_node = (k_node_t *)p_decrement;
+    /* cast the start address of the node to a node_t */
+    p_node = (node_t *)p_decrement;
     
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x\n\r", p_node);

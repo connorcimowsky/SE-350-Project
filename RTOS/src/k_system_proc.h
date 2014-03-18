@@ -1,12 +1,12 @@
 #ifndef K_SYSTEM_PROC_H
 #define K_SYSTEM_PROC_H
 
-#include "k_queue.h"
+#include "queue.h"
 
 
 /* external variables */
 extern volatile U32 g_timer_count;
-extern k_queue_t g_timeout_queue;
+extern queue_t g_timeout_queue;
 
 
 /* indefinitely releases the processor */

@@ -156,13 +156,13 @@ From the beginning of our project, we knew that we would need to store different
 
 Since we wanted to avoid creating linked structures that were coupled with the type of data they were storing, we needed to devise a way to make them as generic as possible.\\
 
-We chose to make a generic node structure, \texttt{k_node_t}, with only one member: a pointer to the next \texttt{k_node_t}:
+We chose to make a generic node structure, \texttt{node_t}, with only one member: a pointer to the next \texttt{node_t}:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-typedef struct k_node_t {
-    struct k_node_t *p_next;
-} k_node_t;
+typedef struct node_t {
+    struct node_t *p_next;
+} node_t;
 \end{lstlisting}
 \end{minipage}
 
@@ -170,14 +170,14 @@ We then designed our linked structures to accommodate nodes of this type:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-typedef struct k_list_t {
-    k_node_t *p_first;
-} k_list_t;
+typedef struct list_t {
+    node_t *p_first;
+} list_t;
 
-typedef struct k_queue_t {
-    k_node_t *p_first;
-    k_node_t *p_last;
-} k_queue_t;
+typedef struct queue_t {
+    node_t *p_first;
+    node_t *p_last;
+} queue_t;
 \end{lstlisting}
 \end{minipage}
 
@@ -192,7 +192,7 @@ typedef struct k_pcb_node_t {
 \end{lstlisting}
 \end{minipage}
 
-As long as the first member remains a pointer to the next node, the structure members will line up in memory and our linked structures will accommodate these nodes (assuming we cast \texttt{k_pcb_node_t} pointers to \texttt{k_node_t} pointers on insertion, and vice versa on removal).
+As long as the first member remains a pointer to the next node, the structure members will line up in memory and our linked structures will accommodate these nodes (assuming we cast \texttt{k_pcb_node_t} pointers to \texttt{node_t} pointers on insertion, and vice versa on removal).
 
 \section{Modeling blocks in our memory heap}
 
@@ -202,42 +202,42 @@ In addition to having a pointer to the next node, our first thought was that eac
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-typedef struct k_mem_blk_node_t {
-    struct k_mem_blk_node_t *p_next;
+typedef struct k_mem_blnode_t {
+    struct k_mem_blnode_t *p_next;
     void *p_mem_blk_start_addr;
-} k_mem_blk_node_t;
+} k_mem_blnode_t;
 \end{lstlisting}
 \end{minipage}
 
-After further thought, we realized that since the size of each memory block is known at compile time, we can simply space the nodes apart at \texttt{(sizeof(k_node_t) + BLOCK_SIZE)} intervals, obviating the need for a member such as \texttt{void *p_mem_blk_start_addr}. Thus, we were able to use the unmodified node structure (\texttt{k_node_t}, outlined in the previous section) for our memory heap.
+After further thought, we realized that since the size of each memory block is known at compile time, we can simply space the nodes apart at \texttt{(sizeof(node_t) + BLOCK_SIZE)} intervals, obviating the need for a member such as \texttt{void *p_mem_blk_start_addr}. Thus, we were able to use the unmodified node structure (\texttt{node_t}, outlined in the previous section) for our memory heap.
 
 \section{Pointer arithmetic}
 
-For our memory heap, we chose to structure blocks with the header in front of the block itself. This means that when we remove a node from our heap in \texttt{k_request_memory_block()}, we need to increment \texttt{node}'s address by 4 bytes (the size of the header, \texttt{sizeof(k_node_t)}) before returning the address to the user. Similarly, in \texttt{k_release_memory_block(void *p_mem_blk)}, we need to decrement the address of \texttt{p_mem_blk} by 4 bytes in order to get the correct pointer to the node for re-insertion into the heap.\\
+For our memory heap, we chose to structure blocks with the header in front of the block itself. This means that when we remove a node from our heap in \texttt{k_request_memory_block()}, we need to increment \texttt{node}'s address by 4 bytes (the size of the header, \texttt{sizeof(node_t)}) before returning the address to the user. Similarly, in \texttt{k_release_memory_block(void *p_mem_blk)}, we need to decrement the address of \texttt{p_mem_blk} by 4 bytes in order to get the correct pointer to the node for re-insertion into the heap.\\
 
 When we originally implemented this pointer arithmetic in \texttt{k_request_memory_block()}, we did the following:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-k_node_t *p_mem_blk = get_node(gp_heap);
-p_mem_blk += sizeof(k_node_t);
+node_t *p_mem_blk = get_node(gp_heap);
+p_mem_blk += sizeof(node_t);
 \end{lstlisting}
 \end{minipage}
 
-If the value of \texttt{p_mem_blk} is, for example, \texttt{0x10000000}, we would expect the resulting value to be \texttt{0x10000004}. However, the above code produces a result of \texttt{0x10000010}. This is because the compiler knows the size of \texttt{k_node_t}, and is multiplying the addend by \texttt{sizeof(k_node_t)}, resulting in an addend of 16 instead of 4. Therefore, we revised the addend to 1 instead of 4:
+If the value of \texttt{p_mem_blk} is, for example, \texttt{0x10000000}, we would expect the resulting value to be \texttt{0x10000004}. However, the above code produces a result of \texttt{0x10000010}. This is because the compiler knows the size of \texttt{node_t}, and is multiplying the addend by \texttt{sizeof(node_t)}, resulting in an addend of 16 instead of 4. Therefore, we revised the addend to 1 instead of 4:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-k_node_t *p_mem_blk = get_node(gp_heap);
+node_t *p_mem_blk = get_node(gp_heap);
 p_mem_blk += 1;
 \end{lstlisting}
 \end{minipage}
 
-Since the block pointer we receive in \texttt{k_request_memory_block(void *p_mem_blk)} is not typed as a \texttt{k_node_t}, the compiler does not multiply the subtrahend by \texttt{sizeof(k_node_t)} for us. Instead of doing this multiplication ourselves, we chose to cast \texttt{p_mem_blk} as a pointer to a \texttt{k_node_t} and simply use a subtrahend of 1:
+Since the block pointer we receive in \texttt{k_request_memory_block(void *p_mem_blk)} is not typed as a \texttt{node_t}, the compiler does not multiply the subtrahend by \texttt{sizeof(node_t)} for us. Instead of doing this multiplication ourselves, we chose to cast \texttt{p_mem_blk} as a pointer to a \texttt{node_t} and simply use a subtrahend of 1:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C]
-k_node_t *p_blk = p_mem_blk;
+node_t *p_blk = p_mem_blk;
 p_blk -= 1;
 \end{lstlisting}
 \end{minipage}

@@ -28,7 +28,7 @@
 volatile U32 g_timer_count = 0;
 
 /* the queue containing messages which are scheduled for later dispatching */
-k_queue_t g_timeout_queue;
+queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_timer_preemption_flag = 0;
@@ -38,7 +38,7 @@ U32 g_uart_preemption_flag = 0;
 
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
-k_list_t g_kcd_reg;
+list_t g_kcd_reg;
 char g_input_buffer[INPUT_BUFFER_SIZE];
 int g_input_buffer_index = 0;
 int g_output_buffer_index = 0;
@@ -246,7 +246,7 @@ void timer_i_process(void)
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
         
-        queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
+        queue_sorted_insert(&g_timeout_queue, (node_t *)p_decrement);
     }
     
     g_timer_preemption_flag = 0;
