@@ -148,12 +148,6 @@ void wall_clock_proc(void)
 
 void set_priority_proc(void)
 {
-    int i = 0;
-    int j = 0;
-    char buf[3] = {'0'};
-    int pid = 0;
-    int priority = 0;
-    
     /* register ourselves for the %C command */
     
     msg_t *p_msg = (msg_t *)request_memory_block();
@@ -165,64 +159,59 @@ void set_priority_proc(void)
     /* start receiving and parsing messages */
     
     while (1) {
+        char pid_buf[3] = {'\0'};
+        char priority_buf[2] = {'\0'};
+        
+        int pid = 0;
+        int priority = 0;
+        
+        int ret_val = 0;
+        
         p_msg = receive_message(NULL);
         
-        if (p_msg->m_data[2] == ' ') {
-            /* start at the first character after the space */
-            i = 3;
+        if (p_msg->m_data[2] == ' '
+         && p_msg->m_data[3] >= '0' && p_msg->m_data[3] <= '9'
+         && p_msg->m_data[4] == ' '
+         && p_msg->m_data[5] >= '0' && p_msg->m_data[5] <= '9'
+         && p_msg->m_data[6] == '\0') {
+            pid_buf[0] = p_msg->m_data[3];
+            priority_buf[0] = p_msg->m_data[5];
+         } else if (p_msg->m_data[2] == ' '
+         && p_msg->m_data[3] >= '0' && p_msg->m_data[3] <= '9'
+         && p_msg->m_data[4] >= '0' && p_msg->m_data[4] <= '9'
+         && p_msg->m_data[5] == ' '
+         && p_msg->m_data[6] >= '0' && p_msg->m_data[5] <= '9'
+         && p_msg->m_data[7] == '\0') {
+            pid_buf[0] = p_msg->m_data[3];
+            pid_buf[1] = p_msg->m_data[4];
+            priority_buf[0] = p_msg->m_data[6];
+         } else {
+            msg_t *p_display_msg = (msg_t *)request_memory_block();
+            p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+            str_cpy("Error: illegal parameters.\n\r", p_display_msg->m_data);
             
-            /* parse the specified process identifier */
-            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
-                if (p_msg->m_data[i] < '0' || p_msg->m_data[i] > '9') {
-                    printf("ERROR\n\r");
-                }
-                
-                if (j >= 2) {
-                    printf("ERROR\n\r");
-                }
-                
-                buf[j++] = p_msg->m_data[i++];
-            }
+            send_message(PID_CRT, p_display_msg);
             
-            buf[j] = '\0';
+            release_memory_block(p_msg);
             
-            pid = a_to_i(buf);
+            continue;
+        }
+        
+        pid = a_to_i(pid_buf);
+        priority = a_to_i(priority_buf);
+        
+        ret_val = set_process_priority(pid, priority);
+        
+        if (ret_val != RTOS_OK) {
+            msg_t *p_display_msg = (msg_t *)request_memory_block();
+            p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+            str_cpy("Error: illegal PID or priority.\n\r", p_display_msg->m_data);
             
-            printf("Parsed PID %d\n\r", pid);
-            
-            j = 0;
-            
-            if (p_msg->m_data[i] != ' ') {
-                printf("ERROR\n\r");
-            }
-            
-            i++;
-            
-            /* parse the specified priority */
-            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
-                if (p_msg->m_data[i] < '0' || p_msg->m_data[i] > '9') {
-                    printf("ERROR\n\r");
-                }
-                
-                if (j >= 1) {
-                    printf("ERROR\n\r");
-                }
-                
-                buf[j++] = p_msg->m_data[i++];
-            }
-            
-            priority = a_to_i(buf);
-            
-            printf("Parsed priority %d\n\r", priority);
-            
-        } else {
-            printf("ERROR\n\r");
+            send_message(PID_CRT, p_display_msg);
         }
         
         release_memory_block(p_msg);
     }
-        
-        
 }
 
 void stress_test_a(void)
