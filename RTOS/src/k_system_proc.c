@@ -189,7 +189,7 @@ void uart_i_process(void)
             k_pcb_t *p_blocked_pcb;
             
             if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
-                pUart->IER ^= IER_THRE;
+                pUart->IER &= (~IER_THRE);
             }
             
             pUart->THR = '\0';
@@ -348,7 +348,7 @@ void crt_proc(void)
         
         if (p_msg->m_type == MSG_TYPE_CRT_DISP) {
             send_message(PID_UART_IPROC, p_msg);
-            pUart->IER ^= IER_THRE;
+            pUart->IER |= IER_THRE;
         } else {
             release_memory_block(p_msg);
         }

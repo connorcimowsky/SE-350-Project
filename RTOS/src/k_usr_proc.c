@@ -164,6 +164,74 @@ void wall_clock_proc(void)
     }
 }
 
+void set_priority_proc(void)
+{
+    /* register ourselves for the %C command */
+    
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    str_cpy("%C", p_msg->m_data);
+    
+    send_message(PID_KCD, p_msg);
+    
+    /* start receiving and parsing messages */
+    
+    while (1) {
+        char pid_buf[3] = {'\0'};
+        char priority_buf[2] = {'\0'};
+        
+        int pid = 0;
+        int priority = 0;
+        
+        int ret_val = 0;
+        
+        p_msg = receive_message(NULL);
+        
+        if (p_msg->m_data[2] == ' '
+         && p_msg->m_data[3] >= '0' && p_msg->m_data[3] <= '9'
+         && p_msg->m_data[4] == ' '
+         && p_msg->m_data[5] >= '0' && p_msg->m_data[5] <= '9'
+         && p_msg->m_data[6] == '\0') {
+            pid_buf[0] = p_msg->m_data[3];
+            priority_buf[0] = p_msg->m_data[5];
+         } else if (p_msg->m_data[2] == ' '
+         && p_msg->m_data[3] >= '0' && p_msg->m_data[3] <= '9'
+         && p_msg->m_data[4] >= '0' && p_msg->m_data[4] <= '9'
+         && p_msg->m_data[5] == ' '
+         && p_msg->m_data[6] >= '0' && p_msg->m_data[5] <= '9'
+         && p_msg->m_data[7] == '\0') {
+            pid_buf[0] = p_msg->m_data[3];
+            pid_buf[1] = p_msg->m_data[4];
+            priority_buf[0] = p_msg->m_data[6];
+         } else {
+            msg_t *p_display_msg = (msg_t *)request_memory_block();
+            p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+            str_cpy("Error: illegal parameters.\n\r", p_display_msg->m_data);
+            
+            send_message(PID_CRT, p_display_msg);
+            
+            release_memory_block(p_msg);
+            
+            continue;
+        }
+        
+        pid = a_to_i(pid_buf);
+        priority = a_to_i(priority_buf);
+        
+        ret_val = set_process_priority(pid, priority);
+        
+        if (ret_val != RTOS_OK) {
+            msg_t *p_display_msg = (msg_t *)request_memory_block();
+            p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+            str_cpy("Error: illegal PID or priority.\n\r", p_display_msg->m_data);
+            
+            send_message(PID_CRT, p_display_msg);
+        }
+        
+        release_memory_block(p_msg);
+    }
+}
+
 void stress_test_a(void)
 {
     int counter = 0;
