@@ -101,24 +101,38 @@ There are two structures used to represent messages: a kernel-facing message hea
 
 When a process wishes to send a message, it will first invoke \texttt{request_memory_block} for the envelope. It then populates the message envelope fields and invokes \texttt{send_message}. This primitive populates the message header fields and enqueues the message in the recipient's message queue. If necessary, the recipient will be unblocked and \texttt{release_processor} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
 
-\begin{algorithm}\caption{Sending messages}\begin{algorithmic}[1]
+\begin{algorithm}
+\caption{Sending messages}
+\begin{algorithmic}[1]
 \Procedure {k_send_message}{$recipient$, $msg$}
-    \If {$recipient < 0$ \textbf{or} $recipient >=$ \texttt{NUM_PROCS}}        \State \Return \texttt{RTOS_ERR} \Comment{Recipient must be a valid process}    \EndIf
+    \If {$recipient < 0$ \textbf{or} $recipient >=$ \texttt{NUM_PROCS}}
+        \State \Return \texttt{RTOS_ERR} \Comment{Recipient must be a valid process}
+    \EndIf
     \If {$\Call{k_send_message_helper}{cur\_proc, recipient, msg} = 1$}
         \If {$recipient.priority >= cur\_proc.priority$}
-            \State \Call{k_release_processor}{\null}        \EndIf    \EndIf\EndProcedure
+            \State \Return \Call{k_release_processor}{\null}
+        \EndIf
+    \EndIf
+    \State \Return \texttt{RTOS_OK}
+\EndProcedure
 
 \Statex
-\Procedure {k_send_message_helper}{$sender$, $recipient$, $msg$}
+
+\Procedure {k_send_message_helper}{$sender$, $recipient$, $msg$}
     \State $msg.sender \leftarrow sender$
     \State $msg.recipient \leftarrow recipient$
     \State $\Call{enqueue}{msg, recipient.msg\_queue}$
     \If {$recipient.state = \texttt{BLOCKED_ON_RECEIVE}$}
         \State $\Call{dequeue}{recipient, blocked\_on\_receive\_queue}$
         \State $recipient.state \leftarrow \texttt{READY}$
-        \State $\Call{enqueue}{recipient, ready\_queue}$        \State \Return 1 \Comment{1 indicates that the recipient was unblocked}
+        \State $\Call{enqueue}{recipient, ready\_queue}$
+        \State \Return 1 \Comment{1 indicates that the recipient was unblocked}
     \Else
-        \State \Return 0    \EndIf\EndProcedure\end{algorithmic}\end{algorithm}
+        \State \Return 0
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. Instead of directly enqueueing the message in the recipient's message queue, \texttt{delayed_send} enqueues the message in the timer i-process's message queue. As described in Section \ref{subsec:Timer I-Process}, the timer i-process will then take care of dispatching the message at the correct time.\\
 
