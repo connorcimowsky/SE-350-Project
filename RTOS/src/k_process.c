@@ -708,4 +708,23 @@ void k_print_msg_logs(void)
     printf("\n\r");
 }
 
+void k_print_memory_heap(void)
+{
+    int mem_blk_counter = 0;
+    node_t *p_mem_blk_iter = gp_heap->mp_first;
+    
+    printf("\n\r\n\r*** MEMORY HEAP ***\n\r\n\r");
+    
+    /* iterate through the memory heap */
+    while (p_mem_blk_iter != NULL) {
+        printf("\t0x%x\n\r", p_mem_blk_iter);
+        p_mem_blk_iter = p_mem_blk_iter->mp_next;
+        mem_blk_counter++;
+    }
+    
+    printf("\n\r");
+    
+    printf("Available blocks: %d\n\r\n\r", mem_blk_counter);
+}
+
 #endif /* DEBUG_HOTKEYS */

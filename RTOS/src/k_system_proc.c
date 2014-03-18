@@ -18,6 +18,7 @@
 #define DEBUG_HOTKEY_2 '@'
 #define DEBUG_HOTKEY_3 '#'
 #define DEBUG_HOTKEY_4 '$'
+#define DEBUG_HOTKEY_5 '^'
 
 #endif /* DEBUG_HOTKEYS */
 
@@ -126,6 +127,8 @@ void uart_i_process(void)
             k_print_blocked_on_receive_queue();
         } else if (g_char_in == DEBUG_HOTKEY_4) {
             k_print_msg_logs();
+        } else if (g_char_in == DEBUG_HOTKEY_5) {
+            k_print_memory_heap();
         }
         
 #endif
@@ -135,7 +138,7 @@ void uart_i_process(void)
 #ifdef DEBUG_HOTKEYS
             
             /* only filter the debug hotkeys if DEBUG_HOTKEYS is defined */
-            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4)) {
+            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4) && (g_char_in != DEBUG_HOTKEY_5)) {
                 g_input_buffer[g_input_buffer_index++] = g_char_in;
             }
             
