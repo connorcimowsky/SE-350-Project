@@ -277,10 +277,7 @@ int k_send_message(int recipient_pid, void *p_msg)
     if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == 1) {
         /* only check for preemption if we unblocked the recipient (helper returned 1) */
         if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
-            /* don't preempt in the case of the UART i-process */
-            if (recipient_pid != PID_UART_IPROC) {
-                return k_release_processor();
-            }
+            return k_release_processor();
         }
     }
     

@@ -308,7 +308,7 @@ void kcd_proc(void)
             char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
             
             /* isolate the command identifier, i.e. the portion of the input before the first space */
-            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
+            while (i < KCD_REG_LENGTH && p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
                 keyboard_command_identifier[i] = p_msg->m_data[i];
                 i++;
             }
