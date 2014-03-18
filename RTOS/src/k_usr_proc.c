@@ -13,28 +13,19 @@ void wall_clock_proc(void)
 {
     msg_t *p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_KCD_REG;
-    p_msg->m_data[0] = '%';
-    p_msg->m_data[1] = 'W';
-    p_msg->m_data[2] = 'R';
-    p_msg->m_data[3] = '\0';
+    str_cpy("%WR", p_msg->m_data);
     
     send_message(PID_KCD, p_msg);
     
     p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_KCD_REG;
-    p_msg->m_data[0] = '%';
-    p_msg->m_data[1] = 'W';
-    p_msg->m_data[2] = 'S';
-    p_msg->m_data[3] = '\0';
+    str_cpy("%WS", p_msg->m_data);
     
     send_message(PID_KCD, p_msg);
     
     p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_KCD_REG;
-    p_msg->m_data[0] = '%';
-    p_msg->m_data[1] = 'W';
-    p_msg->m_data[2] = 'T';
-    p_msg->m_data[3] = '\0';
+    str_cpy("%WT", p_msg->m_data);
     
     send_message(PID_KCD, p_msg);
     
@@ -92,44 +83,71 @@ void wall_clock_proc(void)
                 
             } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'S') {
                 
-                int s, m, h;
-                int milliseconds;
-                char buf[3] = {'\0'};
-                
-                msg_t *p_update_msg = (msg_t *)request_memory_block();
-                p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
-                p_update_msg->m_data[0] = '\0';
-                
-                buf[0] = p_msg->m_data[10];
-                buf[1] = p_msg->m_data[11];
-                buf[2] = '\0';
-                
-                s = a_to_i(buf);
-                
-                buf[0] = p_msg->m_data[7];
-                buf[1] = p_msg->m_data[8];
-                buf[2] = '\0';
-                
-                m = a_to_i(buf);
-                
-                buf[0] = p_msg->m_data[4];
-                buf[1] = p_msg->m_data[5];
-                buf[2] = '\0';
-                
-                h = a_to_i(buf);
-                
-                milliseconds = (h * 3600000) + (m * 60000) + (s * 1000);
-                
-                /* set the correct state of the clock */
-                g_wall_clock_start_time = get_system_time();
-                g_wall_clock_start_time_offset = milliseconds;
-                
-                /* only begin firing updates if the clock is not running */
-                if (g_wall_clock_running == 0) {
-                    g_wall_clock_running = 1;
+                if (p_msg->m_data[3] == ' '
+                 && p_msg->m_data[4] >= '0' && p_msg->m_data[4] <= '9'
+                 && p_msg->m_data[5] >= '0' && p_msg->m_data[5] <= '9'
+                 && p_msg->m_data[6] == ':'
+                 && p_msg->m_data[7] >= '0' && p_msg->m_data[7] <= '9'
+                 && p_msg->m_data[8] >= '0' && p_msg->m_data[8] <= '9'
+                 && p_msg->m_data[9] == ':'
+                 && p_msg->m_data[10] >= '0' && p_msg->m_data[10] <= '9'
+                 && p_msg->m_data[11] >= '0' && p_msg->m_data[11] <= '9'
+                 && p_msg->m_data[12] == '\0') {
+                    int s, m, h;
+                    int milliseconds;
+                    char buf[3] = {'\0'};
                     
-                    /* start firing updates */
-                    send_message(PID_CLOCK, p_update_msg);
+                    buf[0] = p_msg->m_data[10];
+                    buf[1] = p_msg->m_data[11];
+                    buf[2] = '\0';
+                    
+                    s = a_to_i(buf);
+                    
+                    buf[0] = p_msg->m_data[7];
+                    buf[1] = p_msg->m_data[8];
+                    buf[2] = '\0';
+                    
+                    m = a_to_i(buf);
+                    
+                    buf[0] = p_msg->m_data[4];
+                    buf[1] = p_msg->m_data[5];
+                    buf[2] = '\0';
+                    
+                    h = a_to_i(buf);
+                    
+                    if (s >= 0 && s < 60
+                     && m >= 0 && m < 60
+                     && h >= 0 && h < 24) {
+                        milliseconds = (h * 3600000) + (m * 60000) + (s * 1000);
+                        
+                        /* set the correct state of the clock */
+                        g_wall_clock_start_time = get_system_time();
+                        g_wall_clock_start_time_offset = milliseconds;
+                        
+                        /* only begin firing updates if the clock is not running */
+                        if (g_wall_clock_running == 0) {
+                            msg_t *p_update_msg = (msg_t *)request_memory_block();
+                            p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
+                            p_update_msg->m_data[0] = '\0';
+                            
+                            g_wall_clock_running = 1;
+                            
+                            /* start firing updates */
+                            send_message(PID_CLOCK, p_update_msg);
+                        }
+                    } else {
+                        msg_t *p_display_msg = (msg_t *)request_memory_block();
+                        p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+                        str_cpy("Error: invalid time.\n\r", p_display_msg->m_data);
+                        
+                        send_message(PID_CRT, p_display_msg);
+                     }
+                } else {
+                    msg_t *p_display_msg = (msg_t *)request_memory_block();
+                    p_display_msg->m_type = MSG_TYPE_CRT_DISP;
+                    str_cpy("Error: illegal input.\n\r", p_display_msg->m_data);
+                    
+                    send_message(PID_CRT, p_display_msg);
                 }
                 
             } else if (p_msg->m_data[0] == '%' && p_msg->m_data[1] == 'W' && p_msg->m_data[2] == 'T') {
