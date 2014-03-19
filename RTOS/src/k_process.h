@@ -84,6 +84,9 @@ void k_print_blocked_on_receive_queue(void);
 /* print the sent and received message logs */
 void k_print_msg_logs(void);
 
+/* print the contents of the memory heap */
+void k_print_memory_heap(void);
+
 #endif /* DEBUG_HOTKEYS */
 
 #endif /* K_PROCESS_H */

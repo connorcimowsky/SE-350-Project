@@ -4,10 +4,10 @@
 #include "rtos.h"
 
 
-typedef struct k_node_t {
-    struct k_node_t *mp_next;
+typedef struct node_t {
+    struct node_t *mp_next;
     U32 m_val;
-} k_node_t;
+} node_t;
 
 
 #endif /* K_NODE_H */

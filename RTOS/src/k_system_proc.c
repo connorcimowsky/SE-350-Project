@@ -18,6 +18,7 @@
 #define DEBUG_HOTKEY_2 '@'
 #define DEBUG_HOTKEY_3 '#'
 #define DEBUG_HOTKEY_4 '$'
+#define DEBUG_HOTKEY_5 '^'
 
 #endif /* DEBUG_HOTKEYS */
 
@@ -28,7 +29,7 @@
 volatile U32 g_timer_count = 0;
 
 /* the queue containing messages which are scheduled for later dispatching */
-k_queue_t g_timeout_queue;
+queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_timer_preemption_flag = 0;
@@ -38,7 +39,7 @@ U32 g_uart_preemption_flag = 0;
 
 msg_t *gp_cur_msg = NULL;
 uint8_t g_char_in;
-k_list_t g_kcd_reg;
+list_t g_kcd_reg;
 char g_input_buffer[INPUT_BUFFER_SIZE];
 int g_input_buffer_index = 0;
 int g_output_buffer_index = 0;
@@ -126,6 +127,8 @@ void uart_i_process(void)
             k_print_blocked_on_receive_queue();
         } else if (g_char_in == DEBUG_HOTKEY_4) {
             k_print_msg_logs();
+        } else if (g_char_in == DEBUG_HOTKEY_5) {
+            k_print_memory_heap();
         }
         
 #endif
@@ -135,7 +138,7 @@ void uart_i_process(void)
 #ifdef DEBUG_HOTKEYS
             
             /* only filter the debug hotkeys if DEBUG_HOTKEYS is defined */
-            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4)) {
+            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4) && (g_char_in != DEBUG_HOTKEY_5)) {
                 g_input_buffer[g_input_buffer_index++] = g_char_in;
             }
             
@@ -189,7 +192,7 @@ void uart_i_process(void)
             k_pcb_t *p_blocked_pcb;
             
             if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
-                pUart->IER ^= IER_THRE;
+                pUart->IER &= (~IER_THRE);
             }
             
             pUart->THR = '\0';
@@ -246,7 +249,7 @@ void timer_i_process(void)
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
         
-        queue_sorted_insert(&g_timeout_queue, (k_node_t *)p_decrement);
+        queue_sorted_insert(&g_timeout_queue, (node_t *)p_decrement);
     }
     
     g_timer_preemption_flag = 0;
@@ -308,7 +311,7 @@ void kcd_proc(void)
             char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
             
             /* isolate the command identifier, i.e. the portion of the input before the first space */
-            while (p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
+            while (i < KCD_REG_LENGTH && p_msg->m_data[i] != '\0' && p_msg->m_data[i] != ' ') {
                 keyboard_command_identifier[i] = p_msg->m_data[i];
                 i++;
             }
@@ -348,7 +351,7 @@ void crt_proc(void)
         
         if (p_msg->m_type == MSG_TYPE_CRT_DISP) {
             send_message(PID_UART_IPROC, p_msg);
-            pUart->IER ^= IER_THRE;
+            pUart->IER |= IER_THRE;
         } else {
             release_memory_block(p_msg);
         }
