@@ -123,7 +123,8 @@ In order to perform a context switch, the context of the current process (i.e., 
 \caption{Context Switching}
 \begin{algorithmic}[1]
 \Procedure {k_context_switch}{$prev\_proc$, $next\_proc$}
-    \If{$next\_proc.state \not = \texttt{NEW}$ \textbf{and} $next\_proc.state \not = \texttt{READY}$}
+    \State $next\_state \leftarrow next\_proc.state$
+    \If{$next\_state \not = \texttt{NEW}$ \textbf{and} $next\_state \not = \texttt{READY}$}
         \State \Return \Comment{Do nothing if $next\_proc$ is unable to execute}
     \EndIf
     \If{$prev\_proc.state = \texttt{EXECUTING}$}
@@ -133,7 +134,7 @@ In order to perform a context switch, the context of the current process (i.e., 
     \State $prev\_proc.sp \leftarrow \Call{\_\_get\_msp}{\null}$
     \State $next\_proc.state \leftarrow \texttt{EXECUTING}$
     \State $\Call{\_\_set\_msp}{next\_proc.sp}$
-    \If{$next\_proc.state = \texttt{NEW}$}
+    \If{$next\_state = \texttt{NEW}$}
         \State \Call{__rte}{\null} \Comment{For new processes, pop the exception stack frame}
     \EndIf
 \EndProcedure
