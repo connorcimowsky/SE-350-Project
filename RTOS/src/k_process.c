@@ -28,7 +28,7 @@ int g_cur_received_msg_log_index = 0;
 #endif /* DEBUG_HOTKEYS */
 
 
-void process_init(void) 
+void k_process_init(void)
 {
     int i;
     U32 *p_sp;
@@ -166,7 +166,7 @@ int k_release_processor(void)
     gp_current_process = k_dequeue_ready_process();
     
     /* perform a context switch from the previous process to the next process */
-    context_switch(p_previous_pcb, gp_current_process);
+    k_context_switch(p_previous_pcb, gp_current_process);
     
     return RTOS_OK;
 }
@@ -430,7 +430,7 @@ void k_log_received_message(k_msg_t *p_msg)
 
 #endif /* DEBUG_HOTKEYS */
 
-void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
+void k_context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
 {
     PROC_STATE_E new_state = p_pcb_new->m_state;
     

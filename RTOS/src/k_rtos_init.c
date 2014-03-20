@@ -18,7 +18,7 @@ void k_rtos_init(void)
     
     memory_init();
     
-    process_init();
+    k_process_init();
     
     /* enable interrupt requests */
     __enable_irq();
