@@ -102,7 +102,7 @@ In order to perform a context switch, the context of the current process (i.e., 
             \State \Return \texttt{RTOS_OK} \Comment{Do nothing if the priority is lower}
         \EndIf
     \EndIf
-    \State \Call{context\_switch}{$cur\_proc$, $next\_proc$}
+    \State \Call{k\_context\_switch}{$cur\_proc$, $next\_proc$}
     \State \Return \texttt{RTOS_OK}
 \EndProcedure
 
@@ -122,7 +122,7 @@ In order to perform a context switch, the context of the current process (i.e., 
 \begin{algorithm}
 \caption{Context Switching}
 \begin{algorithmic}[1]
-\Procedure {context_switch}{$prev\_proc$, $next\_proc$}
+\Procedure {k_context_switch}{$prev\_proc$, $next\_proc$}
     \If{$next\_proc.state \not = \texttt{NEW}$ \textbf{and} $next\_proc.state \not = \texttt{READY}$}
         \State \Return \Comment{Do nothing if $next\_proc$ is unable to execute}
     \EndIf
@@ -166,17 +166,17 @@ Our operating system allows processes to retrieve and modify the scheduling prio
         \State \Return \texttt{RTOS_OK} \Comment{Do nothing if the priority is unchanged}
     \EndIf
     \If{$proc.state = \texttt{NEW}$ \textbf{or} $proc.state = \texttt{READY}$}
-        \State \Call{remove}{$proc$, $ready\_queue$}
+        \State \Call{remove_from_queue}{$proc$, $ready\_queue$}
         \State $proc.priority \leftarrow priority$
-        \State \Call{enqueue}{$proc$, $ready\_queue$}
+        \State \Call{k_enqueue_ready_process}{$proc$}
     \ElsIf{$proc.state = \texttt{BLOCKED_ON_MEMORY}$}
-        \State \Call{remove}{$proc$, $blocked\_on\_memory\_queue$}
+        \State \Call{remove_from_queue}{$proc$, $blocked\_on\_memory\_queue$}
         \State $proc.priority \leftarrow priority$
-        \State \Call{enqueue}{$proc$, $blocked\_on\_memory\_queue$}
+        \State \Call{k_enqueue_blocked_on_memory_process}{$proc$}
     \ElsIf{$proc.state = \texttt{BLOCKED_ON_RECEIVE}$}
-        \State \Call{remove}{$proc$, $blocked\_on\_receive\_queue$}
+        \State \Call{remove_from_queue}{$proc$, $blocked\_on\_receive\_queue$}
         \State $proc.priority \leftarrow priority$
-        \State \Call{enqueue}{$proc$, $blocked\_on\_receive\_queue$}
+        \State \Call{k_enqueue_blocked_on_receive_process}{$proc$}
     \Else
         \State $proc.priority \leftarrow priority$
     \EndIf
@@ -216,9 +216,9 @@ When a process wishes to send a message, it will first invoke \texttt{request_me
     \State $msg.recipient \leftarrow recipient$
     \State \Call{enqueue}{$msg$, $recipient.msg\_queue$}
     \If {$recipient.state = \texttt{BLOCKED_ON_RECEIVE}$}
-        \State \Call{remove}{$recipient$, $blocked\_on\_receive\_queue$}
+        \State \Call{remove_from_queue}{$recipient$, $blocked\_on\_receive\_queue$}
         \State $recipient.state \leftarrow \texttt{READY}$
-        \State \Call{enqueue}{$recipient$, $ready\_queue$}
+        \State \Call{k_enqueue_ready_process}{$recipient$}
         \State \Return 1 \Comment{1 indicates that the recipient was unblocked}
     \Else
         \State \Return 0
