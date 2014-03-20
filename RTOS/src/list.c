@@ -6,12 +6,12 @@
 #endif
 
 
-int insert_node(list_t *p_list, node_t *p_node)
+int push(node_t *p_node, list_t *p_list)
 {
     if (p_list == NULL || p_node == NULL) {
         
 #ifdef DEBUG_1
-        printf("Node insertion error.\n\r");
+        printf("Could not push node onto list.\n\r");
 #endif
     
         return RTOS_ERR;
@@ -23,14 +23,14 @@ int insert_node(list_t *p_list, node_t *p_node)
     return RTOS_OK;
 }
 
-node_t *get_node(list_t *p_list)
+node_t *pop(list_t *p_list)
 {
     node_t *p_first = NULL;
     
     if (is_list_empty(p_list)) {
         
 #ifdef DEBUG_1
-        printf("Attempted to get the top node of an empty list.\n\r");
+        printf("Attempted to pop from an empty list.\n\r");
 #endif
     
         return NULL;
