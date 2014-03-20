@@ -430,63 +430,37 @@ void k_log_received_message(k_msg_t *p_msg)
 
 #endif /* DEBUG_HOTKEYS */
 
-void k_context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new) 
+void k_context_switch(k_pcb_t *p_pcb_prev, k_pcb_t *p_pcb_next) 
 {
-    PROC_STATE_E new_state = p_pcb_new->m_state;
+    PROC_STATE_E next_state = p_pcb_next->m_state;
     
-    switch (new_state) {
-        case NEW:
-            
-            if (p_pcb_old != NULL) {
-                /* only dereference members if non-NULL */
-                if (p_pcb_old->m_state == EXECUTING) {
-                    /* only enqueue in the ready queue if executing */
-                    p_pcb_old->m_state = READY;
-                    k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
-                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
-                    /* don't add a process to the ready queue if it is already in the blocked-on-receive queue */
-                }
-                /* save the main stack pointer of the previous process */
-                p_pcb_old->mp_sp = (U32 *)__get_MSP();
-            }
-            
-            p_pcb_new->m_state = EXECUTING;
-            
-            /* switch to the stack pointer of the new process */
-            __set_MSP((U32)p_pcb_new->mp_sp);
-            /* pop the exception stack frame to give the new process an initial context */
-            __rte();
-            
-            break;
-            
-        case READY:
-            
-            if (p_pcb_old != NULL) {
-                /* only dereference members if non-NULL */
-                if (p_pcb_old->m_state == EXECUTING) {
-                    /* only enqueue in the ready queue if executing */
-                    p_pcb_old->m_state = READY;
-                    k_enqueue_ready_process(p_pcb_old);
-                } else if (p_pcb_old->m_state == BLOCKED_ON_MEMORY) {
-                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-                } else if (p_pcb_old->m_state == BLOCKED_ON_RECEIVE) {
-                    /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-                }
-                /* save the main stack pointer of the previous process */
-                p_pcb_old->mp_sp = (U32 *)__get_MSP();
-            }
-                
-            p_pcb_new->m_state = EXECUTING;
-            
-            /* switch to the stack pointer of the next-to-run process */
-            __set_MSP((U32)p_pcb_new->mp_sp);
-            
-            break;
-            
-        default:
-            break;
+    if (next_state != NEW && next_state != READY) {
+        /* do nothing if p_pcb_new is unable to execute */
+        return;
+    }
+    
+    if (p_pcb_prev != NULL) {
+        if (p_pcb_prev->m_state == EXECUTING) {
+            /* only enqueue in the ready queue if executing */
+            p_pcb_prev->m_state = READY;
+            k_enqueue_ready_process(p_pcb_prev);
+        } else if (p_pcb_prev->m_state == BLOCKED_ON_MEMORY) {
+            /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
+        } else if (p_pcb_prev->m_state == BLOCKED_ON_RECEIVE) {
+            /* don't add a process to the ready queue if it is already in the blocked-on-receive queue */
+        }
+        /* save the main stack pointer of the previous process */
+        p_pcb_prev->mp_sp = (U32 *)__get_MSP();
+    }
+    
+    p_pcb_next->m_state = EXECUTING;
+    
+    /* switch to the stack pointer of the new process */
+    __set_MSP((U32)p_pcb_next->mp_sp);
+    
+    if (next_state == NEW) {
+        /* pop the exception stack frame to give the new process an initial context */
+        __rte();
     }
 }
 
