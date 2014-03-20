@@ -381,7 +381,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     
     if (p_recipient_pcb->m_state == BLOCKED_ON_RECEIVE) {
         /* if the recipient was blocked, then unblock it */
-        k_remove_blocked_on_receive_process(p_recipient_pcb);
+        remove_from_queue((node_t *)p_recipient_pcb, gp_blocked_on_receive_queue[p_recipient_pcb->m_priority]);
         p_recipient_pcb->m_state = READY;
         k_enqueue_ready_process(p_recipient_pcb);
         
@@ -544,11 +544,6 @@ void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
     
     /* enqueue the PCB in the blocked-on-receive queue */
     enqueue((node_t *)p_pcb, p_blocked_on_receive_queue);
-}
-
-void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
-{
-    remove_from_queue((node_t *)p_pcb, gp_blocked_on_receive_queue[p_pcb->m_priority]);
 }
 
 #ifdef DEBUG_HOTKEYS
