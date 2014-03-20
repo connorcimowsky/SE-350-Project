@@ -432,11 +432,8 @@ void k_context_switch(k_pcb_t *p_pcb_prev, k_pcb_t *p_pcb_next)
             /* only enqueue in the ready queue if executing */
             p_pcb_prev->m_state = READY;
             k_enqueue_ready_process(p_pcb_prev);
-        } else if (p_pcb_prev->m_state == BLOCKED_ON_MEMORY) {
-            /* don't add a process to the ready queue if it is already in the blocked-on-memory queue */
-        } else if (p_pcb_prev->m_state == BLOCKED_ON_RECEIVE) {
-            /* don't add a process to the ready queue if it is already in the blocked-on-receive queue */
         }
+        
         /* save the main stack pointer of the previous process */
         p_pcb_prev->mp_sp = (U32 *)__get_MSP();
     }
