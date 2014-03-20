@@ -321,6 +321,15 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
+        return RTOS_ERR;
+    }
+    
+    if (p_msg == NULL) {
+        return RTOS_ERR;
+    }
+    
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
     
