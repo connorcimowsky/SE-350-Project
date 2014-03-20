@@ -53,6 +53,29 @@
 
 After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
+\begin{algorithm}
+\caption{Memory Initialization}
+\begin{algorithmic}[1]
+\Procedure {k\_memory\_init}{\null}
+    \State $mem\_end \leftarrow mem\_end + \texttt{NUM_PROCS} \times \texttt{PCB_SIZE}$
+    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Ready queue}
+    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Blocked-on-memory queue}
+    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Blocked-on-receive queue}
+    \State $mem\_end \leftarrow mem\_end + \texttt{LIST_SIZE}$ \Comment{Memory heap}
+    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_BLOCKS}}
+        \State $mem\_block \leftarrow mem\_end$
+        \State \Call{push}{$mem\_block$, $mem\_heap$}
+        \State $mem\_end \leftarrow mem\_end + \texttt{BLOCK_SIZE}$
+    \EndFor
+    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_KCD_REG}}
+        \State $kcd\_entry \leftarrow mem\_end$
+        \State \Call{push}{$kcd\_entry$, $kcd\_registry$}
+        \State $mem\_end \leftarrow mem\_end + \texttt{KCD_ENTRY_SIZE}$
+    \EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 \subsection{Process Initialization}
 
 Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \texttt{release_processor}.
