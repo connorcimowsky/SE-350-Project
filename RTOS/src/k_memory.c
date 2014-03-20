@@ -14,7 +14,7 @@ U8 *gp_heap_end_addr;
 U32 *gp_stack;
 
 
-void memory_init(void)
+void k_memory_init(void)
 {
     /* get the address of the end of the memory image */
     U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
@@ -63,7 +63,7 @@ void memory_init(void)
         p_end += sizeof(queue_t);
     }
     
-    /* prepare for alloc_stack() by ensuring 8-byte alignment */
+    /* prepare for k_alloc_stack() by ensuring 8-byte alignment */
     gp_stack = (U32 *)RAM_END_ADDR;
     if ((U32)gp_stack & 0x04) {
         --gp_stack; 
@@ -155,7 +155,7 @@ void memory_init(void)
     
 }
 
-U32 *alloc_stack(U32 size_b) 
+U32 *k_alloc_stack(U32 size_b) 
 {
     U32 *p_sp;
     p_sp = gp_stack; /* gp_stack is always 8-byte aligned */

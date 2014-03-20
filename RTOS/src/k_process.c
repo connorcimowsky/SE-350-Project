@@ -128,7 +128,7 @@ void k_process_init(void)
         /* processes should begin in the NEW state */
         (gp_pcbs[i])->m_state = NEW;
         
-        p_sp = alloc_stack((g_proc_table[i]).m_stack_size);
+        p_sp = k_alloc_stack((g_proc_table[i]).m_stack_size);
         /* save the initial program status register */
         *(--p_sp) = INITIAL_xPSR;
         /* save the entry point of the process */

@@ -5,7 +5,7 @@
 
 
 /* external functions */
-extern U32 *alloc_stack(U32 size_b);
+extern U32 *k_alloc_stack(U32 size_b);
 extern void __rte(void);
 
 
