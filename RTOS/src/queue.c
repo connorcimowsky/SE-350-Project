@@ -6,7 +6,7 @@
 #endif
 
 
-int enqueue_node(queue_t *p_queue, node_t *p_node)
+int enqueue(node_t *p_node, queue_t *p_queue)
 {
     if (p_queue == NULL || p_node == NULL) {
     
@@ -30,7 +30,7 @@ int enqueue_node(queue_t *p_queue, node_t *p_node)
     return RTOS_OK;
 }
 
-int queue_sorted_insert(queue_t *p_queue, node_t *p_node)
+int sorted_enqueue(node_t *p_node, queue_t *p_queue)
 {
     node_t *p_current_iter = NULL;
     node_t *p_previous_iter = NULL;
@@ -77,21 +77,7 @@ int queue_sorted_insert(queue_t *p_queue, node_t *p_node)
     return RTOS_OK;
 }
 
-node_t *queue_peek(queue_t *p_queue)
-{
-    if (is_queue_empty(p_queue)) {
-    
-#ifdef DEBUG_1
-        printf("Attempted to peek at an empty queue.\n\r");
-#endif
-    
-        return NULL;
-    }
-    
-    return p_queue->mp_first;
-}
-
-node_t *dequeue_node(queue_t *p_queue)
+node_t *dequeue(queue_t *p_queue)
 {
     node_t *p_first = NULL;
     
@@ -116,7 +102,7 @@ node_t *dequeue_node(queue_t *p_queue)
     return p_first;
 }
 
-int remove_node_from_queue(queue_t *p_queue, node_t *p_node)
+int remove_from_queue(node_t *p_node, queue_t *p_queue)
 {
     node_t *p_current_iter = NULL;
     node_t *p_previous_iter = NULL;

@@ -291,7 +291,7 @@ void stress_test_c(void)
         if (is_queue_empty(&hibernate_queue)) {
             p_msg = receive_message(NULL);
         } else {
-            p_arithmetic = (U8 *)dequeue_node(&hibernate_queue);
+            p_arithmetic = (U8 *)dequeue(&hibernate_queue);
             p_arithmetic += MSG_HEADER_OFFSET;
             p_msg = (msg_t *)p_arithmetic;
         }
@@ -318,7 +318,7 @@ void stress_test_c(void)
                     } else {
                         p_arithmetic = (U8 *)p_msg;
                         p_arithmetic -= MSG_HEADER_OFFSET;
-                        enqueue_node(&hibernate_queue, (node_t *)p_arithmetic);
+                        enqueue((node_t *)p_arithmetic, &hibernate_queue);
                     }
                 }
             }

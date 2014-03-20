@@ -38,7 +38,7 @@ void k_process_init(void)
     g_proc_table[PID_NULL].m_priority = LOWEST;
     g_proc_table[PID_NULL].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_NULL].mpf_start_pc = &null_process;
-    enqueue_node(gp_ready_queue[LOWEST], (node_t *)gp_pcbs[PID_NULL]);
+    enqueue((node_t *)gp_pcbs[PID_NULL], gp_ready_queue[LOWEST]);
     
     /* populate the test process table */
     set_test_procs();
@@ -54,7 +54,7 @@ void k_process_init(void)
         g_proc_table[i + 1].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
         /* add the PCB corresponding to this process to the ready queue */
-        enqueue_node(p_queue, (node_t *)gp_pcbs[i + 1]);
+        enqueue((node_t *)gp_pcbs[i + 1], p_queue);
     }
     
     /* configure the timer i-process */
@@ -74,49 +74,49 @@ void k_process_init(void)
     g_proc_table[PID_KCD].m_priority = HIGHEST;
     g_proc_table[PID_KCD].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_KCD].mpf_start_pc = &kcd_proc;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_KCD]);
+    enqueue((node_t *)gp_pcbs[PID_KCD], gp_ready_queue[HIGHEST]);
     
     /* configure the CRT process */
     g_proc_table[PID_CRT].m_pid = PID_CRT;
     g_proc_table[PID_CRT].m_priority = HIGHEST;
     g_proc_table[PID_CRT].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_CRT].mpf_start_pc = &crt_proc;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_CRT]);
+    enqueue((node_t *)gp_pcbs[PID_CRT], gp_ready_queue[HIGHEST]);
     
     /* configure the wall clock process */
     g_proc_table[PID_CLOCK].m_pid = PID_CLOCK;
     g_proc_table[PID_CLOCK].m_priority = HIGHEST;
     g_proc_table[PID_CLOCK].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_CLOCK]);
+    enqueue((node_t *)gp_pcbs[PID_CLOCK], gp_ready_queue[HIGHEST]);
     
     /* configure set priority process */
     g_proc_table[PID_SET_PRIO].m_pid = PID_SET_PRIO;
     g_proc_table[PID_SET_PRIO].m_priority = HIGHEST;
     g_proc_table[PID_SET_PRIO].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_SET_PRIO].mpf_start_pc = &set_priority_proc;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_SET_PRIO]);
+    enqueue((node_t *)gp_pcbs[PID_SET_PRIO], gp_ready_queue[HIGHEST]);
     
     /* configure stress test A */
     g_proc_table[PID_A].m_pid = PID_A;
     g_proc_table[PID_A].m_priority = HIGHEST;
     g_proc_table[PID_A].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_A].mpf_start_pc = &stress_test_a;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_A]);
+    enqueue((node_t *)gp_pcbs[PID_A], gp_ready_queue[HIGHEST]);
     
     /* configure stress test B */
     g_proc_table[PID_B].m_pid = PID_B;
     g_proc_table[PID_B].m_priority = HIGHEST;
     g_proc_table[PID_B].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_B].mpf_start_pc = &stress_test_b;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_B]);
+    enqueue((node_t *)gp_pcbs[PID_B], gp_ready_queue[HIGHEST]);
     
     /* configure stress test C */
     g_proc_table[PID_C].m_pid = PID_C;
     g_proc_table[PID_C].m_priority = HIGHEST;
     g_proc_table[PID_C].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_C].mpf_start_pc = &stress_test_c;
-    enqueue_node(gp_ready_queue[HIGHEST], (node_t *)gp_pcbs[PID_C]);
+    enqueue((node_t *)gp_pcbs[PID_C], gp_ready_queue[HIGHEST]);
     
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
@@ -179,7 +179,7 @@ k_pcb_t *k_ready_queue_peek(void)
     /* iterate through the ready queues in priority sequence, using FIFO ordering within each queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_ready_queue[i])) {
-            p_pcb = (k_pcb_t *)queue_peek(gp_ready_queue[i]);
+            p_pcb = (k_pcb_t *)gp_ready_queue[i]->mp_first;
             break;
         }
     }
@@ -223,19 +223,19 @@ int k_set_process_priority(int pid, int priority)
             /* processes in the ready queue can be NEW or READY; follow the same procedure for both states */
         case READY:
             /* dequeue the process from the ready queue, update its priority, then re-enqueue it in the ready queue */
-            remove_node_from_queue(gp_ready_queue[p_pcb->m_priority], (node_t *)p_pcb);
+            remove_from_queue((node_t *)p_pcb, gp_ready_queue[p_pcb->m_priority]);
             p_pcb->m_priority = (PRIORITY_E)priority;
             k_enqueue_ready_process(p_pcb);
             break;
         case BLOCKED_ON_MEMORY:
             /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
-            remove_node_from_queue(gp_blocked_on_memory_queue[p_pcb->m_priority], (node_t *)p_pcb);
+            remove_from_queue((node_t *)p_pcb, gp_blocked_on_memory_queue[p_pcb->m_priority]);
             p_pcb->m_priority = (PRIORITY_E)priority;
             k_enqueue_blocked_on_memory_process(p_pcb);
             break;
         case BLOCKED_ON_RECEIVE:
             /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
-            remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (node_t *)p_pcb);
+            remove_from_queue((node_t *)p_pcb, gp_blocked_on_receive_queue[p_pcb->m_priority]);
             p_pcb->m_priority = (PRIORITY_E)priority;
             k_enqueue_blocked_on_receive_process(p_pcb);
             break;
@@ -295,7 +295,7 @@ void *k_receive_message(int *p_sender_pid)
         k_release_processor();
     }
     
-    p_msg = (k_msg_t *)dequeue_node(&(gp_current_process->m_msg_queue));
+    p_msg = (k_msg_t *)dequeue(&(gp_current_process->m_msg_queue));
     
     if (p_msg == NULL) {
         return NULL;
@@ -329,7 +329,7 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
-    enqueue_node(&(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue), (node_t *)p_msg_envelope);
+    enqueue((node_t *)p_msg_envelope, &(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue));
     
     return RTOS_OK;
 }
@@ -342,7 +342,7 @@ U32 k_get_system_time(void)
 void *k_non_blocking_receive_message(int pid)
 {
     if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
-        k_msg_t *p_msg = (k_msg_t *)dequeue_node(&(gp_pcbs[pid]->m_msg_queue));
+        k_msg_t *p_msg = (k_msg_t *)dequeue(&(gp_pcbs[pid]->m_msg_queue));
         
         U8 *p_increment = (U8 *)p_msg;
         p_increment += MSG_HEADER_OFFSET;
@@ -377,7 +377,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     
     p_recipient_pcb = gp_pcbs[recipient_pid];
     
-    enqueue_node(&(p_recipient_pcb->m_msg_queue), (node_t *)p_msg_envelope);
+    enqueue((node_t *)p_msg_envelope, &(p_recipient_pcb->m_msg_queue));
     
     if (p_recipient_pcb->m_state == BLOCKED_ON_RECEIVE) {
         /* if the recipient was blocked, then unblock it */
@@ -467,7 +467,7 @@ void k_context_switch(k_pcb_t *p_pcb_prev, k_pcb_t *p_pcb_next)
 void k_enqueue_ready_process(k_pcb_t *p_pcb)
 {
     /* enqueue the PCB in the ready queue corresponding to its priority */
-    enqueue_node(gp_ready_queue[p_pcb->m_priority], (node_t *)p_pcb);
+    enqueue((node_t *)p_pcb, gp_ready_queue[p_pcb->m_priority]);
 }
 
 k_pcb_t *k_dequeue_ready_process(void)
@@ -478,7 +478,7 @@ k_pcb_t *k_dequeue_ready_process(void)
     /* iterate through the ready queues in priority sequence, using FIFO ordering within each queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_ready_queue[i])) {
-            p_pcb = (k_pcb_t *)dequeue_node(gp_ready_queue[i]);
+            p_pcb = (k_pcb_t *)dequeue(gp_ready_queue[i]);
             break;
         }
     }
@@ -505,7 +505,7 @@ void k_enqueue_blocked_on_memory_process(k_pcb_t *p_pcb)
     }
     
     /* enqueue the PCB in the blocked-on-memory queue */
-    enqueue_node(p_blocked_on_memory_queue, (node_t *)p_pcb);
+    enqueue((node_t *)p_pcb, p_blocked_on_memory_queue);
 }
 
 k_pcb_t* k_dequeue_blocked_on_memory_process(void)
@@ -516,7 +516,7 @@ k_pcb_t* k_dequeue_blocked_on_memory_process(void)
     /* iterate through the blocked-on-memory queues in priority sequence, using FIFO ordering within each queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
         if (!is_queue_empty(gp_blocked_on_memory_queue[i])) {
-            p_pcb = (k_pcb_t *)dequeue_node(gp_blocked_on_memory_queue[i]);
+            p_pcb = (k_pcb_t *)dequeue(gp_blocked_on_memory_queue[i]);
             break;
         }
     }
@@ -543,12 +543,12 @@ void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb)
     }
     
     /* enqueue the PCB in the blocked-on-receive queue */
-    enqueue_node(p_blocked_on_receive_queue, (node_t *)p_pcb);
+    enqueue((node_t *)p_pcb, p_blocked_on_receive_queue);
 }
 
 void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb)
 {
-    remove_node_from_queue(gp_blocked_on_receive_queue[p_pcb->m_priority], (node_t *)p_pcb);
+    remove_from_queue((node_t *)p_pcb, gp_blocked_on_receive_queue[p_pcb->m_priority]);
 }
 
 #ifdef DEBUG_HOTKEYS
