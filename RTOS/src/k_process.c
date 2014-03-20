@@ -218,32 +218,20 @@ int k_set_process_priority(int pid, int priority)
         return RTOS_OK;
     }
     
-    switch(p_pcb->m_state) {
-        case NEW:
-            /* processes in the ready queue can be NEW or READY; follow the same procedure for both states */
-        case READY:
-            /* dequeue the process from the ready queue, update its priority, then re-enqueue it in the ready queue */
-            remove_from_queue((node_t *)p_pcb, gp_ready_queue[p_pcb->m_priority]);
-            p_pcb->m_priority = (PRIORITY_E)priority;
-            k_enqueue_ready_process(p_pcb);
-            break;
-        case BLOCKED_ON_MEMORY:
-            /* dequeue the process from the blocked-on-memory queue, update its priority, then re-enqueue it in the blocked-on-memory queue */
-            remove_from_queue((node_t *)p_pcb, gp_blocked_on_memory_queue[p_pcb->m_priority]);
-            p_pcb->m_priority = (PRIORITY_E)priority;
-            k_enqueue_blocked_on_memory_process(p_pcb);
-            break;
-        case BLOCKED_ON_RECEIVE:
-            /* dequeue the process from the blocked-on-receive queue, update its priority, then re-enqueue it in the blocked-on-receive queue */
-            remove_from_queue((node_t *)p_pcb, gp_blocked_on_receive_queue[p_pcb->m_priority]);
-            p_pcb->m_priority = (PRIORITY_E)priority;
-            k_enqueue_blocked_on_receive_process(p_pcb);
-            break;
-        case EXECUTING:
-            /* if the process is executing, then it is not in a queue; simply update its priority */
-        default:
-            p_pcb->m_priority = (PRIORITY_E)priority;
-            break;
+    if (p_pcb->m_state == NEW || p_pcb->m_state == READY) {
+        remove_from_queue((node_t *)p_pcb, gp_ready_queue[p_pcb->m_priority]);
+        p_pcb->m_priority = (PRIORITY_E)priority;
+        k_enqueue_ready_process(p_pcb);
+    } else if (p_pcb->m_state == BLOCKED_ON_MEMORY) {
+        remove_from_queue((node_t *)p_pcb, gp_blocked_on_memory_queue[p_pcb->m_priority]);
+        p_pcb->m_priority = (PRIORITY_E)priority;
+        k_enqueue_blocked_on_memory_process(p_pcb);
+    } else if (p_pcb->m_state == BLOCKED_ON_RECEIVE) {
+        remove_from_queue((node_t *)p_pcb, gp_blocked_on_receive_queue[p_pcb->m_priority]);
+        p_pcb->m_priority = (PRIORITY_E)priority;
+        k_enqueue_blocked_on_receive_process(p_pcb);
+    } else {
+        p_pcb->m_priority = (PRIORITY_E)priority;
     }
     
     /* yield the processor so that the scheduler can run again */
