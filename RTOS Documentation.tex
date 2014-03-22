@@ -53,46 +53,58 @@
 
 After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
-\begin{algorithm}
-\caption{Memory Initialization}
-\begin{algorithmic}[1]
-\Procedure {k\_memory\_init}{\null}
-    \State $mem\_end \leftarrow mem\_end + \texttt{NUM_PROCS} \times \texttt{PCB_SIZE}$
-    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Ready queue}
-    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Blocked-on-memory queue}
-    \State $mem\_end \leftarrow mem\_end + \texttt{QUEUE_SIZE}$ \Comment{Blocked-on-receive queue}
-    \State $mem\_end \leftarrow mem\_end + \texttt{LIST_SIZE}$ \Comment{Memory heap}
-    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_BLOCKS}}
-        \State $mem\_block \leftarrow mem\_end$
-        \State \Call{push}{$mem\_block$, $mem\_heap$}
-        \State $mem\_end \leftarrow mem\_end + \texttt{BLOCK_SIZE}$
-    \EndFor
-    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_KCD_REG}}
-        \State $kcd\_entry \leftarrow mem\_end$
-        \State \Call{push}{$kcd\_entry$, $kcd\_registry$}
-        \State $mem\_end \leftarrow mem\_end + \texttt{KCD_ENTRY_SIZE}$
-    \EndFor
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
 \subsection{Process Initialization}
 
-Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \texttt{release_processor}.
+Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
 
 \section{Memory Management}
 
 \subsection{Heap Data Structure}
 
-Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \texttt{request_memory_block} primitive and released by invoking the \texttt{release_memory_block} primitive. Nodes in the memory heap are spaced apart using a predefined block size.
+Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size.
 
 \subsection{Requesting Memory Blocks}
 
-When a process invokes \texttt{request_memory_block}, the operating system first checks if any blocks are available in the heap. If the heap is empty, the kernel enqueues the caller in the blocked-on-memory queue and invokes \texttt{release_processor} so that preemption may occur. Otherwise, a pointer to the next available memory block is popped from the heap. This pointer is then incremented by a predefined offset to compensate for message envelope headers and then returned to the caller.
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if any blocks are available in the heap. If the heap is empty, the kernel enqueues the caller in the blocked-on-memory queue and invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} so that preemption may occur. Otherwise, a pointer to the next available memory block is popped from the heap. This pointer is then incremented by a predefined offset to compensate for message envelope headers and then returned to the caller.\\
+
+\begin{algorithm}
+\caption{Requesting Memory Blocks}
+\label{alg:requestingmemoryblocks}
+\begin{algorithmic}[1]
+\Procedure {k_request_memory_block}{\null}
+    \While{$mem\_heap$ is empty}
+        \State \Call{k_enqueue_blocked_on_memory_process}{$cur\_proc$}
+        \State \Call{k_release_processor}{\null}
+    \EndWhile
+    \State $mem\_blk \leftarrow \Call{pop}{mem\_heap}$
+    \State \Return $mem\_blk$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Releasing Memory Blocks}
 
-When a process invokes \texttt{release_memory_block}, the operating system first ensures that the provided address corresponds to a valid memory block. If valid, the block is then pushed onto the heap. Next, if the blocked-on-memory queue is non-empty, the highest-priority process that is blocked on memory is moved to the ready queue. Finally, \texttt{release_processor} is invoked so that the caller can be preempted if necessary.
+When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address corresponds to a valid memory block. If valid, the block is then pushed onto the heap. Next, if the blocked-on-memory queue is non-empty, the highest-priority process that is blocked on memory is moved to the ready queue. Finally, \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} is invoked so that the caller can be preempted if necessary.\\
+
+\begin{algorithm}
+\caption{Releasing Memory Blocks}
+\label{alg:releasingmemoryblocks}
+\begin{algorithmic}[1]
+\Procedure {k_release_memory_block}{$mem\_blk$}
+    \If{$mem\_blk$ is invalid}
+        \State \Return \texttt{RTOS_ERR}
+    \EndIf
+    \State \Call{push}{$mem\_blk$, $mem\_heap$}
+    \If{$blocked\_on\_memory\_queue$ is not empty}
+        \State $blocked\_proc \leftarrow \Call{k\_dequeue\_blocked\_on\_memory\_process}{\null}$
+        \State $blocked\_proc.state \leftarrow \texttt{READY}$
+        \State \Call{k_enqueue_ready_process}{$blocked\_proc$}
+        \State \Call{k_release_processor}{\null}
+    \EndIf
+    \State \Return \texttt{RTOS_OK}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{Process Management}
 
@@ -104,16 +116,17 @@ Our operating system maintains three queues in which PCBs are stored according t
 
 \subsection{Releasing the Processor}
 
-Since our operating system does not employ time slicing, it is often necessary for a process to relinquish usage of the processor. This mechanism is provided by our operating system and can be employed by invoking the \texttt{release_processor} primitive.\\
+Since our operating system does not employ time slicing, it is often necessary for a process to relinquish usage of the processor. This mechanism is provided by our operating system and can be employed by invoking the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
 
 When invoked, this primitive uses the scheduler to determine which process should be executed next. To do this, the scheduler iterates through the ready queue in order of decreasing priority, exercising a first-in first-out (round-robin) scheduling policy for processes of the same priority.\\
 
 Once a process has been selected by the scheduler, a context switch will only occur if its priority is greater than or equal to that of the currently executing process. Otherwise, the caller will resume execution.\\
 
-In order to perform a context switch, the context of the current process (i.e., the current stack pointer) must be saved to its process control block. Next, the context of the selected process is restored (i.e., its stack pointer is restored). When the saved registers are popped from the stack pointer of the selected process, execution will resume at the point where it left off.
+In order to perform a \hyperref[alg:contextswitching]{context switch}, the context of the current process (i.e., the current stack pointer) must be saved to its process control block. Next, the context of the selected process is restored (i.e., its stack pointer is restored). When the saved registers are popped from the stack pointer of the selected process, execution will resume at the point where it left off.
 
 \begin{algorithm}
 \caption{Releasing the Processor}
+\label{alg:releasingtheprocessor}
 \begin{algorithmic}[1]
 \Procedure {k_release_processor}{\null}
     \If {$ready\_queue$ is empty}
@@ -144,6 +157,7 @@ In order to perform a context switch, the context of the current process (i.e., 
 
 \begin{algorithm}
 \caption{Context Switching}
+\label{alg:contextswitching}
 \begin{algorithmic}[1]
 \Procedure {k_context_switch}{$prev\_proc$, $next\_proc$}
     \State $next\_state \leftarrow next\_proc.state$
@@ -168,10 +182,11 @@ In order to perform a context switch, the context of the current process (i.e., 
 
 Each process has a priority which is stored in its PCB. This priority is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
-Our operating system allows processes to retrieve and modify the scheduling priority of themselves or other processes by providing two primitives: \texttt{get_process_priority} and \texttt{set_process_priority}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \texttt{release_processor} primitive is then invoked to ensure that preemption will occur if necessary.
+Our operating system allows processes to retrieve and modify the scheduling priority of themselves or other processes by providing two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
 
 \begin{algorithm}
 \caption{Process Priority}
+\label{alg:processpriority}
 \begin{algorithmic}[1]
 \Procedure {k_get_process_priority}{$proc$}
     \If {$proc.pid$ is invalid}
@@ -216,10 +231,11 @@ Messages are sent between processes using message envelopes. Each PCB has a `mai
 
 There are two structures used to represent messages: a kernel-facing message header containing the information required for communication, and a user-facing message envelope which contains only the data that is relevant to the sender and recipient. The header includes the PID of the sender, the PID of the recipient, and an expiry time. The user-facing envelope only contains the message type and the message data itself.\\
 
-When a process wishes to send a message, it will first invoke \texttt{request_memory_block} for the envelope. It then populates the message envelope fields and invokes \texttt{send_message}. This primitive populates the message header fields and enqueues the message in the recipient's message queue. If necessary, the recipient will be unblocked and \texttt{release_processor} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
+When a process wishes to send a message, it will first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for the envelope. It then populates the message envelope fields and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}. This primitive populates the message header fields and enqueues the message in the recipient's message queue. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
+\label{alg:sendingmessages}
 \begin{algorithmic}[1]
 \Procedure {k_send_message}{$recipient$, $msg$}
     \If {$recipient.pid$ is invalid}
@@ -251,10 +267,11 @@ When a process wishes to send a message, it will first invoke \texttt{request_me
 \end{algorithmic}
 \end{algorithm}
 
-The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. Instead of directly enqueueing the message in the recipient's message queue, \texttt{delayed_send} enqueues the message in the timer i-process's message queue. As described in Section \ref{subsec:Timer I-Process}, the timer i-process will then take care of dispatching the message at the correct time.\\
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. Instead of directly enqueueing the message in the recipient's message queue, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} enqueues the message in the timer i-process's message queue. As described in Section~\ref{subsec:Timer I-Process}, the timer i-process will then take care of dispatching the message at the correct time.\\
 
 \begin{algorithm}
 \caption{Sending Delayed Messages}
+\label{alg:sendingdelayedmessages}
 \begin{algorithmic}[1]
 \Procedure {k_delayed_send}{$recipient$, $msg$, $delay$}
     \If {$recipient.pid$ is invalid}
@@ -269,10 +286,11 @@ The procedure for delayed message sending is similar, with the added requirement
 \end{algorithmic}
 \end{algorithm}
 
-When a process invokes \texttt{receive_message}, the next message will be dequeued from its message queue and returned, as long as there is at least one pending message in the queue. Otherwise, the process is placed in the blocked-on-receive queue and preempted using \texttt{release_processor}.\\
+When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be dequeued from its message queue and returned, as long as there is at least one pending message in the queue. Otherwise, the process is placed in the blocked-on-receive queue and preempted using \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
 
 \begin{algorithm}
 \caption{Receiving Messages}
+\label{alg:receivingmessages}
 \begin{algorithmic}[1]
 \Procedure {k_receive_message}{$sender$}
     \While{$cur\_proc.msg\_queue$ is empty}
@@ -290,40 +308,143 @@ When a process invokes \texttt{receive_message}, the next message will be dequeu
 
 \subsection{Null Process}
 
-The null process has the lowest priority of any process in our operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be scheduled for execution. As such, the null process simply invokes \texttt{release_processor} in an infinite loop, allowing other processes to be scheduled as soon as they are ready.
+The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in our operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be scheduled for execution. As such, the null process simply invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop, allowing other processes to be scheduled as soon as they are ready.\\
+
+\begin{algorithm}
+\caption{Null Process}
+\label{alg:nullprocess}
+\begin{algorithmic}[1]
+\Procedure {null_proc}{\null}
+    \While{true}
+        \State \Call{release_processor}{\null}
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{KCD Process}
 
-The Keyboard Command Decoder (KCD) process provides a console-like mechanism to users of our operating system. Upon receipt of a command registration message from another process (retrieved using \texttt{receive_message}), it uses a global registry to associate the specified command with the message sender. This registry is implemented as a linked list of structures which contain a command identifier string and the PID of the registered process. Each time a line of input is entered through the console, the KCD process uses the registry to determine if it is prefixed with a registered command; if so, the input is forwarded to the process specified in the registry entry using \texttt{send_message} so that it may act upon the command.
+The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a console-like mechanism to users of our operating system. Upon receipt of a command registration message from another process (retrieved using \hyperref[alg:receivingmessages]{\texttt{receive_message}}), it uses a global registry to associate the specified command with the message sender. This registry is implemented as a linked list of structures which contain a command identifier string and the PID of the registered process. Each time a line of input is entered through the console, the KCD process uses the registry to determine if it is prefixed with a registered command; if so, the input is forwarded to the process specified in the registry entry using \hyperref[alg:sendingmessages]{\texttt{send_message}} so that it may act upon the command.\\
+
+\begin{algorithm}
+\caption{KCD Process}
+\label{alg:kcdprocess}
+\begin{algorithmic}[1]
+\Procedure {kcd_proc}{\null}
+    \While{true}
+        \State $msg \leftarrow \Call{receive\_message}{sender}$
+        \If{$msg.type = \texttt{MSG_TYPE_KCD_REG}$}
+            \State $reg \leftarrow$ next unused $kcd\_reg$ entry
+            \State $reg.id \leftarrow msg.data$
+            \State $reg.pid \leftarrow sender$
+        \ElsIf{$msg.type = \texttt{MSG_TYPE_DEFAULT}$}
+            \State $id \leftarrow$ first token of $msg.data$
+            \If{$kcd\_reg$ contains $id$}
+                \State $dispatch\_msg \leftarrow \Call{request\_memory\_block}{\null}$
+                \State $dispatch\_msg.type \leftarrow \texttt{MSG_TYPE_KCD_DISPATCH}$
+                \State $dispatch\_msg.data \leftarrow msg.data$
+                \State \Call{send_message}{$kcd\_reg[id].pid$, $dispatch\_msg$}
+            \EndIf
+        \EndIf
+        \State \Call{release_memory_block}{$msg$}
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{CRT Process}
 
-The purpose of the CRT process is to print text to the system console. In order to achieve this, it repeatedly invokes \texttt{receive_message} and forwards received messages to the UART i-process using \texttt{send_message}. After it does this, it triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in Section \ref{subsec:UART I-Process}.
+The purpose of the \hyperref[alg:crtprocess]{CRT process} is to print text to the system console. In order to achieve this, it repeatedly invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}} and forwards received messages to the UART i-process using \hyperref[alg:sendingmessages]{\texttt{send_message}}. After it does this, it triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in Section~\ref{subsec:UART I-Process}.\\
+
+\begin{algorithm}
+\caption{CRT Process}
+\label{alg:crtprocess}
+\begin{algorithmic}[1]
+\Procedure {crt_proc}{\null}
+    \While{true}
+        \State $msg \leftarrow \Call{receive\_message}{\null}$
+        \If{$msg.type = \texttt{MSG_TYPE_CRT_DISP}$}
+            \State \Call{send_message}{$uart\_i\_proc$, $msg$}
+        \Else
+            \State \Call{release_memory_block}{$msg$}
+        \EndIf
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{Interrupt Processes}
 
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-The timer i-process provides timing services to our operating system and is primarily responsible for dispatching delayed messages (sent using \texttt{delayed_send}) to other processes. This is achieved through the use of message queues and a global counter, which is used for keeping track of the system time.\\
+The \hyperref[alg:timeriprocess]{timer i-process} provides timing services to our operating system and is primarily responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) to other processes. This is achieved through the use of message queues and a global counter, which is used for keeping track of the system time.\\
 
-When a timer interrupt occurs (once every millisecond), the timer i-process is invoked by the timer interrupt handler. First, it checks if there are any messages in its message queue. If there is a message, it is added to the timeout queue, which maintains sorted order with respect to the expiry times of contained messages. Next, it iterates through the timeout queue and places any expired messages in the message queues of the appropriate recipients. If a message was delivered to a process of equal or greater priority than the current process, the operating system will preempt to the recipient by invoking \texttt{release_processor}.
+When a timer interrupt occurs (once every millisecond), the timer i-process is invoked by the timer interrupt handler. First, it checks if there are any messages in its message queue. If there is a message, it is added to the timeout queue, which maintains sorted order with respect to the expiry times of contained messages. Next, it iterates through the timeout queue and places any expired messages in the message queues of the appropriate recipients. If a message was delivered to a process of equal or greater priority than the current process, the operating system will preempt to the recipient by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+
+\begin{algorithm}
+\caption{Timer I-Process}
+\label{alg:timeriprocess}
+\begin{algorithmic}[1]
+\Procedure {timer_i_proc}{\null}
+    \State $msg \leftarrow \Call{k\_non\_blocking\_receive\_message}{\null}$
+    \State \Call{sorted_enqueue}{$msg$, $timeout\_queue$}
+    \While{$timeout\_queue$ contains expired messages}
+        \State $expired\_msg \leftarrow \Call{dequeue}{timeout\_queue}$
+        \State \Call{k_send_message_helper}{$expired\_msg$} \Comment{Non-preemptive}
+        \If{$expired\_msg.recipient.priority \le cur\_proc.priority$}
+            \State $\triangleright$ preempt $cur\_proc$ on completion
+        \EndIf
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{UART I-Process}
 \label{subsec:UART I-Process}
 
-The UART i-process acts as an interface between the system console and other processes in our operating system. It is triggered by two types of interrupts, each corresponding to one of the two tasks performed by this process.\\
+The \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the system console and other processes in our operating system. It is triggered by two types of interrupts, each corresponding to one of the two tasks performed by this process.\\
 
-The first responsibility of the UART i-process is handling user input. To facilitate this, a global input buffer is used. When the user presses the return key, this buffer is copied into a message which is then sent to the KCD process for interpretation using a non-preemptive version of \texttt{send_message}.\\
+The first responsibility of the UART i-process is handling user input. To facilitate this, a global input buffer is used. When the user presses the return key, this buffer is copied into a message which is then sent to the KCD process for interpretation using a non-preemptive version of \hyperref[alg:sendingmessages]{\texttt{send_message}}.\\
 
-When an output interrupt occurs, the UART i-process retrieves the next message in its queue using a non-blocking version of \texttt{receive_message}. It then uses repeated interrupts to sequentially print characters of the message until it reaches the end.
+When an output interrupt occurs, the UART i-process retrieves the next message in its queue using a non-blocking version of \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It then uses repeated interrupts to sequentially print characters of the message until it reaches the end.\\
+
+\begin{algorithm}
+\caption{UART I-Process}
+\label{alg:uartiprocess}
+\begin{algorithmic}[1]
+\Procedure {uart_i_proc}{\null}
+    \If{$input\_char$ is available}
+        \If{$mem\_heap$ is not empty} \Comment{Avoid blocking}
+            \State $msg \leftarrow \Call{k\_request\_memory\_block}{\null}$
+            \State $msg.type \leftarrow \texttt{MSG_TYPE_CRT_DISP}$
+            \State $msg.data \leftarrow input\_char$
+            \State \Call{k_send_message_helper}{$uart\_i\_proc$, $crt\_proc$, $msg$}
+            \State $\triangleright$ preempt $cur\_proc$ on completion
+        \EndIf
+            \If{$input\_char \not = \textrm{carriage return}$}
+                \State add $input\_char$ to $\mathit{input\_buffer}$
+            \Else
+                \State $msg \leftarrow \Call{k\_request\_memory\_block}{\null}$
+                \State $msg.type \leftarrow \texttt{MSG_TYPE_DEFAULT}$
+                \State $msg.data \leftarrow \mathit{input\_buffer}$
+                \State \Call{k_send_message_helper}{$uart\_i\_proc$, $kcd\_proc$, $msg$} 
+                \State $\triangleright$ preempt $cur\_proc$ on completion
+            \EndIf
+    \ElsIf{$output\_msg$ is available}
+        \State $\texttt{UART0} \leftarrow output\_msg.data[output\_msg\_index]$
+        \State $output\_msg\_index \leftarrow output\_msg\_index + 1$
+    \EndIf
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{User Processes}
 
 \subsection{Wall Clock Process}
 
-The wall clock process uses \texttt{delayed_send} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
-triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \texttt{send_message} to display the current wall clock time. On startup, the wall clock process registers keyboard commands with the KCD process which allow the time to be set, reset, and stopped.
+The wall clock process uses \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
+triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[alg:sendingmessages]{\texttt{send_message}} to display the current wall clock time. On startup, the wall clock process registers keyboard commands with the KCD process which allow the time to be set, reset, and stopped.
 
 \subsection{Test Processes}
 
