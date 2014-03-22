@@ -281,7 +281,6 @@ void stress_test_b(void)
 void stress_test_c(void)
 {
     msg_t *p_msg = NULL;
-    U8* p_arithmetic = NULL;
     
     queue_t hibernate_queue;
     hibernate_queue.mp_first = NULL;
@@ -291,9 +290,7 @@ void stress_test_c(void)
         if (is_queue_empty(&hibernate_queue)) {
             p_msg = receive_message(NULL);
         } else {
-            p_arithmetic = (U8 *)dequeue(&hibernate_queue);
-            p_arithmetic += MSG_HEADER_OFFSET;
-            p_msg = (msg_t *)p_arithmetic;
+            p_msg = (msg_t *)((U8 *)dequeue(&hibernate_queue) + MSG_HEADER_OFFSET);
         }
         
         if (p_msg->m_type == MSG_TYPE_COUNT_REPORT) {
@@ -316,9 +313,7 @@ void stress_test_c(void)
                     if (p_msg->m_type == MSG_TYPE_WAKEUP_10) {
                         break;
                     } else {
-                        p_arithmetic = (U8 *)p_msg;
-                        p_arithmetic -= MSG_HEADER_OFFSET;
-                        enqueue((node_t *)p_arithmetic, &hibernate_queue);
+                        enqueue((node_t *)((U8 *)p_msg - MSG_HEADER_OFFSET), &hibernate_queue);
                     }
                 }
             }

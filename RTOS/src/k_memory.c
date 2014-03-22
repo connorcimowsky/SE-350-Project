@@ -186,7 +186,7 @@ void *k_request_memory_block(void)
         k_enqueue_blocked_on_memory_process(gp_current_process);
         k_release_processor();
     }
-
+    
     /* retrieve the next available node from the heap */
     p_mem_blk = (U8 *)pop(gp_heap);
     
@@ -221,7 +221,6 @@ int k_release_memory_block(void *p_mem_blk)
 
 int k_release_memory_block_helper(void *p_mem_blk)
 {
-    U8 *p_decrement = NULL;
     node_t *p_node = NULL;
     
     if (p_mem_blk == NULL ) {
@@ -233,14 +232,8 @@ int k_release_memory_block_helper(void *p_mem_blk)
         return RTOS_ERR;
     }
     
-    /* cast the memory block for correct pointer arithmetic */
-    p_decrement = p_mem_blk;
-    
     /* decrement the address of the block by the size of the header to get the start address of the node */
-    p_decrement -= MSG_HEADER_OFFSET;
-        
-    /* cast the start address of the node to a node_t */
-    p_node = (node_t *)p_decrement;
+    p_node = (node_t *)((U8 *)p_mem_blk - MSG_HEADER_OFFSET);
     
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x\n\r", p_node);
