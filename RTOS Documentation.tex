@@ -444,11 +444,11 @@ When an output interrupt occurs, the UART i-process retrieves the next message i
 \subsection{Wall Clock Process}
 
 The wall clock process uses \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
-triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[alg:sendingmessages]{\texttt{send_message}} to display the current wall clock time. On startup, the wall clock process registers keyboard commands with the KCD process which allow the time to be set, reset, and stopped.
+triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[alg:sendingmessages]{\texttt{send_message}} to display the current wall clock time. Upon startup, the wall clock process registers three keyboard commands (\texttt{\%WR}, \texttt{\%WS}, \texttt{\%WT}) with the KCD process which allow the time to be set, reset, and stopped.
 
 \subsection{Set Priority Command Process}
 
-On startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
+Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
 
 \subsection{Test Processes}
 
