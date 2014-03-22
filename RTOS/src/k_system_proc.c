@@ -249,15 +249,15 @@ void timer_i_process(void)
         U8 *p_decrement = (U8 *)p_msg;
         p_decrement -= MSG_HEADER_OFFSET;
         
-        queue_sorted_insert(&g_timeout_queue, (node_t *)p_decrement);
+        sorted_enqueue((node_t *)p_decrement, &g_timeout_queue);
     }
     
     g_timer_preemption_flag = 0;
     
-    while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
+    while (!is_queue_empty(&g_timeout_queue) && g_timeout_queue.mp_first->m_val <= g_timer_count) {
         /* while there are expired messages in our timeout queue, place them in the appropriate message queues */
         
-        k_msg_t *p_next_message = (k_msg_t *)dequeue_node(&g_timeout_queue);
+        k_msg_t *p_next_message = (k_msg_t *)dequeue(&g_timeout_queue);
         
         U8 *p_increment = (U8 *)p_next_message;
         p_increment += MSG_HEADER_OFFSET;

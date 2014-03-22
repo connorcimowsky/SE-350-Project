@@ -14,7 +14,7 @@ U8 *gp_heap_end_addr;
 U32 *gp_stack;
 
 
-void memory_init(void)
+void k_memory_init(void)
 {
     /* get the address of the end of the memory image */
     U8 *p_end = (U8 *)&Image$$RW_IRAM1$$ZI$$Limit;
@@ -63,7 +63,7 @@ void memory_init(void)
         p_end += sizeof(queue_t);
     }
     
-    /* prepare for alloc_stack() by ensuring 8-byte alignment */
+    /* prepare for k_alloc_stack() by ensuring 8-byte alignment */
     gp_stack = (U32 *)RAM_END_ADDR;
     if ((U32)gp_stack & 0x04) {
         --gp_stack; 
@@ -82,7 +82,7 @@ void memory_init(void)
         node_t *p_node = (node_t *)p_end;
         
         /* insert the node into the memory heap structure */
-        insert_node(gp_heap, (node_t *)p_node);
+        push((node_t *)p_node, gp_heap);
 
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
@@ -114,7 +114,7 @@ void memory_init(void)
         p_reg->m_pid = 0;
         p_reg->m_active = 0;
         
-        insert_node(&g_kcd_reg, (node_t *)p_reg);
+        push((node_t *)p_reg, &g_kcd_reg);
         
         p_end += sizeof(k_kcd_reg_t);
     }
@@ -155,7 +155,7 @@ void memory_init(void)
     
 }
 
-U32 *alloc_stack(U32 size_b) 
+U32 *k_alloc_stack(U32 size_b) 
 {
     U32 *p_sp;
     p_sp = gp_stack; /* gp_stack is always 8-byte aligned */
@@ -188,7 +188,7 @@ void *k_request_memory_block(void)
     }
 
     /* retrieve the next available node from the heap */
-    p_mem_blk = (U8 *)get_node(gp_heap);
+    p_mem_blk = (U8 *)pop(gp_heap);
     
 #ifdef DEBUG_1
         printf("k_request_memory_block: 0x%x\n\r", p_mem_blk);
@@ -277,7 +277,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* if none of the above tests failed, insert the node into the memory heap */
-    insert_node(gp_heap, p_node);
+    push(p_node, gp_heap);
     
     return RTOS_OK;
 }

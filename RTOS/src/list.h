@@ -9,9 +9,9 @@ typedef struct list_t {
 } list_t;
 
 
-int insert_node(list_t *p_list, node_t *p_node);
+int push(node_t *p_node, list_t *p_list);
 
-node_t *get_node(list_t *p_list);
+node_t *pop(list_t *p_list);
 
 int list_contains_node(list_t *p_list, node_t *p_node);
 

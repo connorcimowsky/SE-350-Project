@@ -16,9 +16,9 @@ void k_rtos_init(void)
     uart_irq_init(0);
     uart_init(1);
     
-    memory_init();
+    k_memory_init();
     
-    process_init();
+    k_process_init();
     
     /* enable interrupt requests */
     __enable_irq();
