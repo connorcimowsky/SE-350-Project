@@ -252,12 +252,12 @@ int k_get_process_priority(int pid)
 
 int k_send_message(int recipient_pid, void *p_msg)
 {
-    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
-        /* pid is out-of-bounds */
+    if (p_msg == NULL) {
         return RTOS_ERR;
     }
     
-    if (p_msg == NULL) {
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
         return RTOS_ERR;
     }
     
@@ -309,6 +309,15 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     
+    if (p_msg == NULL) {
+        return RTOS_ERR;
+    }
+    
+    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
+        /* pid is out-of-bounds */
+        return RTOS_ERR;
+    }
+    
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
     
@@ -350,11 +359,6 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
 #ifdef DEBUG_HOTKEYS
     k_log_sent_message(sender_pid, recipient_pid, (msg_t *)p_msg);
 #endif
-    
-    if (recipient_pid < 0 || recipient_pid >= NUM_PROCS) {
-        /* pid is out-of-bounds */
-        return RTOS_ERR;
-    }
     
     p_decrement = (U8 *)p_msg;
     p_decrement -= MSG_HEADER_OFFSET;
