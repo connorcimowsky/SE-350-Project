@@ -275,7 +275,6 @@ int k_send_message(int recipient_pid, void *p_msg)
 void *k_receive_message(int *p_sender_pid)
 {
     k_msg_t *p_msg = NULL;
-    U8 *p_increment = NULL;
     
     while (is_queue_empty(&(gp_current_process->m_msg_queue))) {
         /* if there are no messages, block ourselves and yield the processor */
@@ -298,15 +297,11 @@ void *k_receive_message(int *p_sender_pid)
         *p_sender_pid = p_msg->m_sender_pid;
     }
     
-    p_increment = (U8 *)p_msg;
-    p_increment += MSG_HEADER_OFFSET;
-    
-    return (void *)p_increment;
+    return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
 }
 
 int k_delayed_send(int recipient_pid, void *p_msg, int delay)
 {
-    U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     
     if (p_msg == NULL) {
@@ -318,10 +313,7 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
         return RTOS_ERR;
     }
     
-    p_decrement = (U8 *)p_msg;
-    p_decrement -= MSG_HEADER_OFFSET;
-    
-    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope = (k_msg_t *)((U8 *)p_msg - MSG_HEADER_OFFSET);
     p_msg_envelope->m_expiry = g_timer_count + delay;
     p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
@@ -340,11 +332,7 @@ void *k_non_blocking_receive_message(int pid)
 {
     if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
         k_msg_t *p_msg = (k_msg_t *)dequeue(&(gp_pcbs[pid]->m_msg_queue));
-        
-        U8 *p_increment = (U8 *)p_msg;
-        p_increment += MSG_HEADER_OFFSET;
-        
-        return (void *)p_increment;
+        return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
     } else {
         return NULL;
     }
@@ -352,7 +340,6 @@ void *k_non_blocking_receive_message(int pid)
 
 int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
 {
-    U8 *p_decrement = NULL;
     k_msg_t *p_msg_envelope = NULL;
     k_pcb_t *p_recipient_pcb = NULL;
     
@@ -360,10 +347,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     k_log_sent_message(sender_pid, recipient_pid, (msg_t *)p_msg);
 #endif
     
-    p_decrement = (U8 *)p_msg;
-    p_decrement -= MSG_HEADER_OFFSET;
-    
-    p_msg_envelope = (k_msg_t *)p_decrement;
+    p_msg_envelope = (k_msg_t *)((U8 *)p_msg - MSG_HEADER_OFFSET);;
     p_msg_envelope->m_sender_pid = sender_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
