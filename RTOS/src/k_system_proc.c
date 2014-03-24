@@ -245,24 +245,17 @@ void timer_i_process(void)
     p_msg = (msg_t *)k_non_blocking_receive_message(PID_TIMER_IPROC);
     if (p_msg != NULL) {
         /* if there is a message waiting for us (from delayed_send), add it to our timeout queue */
-        
-        U8 *p_decrement = (U8 *)p_msg;
-        p_decrement -= MSG_HEADER_OFFSET;
-        
-        queue_sorted_insert(&g_timeout_queue, (node_t *)p_decrement);
+        sorted_enqueue((node_t *)((U8 *)p_msg - MSG_HEADER_OFFSET), &g_timeout_queue);
     }
     
     g_timer_preemption_flag = 0;
     
-    while (!is_queue_empty(&g_timeout_queue) && queue_peek(&g_timeout_queue)->m_val <= g_timer_count) {
+    while (!is_queue_empty(&g_timeout_queue) && g_timeout_queue.mp_first->m_val <= g_timer_count) {
         /* while there are expired messages in our timeout queue, place them in the appropriate message queues */
         
-        k_msg_t *p_next_message = (k_msg_t *)dequeue_node(&g_timeout_queue);
+        k_msg_t *p_next_message = (k_msg_t *)dequeue(&g_timeout_queue);
         
-        U8 *p_increment = (U8 *)p_next_message;
-        p_increment += MSG_HEADER_OFFSET;
-        
-        k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)p_increment);
+        k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)((U8 *)p_next_message + MSG_HEADER_OFFSET));
         
         if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
             /* only preempt to the recipient if it is of equal or greater importance */

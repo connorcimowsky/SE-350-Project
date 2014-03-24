@@ -5,12 +5,12 @@
 
 
 /* external functions */
-extern U32 *alloc_stack(U32 size_b);
+extern U32 *k_alloc_stack(U32 size_b);
 extern void __rte(void);
 
 
 /* populate the process initialization table and set up the initial context of each process */
-void process_init(void);
+void k_process_init(void);
 
 /* invoke the scheduler and switch to the next process */
 int k_release_processor(void);
@@ -50,7 +50,7 @@ void k_log_received_message(k_msg_t *p_msg);
 #endif /* DEBUG_HOTKEYS */
 
 /* perform a context switch from p_pcb_old to p_pcb_new */
-void context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
+void k_context_switch(k_pcb_t *p_pcb_old, k_pcb_t *p_pcb_new);
 
 /* enqueue p_pcb in the ready queue */
 void k_enqueue_ready_process(k_pcb_t *p_pcb);
@@ -66,9 +66,6 @@ k_pcb_t *k_dequeue_blocked_on_memory_process(void);
 
 /* set the state of p_pcb to BLOCKED_ON_RECEIVE and enqueue it in the blocked-on-receive queue */
 void k_enqueue_blocked_on_receive_process(k_pcb_t *p_pcb);
-
-/* remove p_pcb from the blocked-on-receive queue */
-void k_remove_blocked_on_receive_process(k_pcb_t *p_pcb);
 
 #ifdef DEBUG_HOTKEYS
 
