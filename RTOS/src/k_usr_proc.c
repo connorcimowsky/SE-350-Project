@@ -39,11 +39,11 @@ void wall_clock_proc(void)
         if (sender == PID_CLOCK && p_msg->m_type == MSG_TYPE_WALL_CLK_TICK) {
             
             if (g_wall_clock_running == 1) {
-                /* used for signalling ourselves to update */
-                msg_t *p_update_msg = (msg_t *)request_memory_block();
-                
                 /* used for signalling the CRT process to display the current time */
                 msg_t *p_display_msg = (msg_t *)request_memory_block();
+                
+                /* used for signalling ourselves to update */
+                msg_t *p_update_msg = NULL;
                 
                 /* determine the elapsed hours, minutes, and seconds */
                 U32 elapsed_time = g_wall_clock_start_time_offset + (get_system_time() - g_wall_clock_start_time);
@@ -57,6 +57,7 @@ void wall_clock_proc(void)
                 send_message(PID_CRT, p_display_msg);
                 
                 /* update the clock 1 second from now */
+                p_update_msg = (msg_t *)request_memory_block();
                 p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
                 p_update_msg->m_data[0] = '\0';
                 delayed_send(PID_CLOCK, p_update_msg, 1000);
