@@ -43,9 +43,7 @@
 
 \listofalgorithms
 
-\part{Design Description}
-
-\chapter{Structural Overview}
+\chapter{Design Description}
 
 \section{Operating System Initialization}
 
@@ -454,157 +452,18 @@ Upon startup, this process registers a keyboard command (\texttt{\%C}) with the 
 
 In order to ensure the correct behaviour of our operating system, we use six user-­level test processes to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that  our operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
 
-\part{Lessons Learned}
+\chapter{Lessons Learned}
 
-\chapter{Bugs and Design Decisions}
+\section{Version Control}
 
-\section{Data storage in our linked structures}
+At the very beginning of our project, we decided to use \href{http://git-scm.com/}{Git} to manage the source code of our kernel. Paired with \href{http://github.com/}{GitHub}, it provided a robust system for ensuring code quality and minimizing bugs. Throughout the project, we obeyed a strict code review policy; all work was done in individual branches, submitted as a pull request, and then exhaustively reviewed by every member of the team before being merged into the \texttt{master} branch. This policy allowed us to catch several bugs that would have been incredibly difficult to catch in testing.
 
-From the beginning of our project, we knew that we would need to store different types of data in linked structures for different use cases. For example, we knew that nodes in our memory heap structure would have different data storage requirements compared to nodes in our process control structures (e.g. ready queue, blocked queue).\\
+\section{Simulation}
 
-Since we wanted to avoid creating linked structures that were coupled with the type of data they were storing, we needed to devise a way to make them as generic as possible.\\
+For the majority of our first deliverable, we tested our kernel exclusively in the debugger provided by the Keil $\mu$Vision IDE. Before submitting the deliverable, we tested our code on the MCB1700 board; everything worked correctly. This substantiated our assumption that the debugger provided a close approximation to the hardware. In reality, as we discovered during our work on the second deliverable, there is a major difference: the SRAM on the MCB1700 board is not initialized the way it is in the debugger. This led to a number of serious bugs that only surfaced when we tested our code on the board. One of the most common bugs involved dealing with strings. Since we relied on the null character to delimit strings, there were portions of code which would work perfectly in the simulator and not on the board. These types of bugs only appeared in the second deliverable, since message passing and console I/O both rely heavily on strings. After dealing with these bugs, we learned to write code more defensively and test our code primarily on the board instead of using the debugger.
 
-We chose to make a generic node structure, \texttt{node_t}, with only one member: a pointer to the next \texttt{node_t}:
+\section{Documentation}
 
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-typedef struct node_t {
-    struct node_t *p_next;
-} node_t;
-\end{lstlisting}
-\end{minipage}
-
-We then designed our linked structures to accommodate nodes of this type:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-typedef struct list_t {
-    node_t *p_first;
-} list_t;
-
-typedef struct queue_t {
-    node_t *p_first;
-    node_t *p_last;
-} queue_t;
-\end{lstlisting}
-\end{minipage}
-
-This way, if a certain use case necessitates having additional storage in each node, we can simply declare a new type with the additional required members. For example, here is a node that can store a pointer to a process control block:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-typedef struct k_pcb_node_t {
-    struct k_pcb_node_t *p_next;
-    k_pcb_t *p_pcb;
-} k_pcb_node_t;
-\end{lstlisting}
-\end{minipage}
-
-As long as the first member remains a pointer to the next node, the structure members will line up in memory and our linked structures will accommodate these nodes (assuming we cast \texttt{k_pcb_node_t} pointers to \texttt{node_t} pointers on insertion, and vice versa on removal).
-
-\section{Modeling blocks in our memory heap}
-
-During the planning phase, we chose to implement our memory heap as a linked list. However, we were not sure how nodes in this linked list should keep track of the blocks that they would represent.\\
-
-In addition to having a pointer to the next node, our first thought was that each node structure should have a pointer to the beginning address of the memory block that it represents:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-typedef struct k_mem_blnode_t {
-    struct k_mem_blnode_t *p_next;
-    void *p_mem_blk_start_addr;
-} k_mem_blnode_t;
-\end{lstlisting}
-\end{minipage}
-
-After further thought, we realized that since the size of each memory block is known at compile time, we can simply space the nodes apart at \texttt{(sizeof(node_t) + BLOCK_SIZE)} intervals, obviating the need for a member such as \texttt{void *p_mem_blk_start_addr}. Thus, we were able to use the unmodified node structure (\texttt{node_t}, outlined in the previous section) for our memory heap.
-
-\section{Pointer arithmetic}
-
-For our memory heap, we chose to structure blocks with the header in front of the block itself. This means that when we remove a node from our heap in \texttt{k_request_memory_block()}, we need to increment \texttt{node}'s address by 4 bytes (the size of the header, \texttt{sizeof(node_t)}) before returning the address to the user. Similarly, in \texttt{k_release_memory_block(void *p_mem_blk)}, we need to decrement the address of \texttt{p_mem_blk} by 4 bytes in order to get the correct pointer to the node for re-insertion into the heap.\\
-
-When we originally implemented this pointer arithmetic in \texttt{k_request_memory_block()}, we did the following:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-node_t *p_mem_blk = get_node(gp_heap);
-p_mem_blk += sizeof(node_t);
-\end{lstlisting}
-\end{minipage}
-
-If the value of \texttt{p_mem_blk} is, for example, \texttt{0x10000000}, we would expect the resulting value to be \texttt{0x10000004}. However, the above code produces a result of \texttt{0x10000010}. This is because the compiler knows the size of \texttt{node_t}, and is multiplying the addend by \texttt{sizeof(node_t)}, resulting in an addend of 16 instead of 4. Therefore, we revised the addend to 1 instead of 4:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-node_t *p_mem_blk = get_node(gp_heap);
-p_mem_blk += 1;
-\end{lstlisting}
-\end{minipage}
-
-Since the block pointer we receive in \texttt{k_request_memory_block(void *p_mem_blk)} is not typed as a \texttt{node_t}, the compiler does not multiply the subtrahend by \texttt{sizeof(node_t)} for us. Instead of doing this multiplication ourselves, we chose to cast \texttt{p_mem_blk} as a pointer to a \texttt{node_t} and simply use a subtrahend of 1:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-node_t *p_blk = p_mem_blk;
-p_blk -= 1;
-\end{lstlisting}
-\end{minipage}
-
-This will correctly subtract the size of our header from the address of the returned block.
-
-\section{Context switching}
-
-In order to context-switch to processes that have not yet executed, it is necessary to pop a pre-made exception stack frame off of the stack (by calling the inline assembly function \texttt{__rte()}) so that the new process has an initial context.\\
-
-Since we only want to call \texttt{__rte()} if a process has not executed before, we needed to add another process state, \texttt{NEW}. This gives us more fine-grained process control behavior for \texttt{NEW} vs. \texttt{READY} processes.
-
-\section{Process control blocks}
-
-At the beginning of our \texttt{memory_init()} function, we allocate an array of process control block (PCB) nodes (\texttt{k_pcb_node_t}), one for each process (\texttt{NUM_TEST_PROCS}). Since this is an array, it is indexed in array notation (\texttt{0} to \texttt{NUM_TEST_PROCS-1}).\\
-
-When we need to access a PCB node for an arbitrary process, \texttt{p_process}, it makes sense to access this array using the process identifier (\texttt{p_process->m_pid}). However, in our original implementation, process identifiers did not begin at 0; they began at 1. So, in order to access the PCB node for \texttt{p_process}, we needed to access our array of PCB nodes at index \texttt{(p_process->m_pid-1)}. We have since changed our indexing of PIDs (so that the null process can always have a PID of 0), so this is no longer a problem. Although this is a simple concept, it took an extraordinary amount of time to debug.
-
-\section{Dequeuing from the ready queue}
-
-In \texttt{request_memory_block()}, it is expected that the calling process may become blocked in the case that there is no available memory in the heap.\\
-
-Originally, our implementation of \texttt{k_request_memory_block()} would attempt to dequeue the calling process from the ready queue and enqueue it in the blocked queue. This conceptually made sense, as it should be in the \texttt{BLOCKED_ON_RESOURCE} state, not the \texttt{READY} state, next time we call \texttt{k_release_processor()}.\\
-
-However, we know that if a process is able to call \texttt{request_memory_block()}, then it must currently be in the \texttt{EXECUTING} state. Thus, it must have already been dequeued from the ready queue in order to have been scheduled in the first place. So, all we need to do when out of memory is add the calling process to the blocked queue:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-while (is_list_empty(gp_heap)) {
-    // no available memory in the heap
-    if (k_enqueue_blocked_process(gp_current_process) == RTX_OK) {
-        k_release_processor();
-    }
-}
-\end{lstlisting}
-\end{minipage}
-
-\section{Dynamic allocation in the kernel}
-
-In our initial implementation of the kernel, we dynamically requested and returned heap memory for PCB nodes as we enqueued and dequeued them from the ready and blocked queues. For na\"{i}ve test processes, this was not a problem.\\
-
-Once we started to request memory blocks in our test processes, we noticed a fatal flaw in this approach. If a process attempted to request a memory block when there was no available memory in the heap, we would attempt to add it to the blocked queue, as shown in the previous section.\\
-
-However, since we were dynamically requesting heap memory for PCB nodes to be enqueued in the blocked queue (by calling \texttt{k_request_memory_block()}), we would never succeed in enqueueing the process in the blocked queue. Instead, we would infinitely recurse into \texttt{k_request_memory_block()}.\\
-
-To solve this problem, we decided to statically allocate all of our PCB nodes in \texttt{memory_init()}, obviating the need to dynamically request memory in the kernel:
-
-\begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
-/* allocate memory for pcb node pointers */
-gp_pcb_nodes = (k_pcb_node_t **)p_end;
-p_end += NUM_TEST_PROCS * sizeof(k_pcb_node_t *);
-
-/* allocate memory for each pcb node */
-for (i = 0; i < NUM_TEST_PROCS; i++) {
-    gp_pcb_nodes[i] = (k_pcb_node_t *)p_end;
-    p_end += sizeof(k_pcb_node_t); 
-}
-\end{lstlisting}
-\end{minipage}
+Beginning with the first deliverable, we decided to write a portion of our documentation alongside each submission. In the time between the first and third deliverables, we compiled a structural description of each part of our project, wrote pseudocode for each major kernel procedure, and completed the Lessons Learned section. This work greatly reduced the amount of time it took to complete our final report, as our documentation was nearly complete by the time we submitted the third deliverable.
 
 \end{document}
