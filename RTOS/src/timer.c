@@ -21,14 +21,7 @@ uint32_t timer_init(uint8_t n_timer)
     } else if (n_timer == 1) {
         
         pTimer = (LPC_TIM_TypeDef *)LPC_TIM1;
-        
-        pTimer->PR = 12499;
-        // pTimer->MR0 = 1;
         pTimer->MCR = 0;
-        
-        NVIC_EnableIRQ(TIMER1_IRQn);
-        
-        pTimer->CTCR = 0;
         pTimer->TCR = 1;
         
     } else {
