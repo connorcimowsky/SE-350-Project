@@ -11,6 +11,8 @@ void k_rtos_init(void)
     /* disable interrupt requests */
     __disable_irq();
     
+    led_init();
+    
     timer_init(0);
     
     uart_irq_init(0);
