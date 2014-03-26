@@ -1,3 +1,4 @@
+#include "led.h"
 #include "k_memory.h"
 #include "k_process.h"
 #include "k_system_proc.h"
@@ -176,6 +177,11 @@ void *k_request_memory_block(void)
     U8 *p_mem_blk = NULL;
     
     while (is_list_empty(gp_heap)) {
+#ifdef DEBUG_LED
+        /* turn the LEDs off to signal that we are out of memory */
+        led_all_off();
+#endif
+        
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
@@ -186,6 +192,11 @@ void *k_request_memory_block(void)
         k_enqueue_blocked_on_memory_process(gp_current_process);
         k_release_processor();
     }
+    
+#ifdef DEBUG_LED
+    /* turn the LEDs on to signal that we are not out of memory */
+    led_all_on();
+#endif
     
     /* retrieve the next available node from the heap */
     p_mem_blk = (U8 *)pop(gp_heap);
@@ -268,6 +279,11 @@ int k_release_memory_block_helper(void *p_mem_blk)
         
         return RTOS_ERR;
     }
+    
+#ifdef DEBUG_LED
+    /* turn the LEDs on to signal that we are not out of memory */
+    led_all_on();
+#endif
     
     /* if none of the above tests failed, insert the node into the memory heap */
     push(p_node, gp_heap);

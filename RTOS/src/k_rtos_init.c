@@ -2,6 +2,7 @@
 #include "uart_polling.h"
 #include "uart_irq.h"
 #include "timer.h"
+#include "led.h"
 #include "k_memory.h"
 #include "k_process.h"
 
@@ -12,6 +13,7 @@ void k_rtos_init(void)
     __disable_irq();
     
     led_init();
+    led_all_on();
     
     timer_init(0);
     
