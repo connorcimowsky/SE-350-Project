@@ -39,10 +39,8 @@ void wall_clock_proc(void)
         if (sender == PID_CLOCK && p_msg->m_type == MSG_TYPE_WALL_CLK_TICK) {
             
             if (g_wall_clock_running == 1) {
-                
                 /* used for signalling the CRT process to display the current time */
                 msg_t *p_display_msg = (msg_t *)request_memory_block();
-                msg_t *p_update_msg = NULL;
                 
                 /* used for signalling ourselves to update */
                 msg_t *p_update_msg = NULL;
@@ -57,9 +55,6 @@ void wall_clock_proc(void)
                 p_display_msg->m_type = MSG_TYPE_CRT_DISP;
                 sprintf(p_display_msg->m_data, "%c[s%c[%dA%c[%dC%c[%dD%c[36;1m%02d%c[37m:%c[36;1m%02d%c[37m:%c[36;1m%02d%c[u%c[0m", 0x1B, 0x1B, 2000, 0x1B, 2000, 0x1B, 7, 0x1B, h, 0x1B, 0x1B, m, 0x1B, 0x1B, s, 0x1B, 0x1B);
                 send_message(PID_CRT, p_display_msg);
-                
-                /* used for signalling ourselves to update */
-                p_update_msg = (msg_t *)request_memory_block();
                 
                 /* update the clock 1 second from now */
                 p_update_msg = (msg_t *)request_memory_block();
