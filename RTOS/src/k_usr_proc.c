@@ -44,6 +44,9 @@ void wall_clock_proc(void)
                 msg_t *p_display_msg = (msg_t *)request_memory_block();
                 msg_t *p_update_msg = NULL;
                 
+                /* used for signalling ourselves to update */
+                msg_t *p_update_msg = NULL;
+                
                 /* determine the elapsed hours, minutes, and seconds */
                 U32 elapsed_time = g_wall_clock_start_time_offset + (get_system_time() - g_wall_clock_start_time);
                 U32 s = (elapsed_time / 1000) % 60;
@@ -59,6 +62,7 @@ void wall_clock_proc(void)
                 p_update_msg = (msg_t *)request_memory_block();
                 
                 /* update the clock 1 second from now */
+                p_update_msg = (msg_t *)request_memory_block();
                 p_update_msg->m_type = MSG_TYPE_WALL_CLK_TICK;
                 p_update_msg->m_data[0] = '\0';
                 delayed_send(PID_CLOCK, p_update_msg, 1000);
