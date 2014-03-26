@@ -33,7 +33,7 @@ void led_all_off(void)
 
 void led_on(int led_num)
 {
-    uint8_t led_mask = 1 << g_led_bits[led_num];
+    int led_mask = 1 << g_led_bits[led_num];
     
     if (led_num < 3) {
         LPC_GPIO1->FIOSET = led_mask;
@@ -44,7 +44,7 @@ void led_on(int led_num)
 
 void led_off(int led_num)
 {
-    uint8_t led_mask = 1 << g_led_bits[led_num];
+    int led_mask = 1 << g_led_bits[led_num];
     
     if (led_num < 3) {
         LPC_GPIO1->FIOCLR = led_mask;
