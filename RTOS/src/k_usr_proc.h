@@ -19,5 +19,8 @@ void stress_test_b(void);
 /* stress test C */
 void stress_test_c(void);
 
+/* used for time profiling */
+void profiler_proc(void);
+
 
 #endif /* K_USR_PROC_H */

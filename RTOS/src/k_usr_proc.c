@@ -1,7 +1,12 @@
+#include <LPC17xx.h>
 #include "k_usr_proc.h"
 #include "queue.h"
 #include "printf.h"
 #include "string.h"
+
+#define NUM_TRIALS 10
+#define TIMER_RESET (1 << 1) | (1 << 0);
+#define TIMER_START (0 << 1) | (1 << 0);
 
 
 /* global variables */
@@ -323,5 +328,36 @@ void stress_test_c(void)
         release_memory_block(p_msg);
         
         release_processor();
+    }
+}
+
+void profiler_proc(void)
+{
+    int i;
+    void *mem_blks[NUM_TRIALS];
+    U32 finish_time_ns = 0;
+    msg_t *p_msg = (msg_t *)request_memory_block();
+    p_msg->m_type = MSG_TYPE_KCD_REG;
+    str_cpy("%P", p_msg->m_data);
+    
+    send_message(PID_KCD, p_msg);
+    
+    while (1) {
+        msg_t *p_msg = (msg_t *)receive_message(NULL);
+        release_memory_block(p_msg);
+        
+        LPC_TIM1->TCR = TIMER_RESET;
+        LPC_TIM1->TCR = TIMER_START;
+        
+        for (i = 0; i < NUM_TRIALS; i++) {
+            mem_blks[i] = request_memory_block();
+        }
+        
+        finish_time_ns = 10 * LPC_TIM1->TC;
+        printf("request_memory_block:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\ttime per trial (ns): ~%d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        
+        for (i = 0; i < NUM_TRIALS; i++) {
+            release_memory_block(mem_blks[i]);
+        }
     }
 }
