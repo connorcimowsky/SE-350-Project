@@ -333,9 +333,6 @@ void stress_test_c(void)
 
 void profiler_proc(void)
 {
-    int i;
-    void *mem_blks[NUM_TRIALS];
-    U32 finish_time_ns = 0;
     msg_t *p_msg = (msg_t *)request_memory_block();
     p_msg->m_type = MSG_TYPE_KCD_REG;
     str_cpy("%P", p_msg->m_data);
@@ -343,6 +340,12 @@ void profiler_proc(void)
     send_message(PID_KCD, p_msg);
     
     while (1) {
+        int i;
+        void *mem_blks[NUM_TRIALS];
+        U32 finish_time_ns = 0;
+        int sender_pid;
+        
+        /* wait for a message from the KCD */
         msg_t *p_msg = (msg_t *)receive_message(NULL);
         release_memory_block(p_msg);
         
@@ -354,7 +357,27 @@ void profiler_proc(void)
         }
         
         finish_time_ns = 10 * LPC_TIM1->TC;
-        printf("request_memory_block:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\ttime per trial (ns): ~%d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        printf("request_memory_block:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        
+        LPC_TIM1->TCR = TIMER_RESET;
+        LPC_TIM1->TCR = TIMER_START;
+        
+        for (i = 0; i < NUM_TRIALS; i++) {
+            send_message(PID_PROFILER, mem_blks[i]);
+        }
+        
+        finish_time_ns = 10 * LPC_TIM1->TC;
+        printf("send_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        
+        LPC_TIM1->TCR = TIMER_RESET;
+        LPC_TIM1->TCR = TIMER_START;
+        
+        for (i = 0; i < NUM_TRIALS; i++) {
+            receive_message(&sender_pid);
+        }
+        
+        finish_time_ns = 10 * LPC_TIM1->TC;
+        printf("receive_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
         
         for (i = 0; i < NUM_TRIALS; i++) {
             release_memory_block(mem_blks[i]);
