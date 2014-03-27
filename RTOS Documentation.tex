@@ -410,11 +410,16 @@ In order to provide timing services to our operating system, we programmed one o
 \subsection{UART I-Process}
 \label{subsec:UART I-Process}
 
-The \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the system console and other processes in our operating system. It is triggered by two types of interrupts, each corresponding to one of the two tasks performed by this process.\\
+The UART i-process handles interrupts representing two scenarios:
 
-The first responsibility of the UART i-process is handling user input. To facilitate this, a global input buffer is used. When the user presses the return key, this buffer is copied into a message which is then sent to the KCD process for interpretation using a non-preemptive version of \hyperref[alg:sendingmessages]{\texttt{send_message}}.\\
+\begin{itemize}
 
-When an output interrupt occurs, the UART i-process retrieves the next message in its queue using a non-blocking version of \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It then uses repeated interrupts to sequentially print characters of the message until it reaches the end.\\
+\item A character has been entered (input)
+\item A character is ready for display (output)
+
+\end{itemize}
+
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in our operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see Appendix~\ref{app:uartglobals}).
 
 \begin{algorithm}
 \caption{UART I-Process}
@@ -547,6 +552,7 @@ A queue of messages that have not yet expired. Sorted by expiry time. Used for d
 Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the timer i-process.
 
 \section{UART I-Process}
+\label{app:uartglobals}
 
 \subsection{\texttt{g_input_buffer}}
 
