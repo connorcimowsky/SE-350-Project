@@ -373,6 +373,17 @@ The purpose of the \hyperref[alg:crtprocess]{CRT process} is to print text to th
 
 \section{Interrupt Processes}
 
+Both the timer and UART i-processes are scheduled exclusively by their respective interrupt handlers; they are never placed in process control structures (e.g., the ready queue). When an interrupt is received, the following operations are performed:
+
+\begin{itemize}
+
+\item The context of the currently executing process is pushed onto the stack
+\item The appropriate i-process is invoked
+\item If necessary, the currently executing process is preempted
+\item The previously saved context is popped off of the stack
+
+\end{itemize}
+
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
