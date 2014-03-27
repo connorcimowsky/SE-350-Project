@@ -387,9 +387,7 @@ Both the timer and UART i-processes are scheduled exclusively by their respectiv
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-The \hyperref[alg:timeriprocess]{timer i-process} provides timing services to our operating system and is primarily responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) to other processes. This is achieved through the use of message queues and a global counter, which is used for keeping track of the system time.\\
-
-When a timer interrupt occurs (once every millisecond), the timer i-process is invoked by the timer interrupt handler. First, it checks if there are any messages in its message queue. If there is a message, it is added to the timeout queue, which maintains sorted order with respect to the expiry times of contained messages. Next, it iterates through the timeout queue and places any expired messages in the message queues of the appropriate recipients. If a message was delivered to a process of equal or greater priority than the current process, the operating system will preempt to the recipient by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+In order to provide timing services to our operating system, we programmed one of the LPC1768's on-chip timers to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
 
 \begin{algorithm}
 \caption{Timer I-Process}
@@ -535,10 +533,12 @@ An array of queues (one queue for each priority) containing pointers to process 
 \section{Timer I-Process}
 
 \subsection{\texttt{g_timer_count}}
+\label{app:gtimercount}
 
 The current system time. Used for determining when delayed messages have expired. Incremented each time a timer interrupt is received (1 ms intervals).
 
 \subsection{\texttt{g_timeout_queue}}
+\label{app:gtimeoutqueue}
 
 A queue of messages that have not yet expired. Sorted by expiry time. Used for dispatching delayed messages at the correct time.
 
