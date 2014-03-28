@@ -653,7 +653,7 @@ void k_print_msg_logs(void)
 void k_print_memory_heap(void)
 {
     int mem_blk_counter = 0;
-    node_t *p_mem_blk_iter = gp_heap->mp_first;
+    node_t *p_mem_blk_iter = g_heap.mp_first;
     
     printf("\n\r\n\r*** MEMORY HEAP ***\n\r\n\r");
     

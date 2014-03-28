@@ -8,7 +8,7 @@
 
 
 /* global variables */
-list_t *gp_heap;
+list_t g_heap;
 U8 *gp_heap_begin_addr;
 U8 *gp_heap_end_addr;
 U32 *gp_stack;
@@ -52,10 +52,8 @@ void k_memory_init(void)
         --gp_stack; 
     }
     
-    /* create the memory heap */
-    gp_heap = (list_t *)p_end;
-    gp_heap->mp_first = NULL;
-    p_end += sizeof(list_t);
+    /* initialize the memory heap */
+    list_init(&g_heap);
     
     /* save the beginning address of the heap for error-checking later on */
     gp_heap_begin_addr = p_end;
@@ -65,7 +63,7 @@ void k_memory_init(void)
         node_t *p_node = (node_t *)p_end;
         
         /* insert the node into the memory heap structure */
-        push((node_t *)p_node, gp_heap);
+        push((node_t *)p_node, &g_heap);
 
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
@@ -157,7 +155,7 @@ void *k_request_memory_block(void)
 {
     U8 *p_mem_blk = NULL;
     
-    while (is_list_empty(gp_heap)) {
+    while (is_list_empty(&g_heap)) {
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
@@ -170,7 +168,7 @@ void *k_request_memory_block(void)
     }
     
     /* retrieve the next available node from the heap */
-    p_mem_blk = (U8 *)pop(gp_heap);
+    p_mem_blk = (U8 *)pop(&g_heap);
     
 #ifdef DEBUG_1
         printf("k_request_memory_block: 0x%x\n\r", p_mem_blk);
@@ -242,7 +240,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* make sure we are not trying to release a duplicate block */
-    if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
+    if (!is_list_empty(&g_heap) && list_contains_node(&g_heap, p_node)) {
         
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is already contained in the heap\n\r", p_node);
@@ -252,7 +250,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* if none of the above tests failed, insert the node into the memory heap */
-    push(p_node, gp_heap);
+    push(p_node, &g_heap);
     
     return RTOS_OK;
 }

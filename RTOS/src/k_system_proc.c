@@ -98,7 +98,7 @@ void uart_i_process(void)
 #endif
         
         /* echo the entered character to the CRT process; only request memory if we will not block */
-        if (!is_list_empty(gp_heap)) {
+        if (!is_list_empty(&g_heap)) {
             msg_t *p_msg = (msg_t *)k_request_memory_block();
             p_msg->m_type = MSG_TYPE_CRT_DISP;
             
@@ -154,7 +154,7 @@ void uart_i_process(void)
             g_input_buffer[g_input_buffer_index++] = '\0';
             
             /* only request memory if we will not block */
-            if (!is_list_empty(gp_heap)) {
+            if (!is_list_empty(&g_heap)) {
                 msg_t *p_msg = (msg_t *)k_request_memory_block();
                 p_msg->m_type = MSG_TYPE_DEFAULT;
                 str_cpy(g_input_buffer, p_msg->m_data);

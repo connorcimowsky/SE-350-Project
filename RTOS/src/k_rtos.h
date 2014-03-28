@@ -105,7 +105,7 @@ typedef struct k_msg_log_t {
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit;
 
 /* current bottom of (incrementing) heap */
-extern list_t *gp_heap;
+extern list_t g_heap;
 
 /* current top of (decrementing) stack, 8-byte aligned */
 extern U32 *gp_stack;
