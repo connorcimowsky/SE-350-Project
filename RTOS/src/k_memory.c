@@ -32,31 +32,19 @@ void k_memory_init(void)
         p_end += sizeof(k_pcb_t);
     }
     
-    /* create the ready queue */
+    /* initialize the ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_ready_queue[i] = (queue_t *)p_end;
-        gp_ready_queue[i]->mp_first = NULL;
-        gp_ready_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_ready_queue[i]);
     }
     
-    /* create the blocked-on-memory queue */
+    /* initialize the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_memory_queue[i] = (queue_t *)p_end;
-        gp_blocked_on_memory_queue[i]->mp_first = NULL;
-        gp_blocked_on_memory_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_blocked_on_memory_queue[i]);
     }
     
-    /* create the blocked-on-receive queue */
+    /* initialize the blocked-on-receive queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_receive_queue[i] = (queue_t *)p_end;
-        gp_blocked_on_receive_queue[i]->mp_first = NULL;
-        gp_blocked_on_receive_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_blocked_on_receive_queue[i]);
     }
     
     /* prepare for k_alloc_stack() by ensuring 8-byte alignment */

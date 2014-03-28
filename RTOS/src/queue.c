@@ -6,6 +6,12 @@
 #endif
 
 
+void queue_init(queue_t *p_queue)
+{
+    p_queue->mp_first = NULL;
+    p_queue->mp_last = NULL;
+}
+
 int enqueue(node_t *p_node, queue_t *p_queue)
 {
     if (p_queue == NULL || p_node == NULL) {

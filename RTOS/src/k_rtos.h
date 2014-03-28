@@ -120,13 +120,13 @@ extern k_pcb_t *g_pcbs[NUM_PROCS];
 extern k_pcb_t *gp_current_process;
 
 /* array of queues for processes that are READY, one for each priority */
-extern queue_t *gp_ready_queue[NUM_PRIORITIES];
+extern queue_t g_ready_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_MEMORY, one for each priority */
-extern queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+extern queue_t g_blocked_on_memory_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
-extern queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+extern queue_t g_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* registry of keyboard command entries */
 extern list_t g_kcd_reg;
