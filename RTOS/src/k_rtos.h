@@ -76,9 +76,6 @@ typedef struct k_msg_t {
 
 /* keyboard command registry entry */
 typedef struct k_kcd_reg_t {
-    /* pointer to the next keyboard command registry entry */
-    struct k_kcd_reg_t *mp_next;
-    
     /* the keyboard command identifier */
     char m_id[KCD_REG_LENGTH];
     
@@ -129,7 +126,7 @@ extern queue_t g_blocked_on_memory_queue[NUM_PRIORITIES];
 extern queue_t g_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* registry of keyboard command entries */
-extern list_t g_kcd_reg;
+extern k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
 
 /* circular buffer of recently sent messages */
 extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];

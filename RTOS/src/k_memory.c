@@ -76,27 +76,15 @@ void k_memory_init(void)
     queue_init(&g_timeout_queue);
     
     /* initialize the keyboard command registry for the KCD process */
-    list_init(&g_kcd_reg);
-    
-    /* populate the keyboard command registry with NUM_KCD_REG empty entries */
     for (i = 0; i < NUM_KCD_REG; i++) {
         int j;
         
-        k_kcd_reg_t *p_reg = (k_kcd_reg_t *)p_end;
-        
-        p_reg->mp_next = NULL;
-        
-        /* make sure the keyboard command identifier is an array of null characters */
         for (j = 0; j < KCD_REG_LENGTH; j++) {
-            p_reg->m_id[j] = '\0';
+            g_kcd_reg[i].m_id[j] = '\0';
         }
         
-        p_reg->m_pid = 0;
-        p_reg->m_active = 0;
-        
-        push((node_t *)p_reg, &g_kcd_reg);
-        
-        p_end += sizeof(k_kcd_reg_t);
+        g_kcd_reg[i].m_pid = 0;
+        g_kcd_reg[i].m_active = 0;
     }
     
 #ifdef DEBUG_HOTKEYS
