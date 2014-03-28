@@ -5,7 +5,11 @@
 
 
 /* external variables */
+
+/* the total number of timer ticks, measured in milliseconds */
 extern volatile U32 g_timer_count;
+
+/* the queue containing delayed messages that have not yet expired */
 extern queue_t g_timeout_queue;
 
 

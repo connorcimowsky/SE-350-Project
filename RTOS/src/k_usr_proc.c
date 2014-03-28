@@ -5,8 +5,14 @@
 
 
 /* global variables */
+
+/* the system time at which the wall clock was started */
 U32 g_wall_clock_start_time = 0;
+
+/* the start time specified by the '%WS hh:mm:ss' command */
 U32 g_wall_clock_start_time_offset = 0;
+
+/* flag to indicate if the wall clock is currently running */
 U32 g_wall_clock_running = 0;
 
 
@@ -284,8 +290,7 @@ void stress_test_c(void)
     msg_t *p_msg = NULL;
     
     queue_t hibernate_queue;
-    hibernate_queue.mp_first = NULL;
-    hibernate_queue.mp_last = NULL;
+    queue_init(&hibernate_queue);
     
     while (1) {
         if (is_queue_empty(&hibernate_queue)) {

@@ -8,9 +8,17 @@
 
 
 /* global variables */
-list_t *gp_heap;
+
+/* list of available memory blocks */
+list_t g_heap;
+
+/* the beginning address of the heap, used for error checking */
 U8 *gp_heap_begin_addr;
+
+/* the end address of the heap, used for error checking */
 U8 *gp_heap_end_addr;
+
+/* current top of (decrementing) stack, 8-byte aligned */
 U32 *gp_stack;
 
 
@@ -22,45 +30,28 @@ void k_memory_init(void)
     
     /* add 4 bytes of padding */
     p_end += 4;
-
-    /* reserve memory for pointers to PCBs */
-    gp_pcbs = (k_pcb_t **)p_end;
-    p_end += NUM_PROCS * sizeof(k_pcb_t *);
     
-    /* reserve memory for the PCBs themselves */
+    /* reserve memory for PCBs */
     for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcbs[i] = (k_pcb_t *)p_end;
-        gp_pcbs[i]->m_msg_queue.mp_first = NULL;
-        gp_pcbs[i]->m_msg_queue.mp_last = NULL;
+        g_pcbs[i] = (k_pcb_t *)p_end;
+        queue_init(&g_pcbs[i]->m_msg_queue);
         
         p_end += sizeof(k_pcb_t);
     }
     
-    /* create the ready queue */
+    /* initialize the ready queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_ready_queue[i] = (queue_t *)p_end;
-        gp_ready_queue[i]->mp_first = NULL;
-        gp_ready_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_ready_queue[i]);
     }
     
-    /* create the blocked-on-memory queue */
+    /* initialize the blocked-on-memory queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_memory_queue[i] = (queue_t *)p_end;
-        gp_blocked_on_memory_queue[i]->mp_first = NULL;
-        gp_blocked_on_memory_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_blocked_on_memory_queue[i]);
     }
     
-    /* create the blocked-on-receive queue */
+    /* initialize the blocked-on-receive queue */
     for (i = 0; i < NUM_PRIORITIES; i++) {
-        gp_blocked_on_receive_queue[i] = (queue_t *)p_end;
-        gp_blocked_on_receive_queue[i]->mp_first = NULL;
-        gp_blocked_on_receive_queue[i]->mp_last = NULL;
-        
-        p_end += sizeof(queue_t);
+        queue_init(&g_blocked_on_receive_queue[i]);
     }
     
     /* prepare for k_alloc_stack() by ensuring 8-byte alignment */
@@ -69,12 +60,10 @@ void k_memory_init(void)
         --gp_stack; 
     }
     
-    /* create the memory heap */
-    gp_heap = (list_t *)p_end;
-    gp_heap->mp_first = NULL;
-    p_end += sizeof(list_t);
+    /* initialize the memory heap */
+    list_init(&g_heap);
     
-    /* save the beginning address of the heap for error-checking later on */
+    /* save the beginning address of the heap for error checking later on */
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
@@ -82,41 +71,28 @@ void k_memory_init(void)
         node_t *p_node = (node_t *)p_end;
         
         /* insert the node into the memory heap structure */
-        push((node_t *)p_node, gp_heap);
-
+        push((node_t *)p_node, &g_heap);
+        
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
     }
     
-    /* save the end address of the heap for error-checking later on */
+    /* save the end address of the heap for error checking later on */
     gp_heap_end_addr = p_end;
     
     /* initialize the timeout queue for the timer i-process */
-    g_timeout_queue.mp_first = NULL;
-    g_timeout_queue.mp_last = NULL;
+    queue_init(&g_timeout_queue);
     
     /* initialize the keyboard command registry for the KCD process */
-    g_kcd_reg.mp_first = NULL;
-    
-    /* populate the keyboard command registry with NUM_KCD_REG empty entries */
     for (i = 0; i < NUM_KCD_REG; i++) {
         int j;
         
-        k_kcd_reg_t *p_reg = (k_kcd_reg_t *)p_end;
-        
-        p_reg->mp_next = NULL;
-        
-        /* make sure the keyboard command identifier is an array of null characters */
         for (j = 0; j < KCD_REG_LENGTH; j++) {
-            p_reg->m_id[j] = '\0';
+            g_kcd_reg[i].m_id[j] = '\0';
         }
         
-        p_reg->m_pid = 0;
-        p_reg->m_active = 0;
-        
-        push((node_t *)p_reg, &g_kcd_reg);
-        
-        p_end += sizeof(k_kcd_reg_t);
+        g_kcd_reg[i].m_pid = 0;
+        g_kcd_reg[i].m_active = 0;
     }
     
 #ifdef DEBUG_HOTKEYS
@@ -175,7 +151,7 @@ void *k_request_memory_block(void)
 {
     U8 *p_mem_blk = NULL;
     
-    while (is_list_empty(gp_heap)) {
+    while (is_list_empty(&g_heap)) {
         /* if the heap is empty, loop until a block becomes available */
         
 #ifdef DEBUG_1
@@ -188,7 +164,7 @@ void *k_request_memory_block(void)
     }
     
     /* retrieve the next available node from the heap */
-    p_mem_blk = (U8 *)pop(gp_heap);
+    p_mem_blk = (U8 *)pop(&g_heap);
     
 #ifdef DEBUG_1
         printf("k_request_memory_block: 0x%x\n\r", p_mem_blk);
@@ -260,7 +236,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* make sure we are not trying to release a duplicate block */
-    if (!is_list_empty(gp_heap) && list_contains_node(gp_heap, p_node)) {
+    if (!is_list_empty(&g_heap) && list_contains_node(&g_heap, p_node)) {
         
 #ifdef DEBUG_1
         printf("k_release_memory_block: 0x%x is already contained in the heap\n\r", p_node);
@@ -270,7 +246,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
     }
     
     /* if none of the above tests failed, insert the node into the memory heap */
-    push(p_node, gp_heap);
+    push(p_node, &g_heap);
     
     return RTOS_OK;
 }

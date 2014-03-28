@@ -25,10 +25,10 @@
 
 /* global variables */
 
-/* the number of times time timer has ticked, measured in milliseconds */
+/* the total number of timer ticks, measured in milliseconds */
 volatile U32 g_timer_count = 0;
 
-/* the queue containing messages which are scheduled for later dispatching */
+/* the queue containing delayed messages that have not yet expired */
 queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
@@ -37,12 +37,20 @@ U32 g_timer_preemption_flag = 0;
 /* used by UART0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_uart_preemption_flag = 0;
 
+/* the message currently being printed by the UART i-process */
 msg_t *gp_cur_msg = NULL;
-uint8_t g_char_in;
-list_t g_kcd_reg;
+
+/* buffer of characters that have been entered since the last carriage return */
 char g_input_buffer[INPUT_BUFFER_SIZE];
+
+/* next available index of the input buffer */
 int g_input_buffer_index = 0;
+
+/* index of the next character in gp_cur_msg->m_data to be printed */
 int g_output_buffer_index = 0;
+
+/* the registry of keyboard command entries */
+k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
 
 
 void null_process(void)
@@ -91,23 +99,23 @@ void uart_i_process(void)
         /* a character has been entered */
         
         /* read the character from the receiver buffer register and acknowledge the interrupt */
-        g_char_in = pUart->RBR;
+        char input_char = pUart->RBR;
         
 #ifdef DEBUG_1
         printf("UART i-process: read %c\n\r", g_char_in);
 #endif
         
         /* echo the entered character to the CRT process; only request memory if we will not block */
-        if (!is_list_empty(gp_heap)) {
+        if (!is_list_empty(&g_heap)) {
             msg_t *p_msg = (msg_t *)k_request_memory_block();
             p_msg->m_type = MSG_TYPE_CRT_DISP;
             
-            if (g_char_in != '\r') {
-                p_msg->m_data[0] = g_char_in;
+            if (input_char != '\r') {
+                p_msg->m_data[0] = input_char;
                 p_msg->m_data[1] = '\0';
             } else {
                 p_msg->m_data[0] = '\n';
-                p_msg->m_data[1] = g_char_in;
+                p_msg->m_data[1] = input_char;
                 p_msg->m_data[2] = '\0';
             }
             
@@ -119,27 +127,27 @@ void uart_i_process(void)
         
 #ifdef DEBUG_HOTKEYS
         
-        if (g_char_in == DEBUG_HOTKEY_1) {
+        if (input_char == DEBUG_HOTKEY_1) {
             k_print_ready_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_2) {
+        } else if (input_char == DEBUG_HOTKEY_2) {
             k_print_blocked_on_memory_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_3) {
+        } else if (input_char == DEBUG_HOTKEY_3) {
             k_print_blocked_on_receive_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_4) {
+        } else if (input_char == DEBUG_HOTKEY_4) {
             k_print_msg_logs();
-        } else if (g_char_in == DEBUG_HOTKEY_5) {
+        } else if (input_char == DEBUG_HOTKEY_5) {
             k_print_memory_heap();
         }
         
 #endif
         
-        if (g_char_in != '\r') {
+        if (input_char != '\r') {
             
 #ifdef DEBUG_HOTKEYS
             
             /* only filter the debug hotkeys if DEBUG_HOTKEYS is defined */
-            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4) && (g_char_in != DEBUG_HOTKEY_5)) {
-                g_input_buffer[g_input_buffer_index++] = g_char_in;
+            if ((input_char != DEBUG_HOTKEY_1) && (input_char != DEBUG_HOTKEY_2) && (input_char != DEBUG_HOTKEY_3) && (input_char != DEBUG_HOTKEY_4) && (input_char != DEBUG_HOTKEY_5)) {
+                g_input_buffer[g_input_buffer_index++] = input_char;
             }
             
 #else
@@ -154,7 +162,7 @@ void uart_i_process(void)
             g_input_buffer[g_input_buffer_index++] = '\0';
             
             /* only request memory if we will not block */
-            if (!is_list_empty(gp_heap)) {
+            if (!is_list_empty(&g_heap)) {
                 msg_t *p_msg = (msg_t *)k_request_memory_block();
                 p_msg->m_type = MSG_TYPE_DEFAULT;
                 str_cpy(g_input_buffer, p_msg->m_data);
@@ -191,7 +199,7 @@ void uart_i_process(void)
             
             k_pcb_t *p_blocked_pcb;
             
-            if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
+            if (is_queue_empty(&(g_pcbs[PID_UART_IPROC]->m_msg_queue))) {
                 pUart->IER &= (~IER_THRE);
             }
             
@@ -257,7 +265,7 @@ void timer_i_process(void)
         
         k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)((U8 *)p_next_message + MSG_HEADER_OFFSET));
         
-        if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
+        if (g_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
             /* only preempt to the recipient if it is of equal or greater importance */
             g_timer_preemption_flag = 1;
         }
@@ -279,18 +287,20 @@ void kcd_proc(void)
         msg_t *p_msg = (msg_t *)receive_message(&sender);
         
         if (p_msg->m_type == MSG_TYPE_KCD_REG) {
+            int i;
             
             /* pick the next unused entry from the registry */
-            k_kcd_reg_t *p_reg = (k_kcd_reg_t *)g_kcd_reg.mp_first;
-            while (p_reg != NULL && p_reg->m_active == 1) {
-                p_reg = p_reg->mp_next;
-            }
-            
-            /* if available, populate the fields of the registry entry */
-            if (p_reg != NULL && p_reg->m_active == 0) {
-                str_cpy(p_msg->m_data, p_reg->m_id);
-                p_reg->m_pid = sender;
-                p_reg->m_active = 1;
+            for (i = 0; i < NUM_KCD_REG; i++) {
+                if (g_kcd_reg[i].m_active == 0) {
+                    
+                    /* populate the fields of the registry entry */
+                    str_cpy(p_msg->m_data, g_kcd_reg[i].m_id);
+                    g_kcd_reg[i].m_pid = sender;
+                    g_kcd_reg[i].m_active = 1;
+                    
+                    break;
+                    
+                }
             }
             
         } else if (p_msg->m_type == MSG_TYPE_DEFAULT) {
@@ -298,7 +308,6 @@ void kcd_proc(void)
             /* we have received a keyboard command */
             
             int i = 0;
-            k_kcd_reg_t *p_kcd_reg_iter = NULL;
             
             /* we will isolate the command identifier in this buffer */
             char keyboard_command_identifier[KCD_REG_LENGTH] = {'\0'};
@@ -310,23 +319,19 @@ void kcd_proc(void)
             }
             
             /* iterate through the keyboard command registry to see if the entered command has been registered */
-            p_kcd_reg_iter = (k_kcd_reg_t *)g_kcd_reg.mp_first;
-            while (p_kcd_reg_iter != NULL) {
-                
-                if (p_kcd_reg_iter->m_active == 1 && str_cmp(p_kcd_reg_iter->m_id, keyboard_command_identifier)) {
+            for (i = 0; i < NUM_KCD_REG; i++) {
+                if (g_kcd_reg[i].m_active == 1 && str_cmp(g_kcd_reg[i].m_id, keyboard_command_identifier)) {
+                    
+                    /* dispatch the command if a matching registry entry was found */
+                    msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
+                    p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
+                    str_cpy(p_msg->m_data, p_msg_dispatch->m_data);
+                    
+                    send_message(g_kcd_reg[i].m_pid, p_msg_dispatch);
+                    
                     break;
+                    
                 }
-                
-                p_kcd_reg_iter = p_kcd_reg_iter->mp_next;
-            }
-            
-            /* only dispatch the command if a registry entry was found */
-            if (p_kcd_reg_iter != NULL) {
-                msg_t *p_msg_dispatch = (msg_t *)request_memory_block();
-                p_msg_dispatch->m_type = MSG_TYPE_KCD_DISPATCH;
-                str_cpy(p_msg->m_data, p_msg_dispatch->m_data);
-                
-                send_message(p_kcd_reg_iter->m_pid, p_msg_dispatch);
             }
             
         }
