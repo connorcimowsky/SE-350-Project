@@ -6,10 +6,21 @@
 #endif
 
 
-void queue_init(queue_t *p_queue)
+int queue_init(queue_t *p_queue)
 {
+    if (p_queue == NULL) {
+        
+#ifdef DEBUG_1
+        printf("Queue initialization error.\n\r");
+#endif
+        
+        return RTOS_ERR;
+    }
+    
     p_queue->mp_first = NULL;
     p_queue->mp_last = NULL;
+    
+    return RTOS_OK;
 }
 
 int enqueue(node_t *p_node, queue_t *p_queue)

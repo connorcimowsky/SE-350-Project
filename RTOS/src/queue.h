@@ -10,7 +10,7 @@ typedef struct queue_t {
 } queue_t;
 
 
-void queue_init(queue_t *p_queue);
+int queue_init(queue_t *p_queue);
 
 int enqueue(node_t *p_node, queue_t *p_queue);
 
