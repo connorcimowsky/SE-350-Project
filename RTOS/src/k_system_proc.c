@@ -25,10 +25,10 @@
 
 /* global variables */
 
-/* the number of times time timer has ticked, measured in milliseconds */
+/* the total number of timer ticks, measured in milliseconds */
 volatile U32 g_timer_count = 0;
 
-/* the queue containing messages which are scheduled for later dispatching */
+/* the queue containing delayed messages that have not yet expired */
 queue_t g_timeout_queue;
 
 /* used by TIMER0_IRQHandler to determine whether or not we should yield the processor */
@@ -37,12 +37,20 @@ U32 g_timer_preemption_flag = 0;
 /* used by UART0_IRQHandler to determine whether or not we should yield the processor */
 U32 g_uart_preemption_flag = 0;
 
+/* the message currently being printed by the UART i-process */
 msg_t *gp_cur_msg = NULL;
-uint8_t g_char_in;
-k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
+
+/* buffer of characters that have been entered since the last carriage return */
 char g_input_buffer[INPUT_BUFFER_SIZE];
+
+/* next available index of the input buffer */
 int g_input_buffer_index = 0;
+
+/* index of the next character in gp_cur_msg->m_data to be printed */
 int g_output_buffer_index = 0;
+
+/* the registry of keyboard command entries */
+k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
 
 
 void null_process(void)
@@ -91,7 +99,7 @@ void uart_i_process(void)
         /* a character has been entered */
         
         /* read the character from the receiver buffer register and acknowledge the interrupt */
-        g_char_in = pUart->RBR;
+        char input_char = pUart->RBR;
         
 #ifdef DEBUG_1
         printf("UART i-process: read %c\n\r", g_char_in);
@@ -102,12 +110,12 @@ void uart_i_process(void)
             msg_t *p_msg = (msg_t *)k_request_memory_block();
             p_msg->m_type = MSG_TYPE_CRT_DISP;
             
-            if (g_char_in != '\r') {
-                p_msg->m_data[0] = g_char_in;
+            if (input_char != '\r') {
+                p_msg->m_data[0] = input_char;
                 p_msg->m_data[1] = '\0';
             } else {
                 p_msg->m_data[0] = '\n';
-                p_msg->m_data[1] = g_char_in;
+                p_msg->m_data[1] = input_char;
                 p_msg->m_data[2] = '\0';
             }
             
@@ -119,27 +127,27 @@ void uart_i_process(void)
         
 #ifdef DEBUG_HOTKEYS
         
-        if (g_char_in == DEBUG_HOTKEY_1) {
+        if (input_char == DEBUG_HOTKEY_1) {
             k_print_ready_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_2) {
+        } else if (input_char == DEBUG_HOTKEY_2) {
             k_print_blocked_on_memory_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_3) {
+        } else if (input_char == DEBUG_HOTKEY_3) {
             k_print_blocked_on_receive_queue();
-        } else if (g_char_in == DEBUG_HOTKEY_4) {
+        } else if (input_char == DEBUG_HOTKEY_4) {
             k_print_msg_logs();
-        } else if (g_char_in == DEBUG_HOTKEY_5) {
+        } else if (input_char == DEBUG_HOTKEY_5) {
             k_print_memory_heap();
         }
         
 #endif
         
-        if (g_char_in != '\r') {
+        if (input_char != '\r') {
             
 #ifdef DEBUG_HOTKEYS
             
             /* only filter the debug hotkeys if DEBUG_HOTKEYS is defined */
-            if ((g_char_in != DEBUG_HOTKEY_1) && (g_char_in != DEBUG_HOTKEY_2) && (g_char_in != DEBUG_HOTKEY_3) && (g_char_in != DEBUG_HOTKEY_4) && (g_char_in != DEBUG_HOTKEY_5)) {
-                g_input_buffer[g_input_buffer_index++] = g_char_in;
+            if ((input_char != DEBUG_HOTKEY_1) && (input_char != DEBUG_HOTKEY_2) && (input_char != DEBUG_HOTKEY_3) && (input_char != DEBUG_HOTKEY_4) && (input_char != DEBUG_HOTKEY_5)) {
+                g_input_buffer[g_input_buffer_index++] = input_char;
             }
             
 #else

@@ -11,18 +11,37 @@
 
 
 /* global variables */
+
+/* process initialization table */
 PROC_INIT g_proc_table[NUM_PROCS];
+
+/* array of PCBs */
 k_pcb_t *g_pcbs[NUM_PROCS];
+
+/* the process whose state is EXECUTING */
 k_pcb_t *gp_current_process = NULL;
+
+/* array of queues for processes that are READY, one for each priority */
 queue_t g_ready_queue[NUM_PRIORITIES];
+
+/* array of queues for processes that are BLOCKED_ON_MEMORY, one for each priority */
 queue_t g_blocked_on_memory_queue[NUM_PRIORITIES];
+
+/* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
 queue_t g_blocked_on_receive_queue[NUM_PRIORITIES];
 
 #ifdef DEBUG_HOTKEYS
 
+/* circular buffer of recently sent messages */
 k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
+
+/* current index of the sent message log */
 int g_cur_sent_msg_log_index = 0;
+
+/* circular buffer of recently received messages */
 k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
+
+/* current index of the received message log */
 int g_cur_received_msg_log_index = 0;
 
 #endif /* DEBUG_HOTKEYS */
