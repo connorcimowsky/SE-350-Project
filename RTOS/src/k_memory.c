@@ -64,7 +64,7 @@ void k_memory_init(void)
         
         /* insert the node into the memory heap structure */
         push((node_t *)p_node, &g_heap);
-
+        
         /* space each memory block apart using the defined block size */
         p_end += BLOCK_SIZE;
     }
@@ -76,7 +76,7 @@ void k_memory_init(void)
     queue_init(&g_timeout_queue);
     
     /* initialize the keyboard command registry for the KCD process */
-    g_kcd_reg.mp_first = NULL;
+    list_init(&g_kcd_reg);
     
     /* populate the keyboard command registry with NUM_KCD_REG empty entries */
     for (i = 0; i < NUM_KCD_REG; i++) {
