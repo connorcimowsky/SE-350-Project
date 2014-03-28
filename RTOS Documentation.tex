@@ -428,7 +428,7 @@ The UART i-process handles interrupts representing two scenarios:
 \begin{itemize}
 
 \item A character has been entered (see Figure~\ref{fig:inputdataflow})
-\item A character is ready for display (output)
+\item A character is ready for display (see Figure~\ref{fig:outputdataflow})
 
 \end{itemize}
 
@@ -487,6 +487,32 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
         \draw[arrow] (uart) to[bend right] node[below left] {character} (input);
         \draw[arrow] (input) to[bend right] node[below right] {carriage return} (kcd);
         \draw[arrow] (kcd) to[bend left = 40] node[above] {dispatch} (user);
+        
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    
+\end{figure}
+
+\begin{figure}
+    
+    \centering
+    
+    \caption{Data Flow of Output Characters}
+    \label{fig:outputdataflow}
+    
+    \vspace{1em}
+    
+    \begin{tikzpicture}[node distance=1em, arrow/.style={->,shorten >=1pt,semithick}, roundedrect/.style={rectangle, draw, text width=5em, text centered, rounded corners, minimum height=3em}, line/.style={draw}, box/.style={draw, rectangle}]
+        
+        \node [roundedrect, dashed] (user) {User Process};
+        \node [roundedrect, right = of user] (crt) {CRT Process};
+        \node [roundedrect, right = of crt] (uart) {UART I-Process};
+        \node [roundedrect, right = of uart] (console) {Console};
+        
+        \draw[arrow] (user) to[bend left = 40] node[above] {message} (crt);
+        \draw[arrow] (crt) to[bend left = 40] node[above] {message} (uart);
+        \draw[arrow] (uart) to[bend left = 40] node[above] {character} (console);
         
     \end{tikzpicture}
     
