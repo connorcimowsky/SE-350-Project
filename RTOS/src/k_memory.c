@@ -196,11 +196,6 @@ void *k_request_memory_block(void)
         k_release_processor();
     }
     
-#ifdef DEBUG_LED
-    /* turn the LEDs on to signal that we are not out of memory */
-    led_all_on();
-#endif
-    
     /* retrieve the next available node from the heap */
     p_mem_blk = (U8 *)pop(gp_heap);
     
