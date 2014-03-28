@@ -7,8 +7,11 @@
     listings,
     underscore,
     authblk,
-    hyperref
+    hyperref,
+    tikz
 }
+
+\usetikzlibrary{positioning}
 
 \setlength{\parindent}{0pt}
 
@@ -48,6 +51,8 @@ This document describes a real-time operating system for the Keil MCB1700 Evalua
 \tableofcontents
 
 \listofalgorithms
+
+\listoffigures
 
 \chapter{Design Description}
 
@@ -422,7 +427,7 @@ The UART i-process handles interrupts representing two scenarios:
 
 \begin{itemize}
 
-\item A character has been entered (input)
+\item A character has been entered (see Figure~\ref{fig:inputdataflow})
 \item A character is ready for display (output)
 
 \end{itemize}
@@ -458,6 +463,36 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+\begin{figure}
+    
+    \centering
+    
+    \caption{Data Flow of Input Characters}
+    \label{fig:inputdataflow}
+    
+    \vspace{1em}
+    
+    \begin{tikzpicture}[node distance=1em, arrow/.style={->,shorten >=1pt,semithick}, roundedrect/.style={rectangle, draw, text width=5em, text centered, rounded corners, minimum height=3em}, line/.style={draw}, box/.style={draw, rectangle}]
+        
+        \node [roundedrect] (console) {Console};
+        \node [roundedrect, right = of console] (uart) {UART I-Process};
+        \node [roundedrect, above right = of uart] (crt) {CRT Process};
+        \node [box, below right = of uart] (input) {Input Buffer};
+        \node [roundedrect, above right = of input] (kcd) {KCD Process};
+        \node [roundedrect, right = of kcd, dashed] (user) {User Process};
+        
+        \draw[arrow] (console) to[bend left = 40] node[above left] {key pressed} (uart);
+        \draw[arrow] (uart) to[bend left] node[above left] {echo} (crt);
+        \draw[arrow] (uart) to[bend right] node[below left] {character} (input);
+        \draw[arrow] (input) to[bend right] node[below right] {carriage return} (kcd);
+        \draw[arrow] (kcd) to[bend left = 40] node[above] {dispatch} (user);
+        
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    
+\end{figure}
 
 \section{User Processes}
 
