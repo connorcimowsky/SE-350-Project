@@ -26,8 +26,7 @@ void k_memory_init(void)
     /* reserve memory for PCBs */
     for (i = 0; i < NUM_PROCS; i++) {
         g_pcbs[i] = (k_pcb_t *)p_end;
-        g_pcbs[i]->m_msg_queue.mp_first = NULL;
-        g_pcbs[i]->m_msg_queue.mp_last = NULL;
+        queue_init(&g_pcbs[i]->m_msg_queue);
         
         p_end += sizeof(k_pcb_t);
     }
@@ -76,8 +75,7 @@ void k_memory_init(void)
     gp_heap_end_addr = p_end;
     
     /* initialize the timeout queue for the timer i-process */
-    g_timeout_queue.mp_first = NULL;
-    g_timeout_queue.mp_last = NULL;
+    queue_init(&g_timeout_queue);
     
     /* initialize the keyboard command registry for the KCD process */
     g_kcd_reg.mp_first = NULL;

@@ -284,8 +284,7 @@ void stress_test_c(void)
     msg_t *p_msg = NULL;
     
     queue_t hibernate_queue;
-    hibernate_queue.mp_first = NULL;
-    hibernate_queue.mp_last = NULL;
+    queue_init(&hibernate_queue);
     
     while (1) {
         if (is_queue_empty(&hibernate_queue)) {
