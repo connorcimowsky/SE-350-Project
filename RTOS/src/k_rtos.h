@@ -114,7 +114,7 @@ extern U32 *gp_stack;
 extern PROC_INIT g_proc_table[NUM_PROCS];
 
 /* array of PCBs */
-extern k_pcb_t **gp_pcbs;
+extern k_pcb_t *g_pcbs[NUM_PROCS];
 
 /* the process whose state is EXECUTING */
 extern k_pcb_t *gp_current_process;

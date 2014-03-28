@@ -12,7 +12,7 @@
 
 /* global variables */
 PROC_INIT g_proc_table[NUM_PROCS];
-k_pcb_t **gp_pcbs = NULL;
+k_pcb_t *g_pcbs[NUM_PROCS];
 k_pcb_t *gp_current_process = NULL;
 queue_t *gp_ready_queue[NUM_PRIORITIES];
 queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
@@ -38,7 +38,7 @@ void k_process_init(void)
     g_proc_table[PID_NULL].m_priority = LOWEST;
     g_proc_table[PID_NULL].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_NULL].mpf_start_pc = &null_process;
-    enqueue((node_t *)gp_pcbs[PID_NULL], gp_ready_queue[LOWEST]);
+    enqueue((node_t *)g_pcbs[PID_NULL], gp_ready_queue[LOWEST]);
     
     /* populate the test process table */
     set_test_procs();
@@ -54,7 +54,7 @@ void k_process_init(void)
         g_proc_table[i + 1].mpf_start_pc = g_test_procs[i].mpf_start_pc;
         
         /* add the PCB corresponding to this process to the ready queue */
-        enqueue((node_t *)gp_pcbs[i + 1], p_queue);
+        enqueue((node_t *)g_pcbs[i + 1], p_queue);
     }
     
     /* configure the timer i-process */
@@ -74,59 +74,59 @@ void k_process_init(void)
     g_proc_table[PID_KCD].m_priority = HIGHEST;
     g_proc_table[PID_KCD].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_KCD].mpf_start_pc = &kcd_proc;
-    enqueue((node_t *)gp_pcbs[PID_KCD], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_KCD], gp_ready_queue[HIGHEST]);
     
     /* configure the CRT process */
     g_proc_table[PID_CRT].m_pid = PID_CRT;
     g_proc_table[PID_CRT].m_priority = HIGHEST;
     g_proc_table[PID_CRT].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_CRT].mpf_start_pc = &crt_proc;
-    enqueue((node_t *)gp_pcbs[PID_CRT], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_CRT], gp_ready_queue[HIGHEST]);
     
     /* configure the wall clock process */
     g_proc_table[PID_CLOCK].m_pid = PID_CLOCK;
     g_proc_table[PID_CLOCK].m_priority = HIGHEST;
     g_proc_table[PID_CLOCK].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_CLOCK].mpf_start_pc = &wall_clock_proc;
-    enqueue((node_t *)gp_pcbs[PID_CLOCK], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_CLOCK], gp_ready_queue[HIGHEST]);
     
     /* configure set priority process */
     g_proc_table[PID_SET_PRIO].m_pid = PID_SET_PRIO;
     g_proc_table[PID_SET_PRIO].m_priority = HIGHEST;
     g_proc_table[PID_SET_PRIO].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_SET_PRIO].mpf_start_pc = &set_priority_proc;
-    enqueue((node_t *)gp_pcbs[PID_SET_PRIO], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_SET_PRIO], gp_ready_queue[HIGHEST]);
     
     /* configure stress test A */
     g_proc_table[PID_A].m_pid = PID_A;
     g_proc_table[PID_A].m_priority = HIGHEST;
     g_proc_table[PID_A].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_A].mpf_start_pc = &stress_test_a;
-    enqueue((node_t *)gp_pcbs[PID_A], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_A], gp_ready_queue[HIGHEST]);
     
     /* configure stress test B */
     g_proc_table[PID_B].m_pid = PID_B;
     g_proc_table[PID_B].m_priority = HIGHEST;
     g_proc_table[PID_B].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_B].mpf_start_pc = &stress_test_b;
-    enqueue((node_t *)gp_pcbs[PID_B], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_B], gp_ready_queue[HIGHEST]);
     
     /* configure stress test C */
     g_proc_table[PID_C].m_pid = PID_C;
     g_proc_table[PID_C].m_priority = HIGHEST;
     g_proc_table[PID_C].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_C].mpf_start_pc = &stress_test_c;
-    enqueue((node_t *)gp_pcbs[PID_C], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_C], gp_ready_queue[HIGHEST]);
     
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;
         
-        (gp_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
-        (gp_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
+        (g_pcbs[i])->m_pid = (g_proc_table[i]).m_pid;
+        (g_pcbs[i])->m_priority = (g_proc_table[i]).m_priority;
         
         /* processes should begin in the NEW state */
-        (gp_pcbs[i])->m_state = NEW;
+        (g_pcbs[i])->m_state = NEW;
         
         p_sp = k_alloc_stack((g_proc_table[i]).m_stack_size);
         /* save the initial program status register */
@@ -138,7 +138,7 @@ void k_process_init(void)
             *(--p_sp) = 0x0;
         }
         /* set the PCB's stack pointer */
-        (gp_pcbs[i])->mp_sp = p_sp;
+        (g_pcbs[i])->mp_sp = p_sp;
     }
 }
 
@@ -211,7 +211,7 @@ int k_set_process_priority(int pid, int priority)
         return RTOS_ERR;
     }
     
-    p_pcb = gp_pcbs[pid];
+    p_pcb = g_pcbs[pid];
     
     if (p_pcb->m_priority == priority) {
         /* priority value has not changed; return early */
@@ -247,7 +247,7 @@ int k_get_process_priority(int pid)
         return RTOS_ERR;
     }
     
-    return (int)gp_pcbs[pid]->m_priority;
+    return (int)g_pcbs[pid]->m_priority;
 }
 
 int k_send_message(int recipient_pid, void *p_msg)
@@ -264,7 +264,7 @@ int k_send_message(int recipient_pid, void *p_msg)
     /* call the non-preemptive version of k_send_message */
     if (k_send_message_helper(gp_current_process->m_pid, recipient_pid, p_msg) == 1) {
         /* only check for preemption if we unblocked the recipient (helper returned 1) */
-        if (gp_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
+        if (g_pcbs[recipient_pid]->m_priority <= gp_current_process->m_priority) {
             return k_release_processor();
         }
     }
@@ -318,7 +318,7 @@ int k_delayed_send(int recipient_pid, void *p_msg, int delay)
     p_msg_envelope->m_sender_pid = gp_current_process->m_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
-    enqueue((node_t *)p_msg_envelope, &(gp_pcbs[PID_TIMER_IPROC]->m_msg_queue));
+    enqueue((node_t *)p_msg_envelope, &(g_pcbs[PID_TIMER_IPROC]->m_msg_queue));
     
     return RTOS_OK;
 }
@@ -330,8 +330,8 @@ U32 k_get_system_time(void)
 
 void *k_non_blocking_receive_message(int pid)
 {
-    if (!is_queue_empty(&(gp_pcbs[pid]->m_msg_queue))) {
-        k_msg_t *p_msg = (k_msg_t *)dequeue(&(gp_pcbs[pid]->m_msg_queue));
+    if (!is_queue_empty(&(g_pcbs[pid]->m_msg_queue))) {
+        k_msg_t *p_msg = (k_msg_t *)dequeue(&(g_pcbs[pid]->m_msg_queue));
         return (void *)((U8 *)p_msg + MSG_HEADER_OFFSET);
     } else {
         return NULL;
@@ -351,7 +351,7 @@ int k_send_message_helper(int sender_pid, int recipient_pid, void *p_msg)
     p_msg_envelope->m_sender_pid = sender_pid;
     p_msg_envelope->m_recipient_pid = recipient_pid;
     
-    p_recipient_pcb = gp_pcbs[recipient_pid];
+    p_recipient_pcb = g_pcbs[recipient_pid];
     
     enqueue((node_t *)p_msg_envelope, &(p_recipient_pcb->m_msg_queue));
     

@@ -191,7 +191,7 @@ void uart_i_process(void)
             
             k_pcb_t *p_blocked_pcb;
             
-            if (is_queue_empty(&(gp_pcbs[PID_UART_IPROC]->m_msg_queue))) {
+            if (is_queue_empty(&(g_pcbs[PID_UART_IPROC]->m_msg_queue))) {
                 pUart->IER &= (~IER_THRE);
             }
             
@@ -257,7 +257,7 @@ void timer_i_process(void)
         
         k_send_message_helper(p_next_message->m_sender_pid, p_next_message->m_recipient_pid, (msg_t *)((U8 *)p_next_message + MSG_HEADER_OFFSET));
         
-        if (gp_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
+        if (g_pcbs[p_next_message->m_recipient_pid]->m_priority <= gp_current_process->m_priority) {
             /* only preempt to the recipient if it is of equal or greater importance */
             g_timer_preemption_flag = 1;
         }

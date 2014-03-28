@@ -22,16 +22,12 @@ void k_memory_init(void)
     
     /* add 4 bytes of padding */
     p_end += 4;
-
-    /* reserve memory for pointers to PCBs */
-    gp_pcbs = (k_pcb_t **)p_end;
-    p_end += NUM_PROCS * sizeof(k_pcb_t *);
     
-    /* reserve memory for the PCBs themselves */
+    /* reserve memory for PCBs */
     for (i = 0; i < NUM_PROCS; i++) {
-        gp_pcbs[i] = (k_pcb_t *)p_end;
-        gp_pcbs[i]->m_msg_queue.mp_first = NULL;
-        gp_pcbs[i]->m_msg_queue.mp_last = NULL;
+        g_pcbs[i] = (k_pcb_t *)p_end;
+        g_pcbs[i]->m_msg_queue.mp_first = NULL;
+        g_pcbs[i]->m_msg_queue.mp_last = NULL;
         
         p_end += sizeof(k_pcb_t);
     }
