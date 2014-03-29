@@ -12,6 +12,7 @@ void k_rtos_init(void)
     __disable_irq();
     
     timer_init(0);
+    timer_init(1);
     
     uart_irq_init(0);
     uart_init(1);
