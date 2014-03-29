@@ -118,6 +118,13 @@ void k_process_init(void)
     g_proc_table[PID_C].mpf_start_pc = &stress_test_c;
     enqueue((node_t *)g_pcbs[PID_C], &g_ready_queue[HIGHEST]);
     
+    /* configure the profiler process */
+    g_proc_table[PID_PROFILER].m_pid = PID_PROFILER;
+    g_proc_table[PID_PROFILER].m_priority = HIGHEST;
+    g_proc_table[PID_PROFILER].m_stack_size = USR_SZ_STACK;
+    g_proc_table[PID_PROFILER].mpf_start_pc = &profiler_proc;
+    enqueue((node_t *)gp_pcbs[PID_PROFILER], gp_ready_queue[HIGHEST]);
+    
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {
         int j;
