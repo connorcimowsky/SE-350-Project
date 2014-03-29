@@ -53,9 +53,11 @@ This document describes a real-time operating system for the Keil MCB1700 Evalua
 
 \section{Operating System Initialization}
 
+Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of our \texttt{main} function will then be loaded into the program counter and the CPU will begin fetching instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
+
 \subsection{Memory Initialization}
 
-After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+Now that the board's hardware has been initialized, it is necessary to dedicate a portion of the on-chip SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
 \subsection{Process Initialization}
 
@@ -471,5 +473,116 @@ For the majority of our first deliverable, we tested our kernel exclusively in t
 \section{Documentation}
 
 Beginning with the first deliverable, we decided to write a portion of our documentation alongside each submission. In the time between the first and third deliverables, we compiled a structural description of each part of our project, wrote pseudocode for each major kernel procedure, and completed the Lessons Learned section. This work greatly reduced the amount of time it took to complete our final report, as our documentation was nearly complete by the time we submitted the third deliverable.
+
+\appendix
+
+\addcontentsline{toc}{chapter}{Appendices}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+
+\chapter{Global Variables}
+
+\section{Memory}
+
+\subsection{\texttt{g_heap}}
+
+During the memory initialization process, we allocate sections of SRAM into memory blocks. In order to efficiently serve the needs of processes, our operating system uses a linked list to manage these blocks.
+
+% TODO: Diagram.
+
+\subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
+
+These variables are set during the memory initialization process and are used for bounds checking in \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.
+
+\subsection{\texttt{gp_stack}}
+
+A pointer to the top of the stack. Used during initialization to provide a stack frame for each process.
+
+\section{Processes}
+
+\subsection{\texttt{g_pcbs}}
+
+An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[alg:sendingmessages]{\texttt{send_message}}).
+
+\subsection{\texttt{g_proc_table}}
+
+An array containing the information required (e.g., PID, priority, entry point) to initialize the process control block for each process in the system.
+
+\subsection{\texttt{gp_current_process}}
+
+A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}).
+
+\subsection{\texttt{g_ready_queue}}
+
+Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
+
+% TODO: Diagram.
+
+\subsection{\texttt{g_blocked_on_memory_queue}}
+
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
+
+% TODO: Diagram.
+
+\subsection{\texttt{g_blocked_on_receive_queue}}
+
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:sendingmessages]{\texttt{send_message}} and \hyperref[alg:receivingmessages]{\texttt{receive_message}} for blocking and unblocking processes.
+
+% TODO: Diagram.
+
+\section{Timer I-Process}
+
+\subsection{\texttt{g_timer_count}}
+
+The current system time. Used for determining when delayed messages have expired. Incremented each time a timer interrupt is received (1 ms intervals).
+
+\subsection{\texttt{g_timeout_queue}}
+
+A queue of messages that have not yet expired. Sorted by expiry time. Used for dispatching delayed messages at the correct time.
+
+\subsection{\texttt{g_timer_preemption_flag}}
+
+Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the timer i-process.
+
+\section{UART I-Process}
+
+\subsection{\texttt{g_input_buffer}}
+
+A buffer containing characters that have been entered by the user since the last carriage return.
+
+\subsection{\texttt{g_input_buffer_index}}
+
+The next available index of the input buffer. Incremented each time a character is appended to the input buffer. 
+
+\subsection{\texttt{gp_cur_msg}}
+
+A pointer to the message currently being printed to the console.
+
+\subsection{\texttt{g_output_buffer_index}}
+
+The index of the next character of \texttt{gp_cur_msg} to be printed to the console.
+
+\subsection{\texttt{g_uart_preemption_flag}}
+
+Used to indicate whether the UART interrupt handler should preempt the currently executing process on completion of the UART i-process.
+
+\section{KCD Process}
+
+\subsection{\texttt{g_kcd_reg}}
+
+An array containing keyboard commands that have been registered by other processes (e.g., the wall clock process).
+
+\section{Wall Clock Process}
+
+\subsection{\texttt{g_wall_clock_start_time}}
+
+The system time at which the wall clock was started. Used for computing the elapsed time for display on the console.
+
+\subsection{\texttt{g_wall_clock_start_time_offset}}
+
+The start time specified by the `\texttt{\%WS hh:mm:ss}' command. Used for computing the elapsed time for display on the console.
+
+\subsection{\texttt{g_wall_clock_running}}
+
+A flag used to indicate if the wall clock is currently running. Enables support for pausing and resuming the wall clock.
 
 \end{document}
