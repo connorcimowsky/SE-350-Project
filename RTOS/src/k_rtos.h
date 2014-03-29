@@ -76,9 +76,6 @@ typedef struct k_msg_t {
 
 /* keyboard command registry entry */
 typedef struct k_kcd_reg_t {
-    /* pointer to the next keyboard command registry entry */
-    struct k_kcd_reg_t *mp_next;
-    
     /* the keyboard command identifier */
     char m_id[KCD_REG_LENGTH];
     
@@ -105,7 +102,7 @@ typedef struct k_msg_log_t {
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit;
 
 /* current bottom of (incrementing) heap */
-extern list_t *gp_heap;
+extern list_t g_heap;
 
 /* current top of (decrementing) stack, 8-byte aligned */
 extern U32 *gp_stack;
@@ -114,22 +111,22 @@ extern U32 *gp_stack;
 extern PROC_INIT g_proc_table[NUM_PROCS];
 
 /* array of PCBs */
-extern k_pcb_t **gp_pcbs;
+extern k_pcb_t *g_pcbs[NUM_PROCS];
 
 /* the process whose state is EXECUTING */
 extern k_pcb_t *gp_current_process;
 
 /* array of queues for processes that are READY, one for each priority */
-extern queue_t *gp_ready_queue[NUM_PRIORITIES];
+extern queue_t g_ready_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_MEMORY, one for each priority */
-extern queue_t *gp_blocked_on_memory_queue[NUM_PRIORITIES];
+extern queue_t g_blocked_on_memory_queue[NUM_PRIORITIES];
 
 /* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
-extern queue_t *gp_blocked_on_receive_queue[NUM_PRIORITIES];
+extern queue_t g_blocked_on_receive_queue[NUM_PRIORITIES];
 
 /* registry of keyboard command entries */
-extern list_t g_kcd_reg;
+extern k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
 
 /* circular buffer of recently sent messages */
 extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];

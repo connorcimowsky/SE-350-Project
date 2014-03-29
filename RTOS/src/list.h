@@ -9,6 +9,8 @@ typedef struct list_t {
 } list_t;
 
 
+int list_init(list_t *p_list);
+
 int push(node_t *p_node, list_t *p_list);
 
 node_t *pop(list_t *p_list);
