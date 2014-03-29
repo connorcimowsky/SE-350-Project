@@ -452,6 +452,16 @@
               <FilePath>.\src\timer.c</FilePath>
             </File>
             <File>
+              <FileName>led.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\led.h</FilePath>
+            </File>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\led.c</FilePath>
+            </File>
+            <File>
               <FileName>node.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\src\node.h</FilePath>
@@ -1019,6 +1029,16 @@
               <FileName>timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>led.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\led.h</FilePath>
+            </File>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\led.c</FilePath>
             </File>
             <File>
               <FileName>node.h</FileName>

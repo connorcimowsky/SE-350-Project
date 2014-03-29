@@ -5,11 +5,20 @@
 #include "k_memory.h"
 #include "k_process.h"
 
+#ifdef DEBUG_LED
+#include "led.h"
+#endif
+
 
 void k_rtos_init(void)
 {
     /* disable interrupt requests */
     __disable_irq();
+    
+#ifdef DEBUG_LED
+    led_init();
+    led_all_on();
+#endif
     
     timer_init(0);
     timer_init(1);
