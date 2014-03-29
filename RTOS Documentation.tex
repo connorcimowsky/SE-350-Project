@@ -39,6 +39,12 @@
 
 \maketitle
 
+\begin{abstract}
+
+This document describes a real-time operating system for the Keil MCB1700 Evaluation Board. It examines the design of the operating system, documents user-facing primitives, and provides an analysis of system performance.
+
+\end{abstract}
+
 \tableofcontents
 
 \listofalgorithms
@@ -47,9 +53,11 @@
 
 \section{Operating System Initialization}
 
+Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of our \texttt{main} function will then be loaded into the program counter and the CPU will begin fetching instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
+
 \subsection{Memory Initialization}
 
-After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+Now that the board's hardware has been initialized, it is necessary to dedicate a portion of the on-chip SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
 \subsection{Process Initialization}
 
@@ -489,11 +497,9 @@ Beginning with the first deliverable, we decided to write a portion of our docum
 
 \section{Memory}
 
-\subsection{\texttt{gp_heap}}
+\subsection{\texttt{g_heap}}
 
 During the memory initialization process, we allocate sections of SRAM into memory blocks. In order to efficiently serve the needs of processes, our operating system uses a linked list to manage these blocks.
-
-% DIAGRAM OF A LINKED LIST
 
 \subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
 
@@ -505,35 +511,29 @@ A pointer to the top of the stack. Used during initialization to provide a stack
 
 \section{Processes}
 
-\subsection{\texttt{gp_pcbs}}
+\subsection{\texttt{g_pcbs}}
 
 An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[alg:sendingmessages]{\texttt{send_message}}).
 
 \subsection{\texttt{g_proc_table}}
 
-Contains the information required (e.g., PID, priority, entry point) to initialize the process control block for each process in the system.
+An array containing the information required (e.g., PID, priority, entry point) to initialize the process control block for each process in the system.
 
 \subsection{\texttt{gp_current_process}}
 
 A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}).
 
-\subsection{\texttt{gp_ready_queue}}
+\subsection{\texttt{g_ready_queue}}
 
-The most important process control structure. Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
+Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
 
-% DIAGRAM
-
-\subsection{\texttt{gp_blocked_on_memory_queue}}
+\subsection{\texttt{g_blocked_on_memory_queue}}
 
 An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
 
-% DIAGRAM
-
-\subsection{\texttt{gp_blocked_on_receive_queue}}
+\subsection{\texttt{g_blocked_on_receive_queue}}
 
 An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:sendingmessages]{\texttt{send_message}} and \hyperref[alg:receivingmessages]{\texttt{receive_message}} for blocking and unblocking processes.
-
-% DIAGRAM
 
 \section{Timer I-Process}
 
@@ -578,7 +578,7 @@ Used to indicate whether the UART interrupt handler should preempt the currently
 
 \subsection{\texttt{g_kcd_reg}}
 
-A linked list containing keyboard commands that have been registered by other processes (e.g., the wall clock process).
+An array containing keyboard commands that have been registered by other processes (e.g., the wall clock process).
 
 \section{Wall Clock Process}
 
