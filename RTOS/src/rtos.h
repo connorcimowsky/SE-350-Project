@@ -40,6 +40,7 @@ typedef enum {
     PID_CRT,
     PID_TIMER_IPROC,
     PID_UART_IPROC,
+    PID_PROFILER,
     NUM_PROCS
 } PID_E;
 
