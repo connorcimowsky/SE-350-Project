@@ -53,9 +53,11 @@ This document describes a real-time operating system for the Keil MCB1700 Evalua
 
 \section{Operating System Initialization}
 
+Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of our \texttt{main} function will then be loaded into the program counter and the CPU will begin fetching instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
+
 \subsection{Memory Initialization}
 
-After initializing the hardware components of the MCB1700 board, such as timers and UART controllers, it is necessary to dedicate a portion of the onboard SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+Now that the board's hardware has been initialized, it is necessary to dedicate a portion of the on-chip SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
 
 \subsection{Process Initialization}
 
