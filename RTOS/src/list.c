@@ -6,6 +6,22 @@
 #endif
 
 
+int list_init(list_t *p_list)
+{
+    if (p_list == NULL) {
+        
+#ifdef DEBUG_1
+        printf("List initialization error.\n\r");
+#endif
+        
+        return RTOS_ERR;
+    }
+    
+    p_list->mp_first = NULL;
+    
+    return RTOS_OK;
+}
+
 int push(node_t *p_node, list_t *p_list)
 {
     if (p_list == NULL || p_node == NULL) {

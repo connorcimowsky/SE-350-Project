@@ -58,15 +58,15 @@ This document describes a real-time operating system for the Keil MCB1700 Evalua
 
 \section{Operating System Initialization}
 
-Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of our \texttt{main} function will then be loaded into the program counter and the CPU will begin fetching instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
+Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of the \texttt{main} function is then loaded into the program counter and the CPU begins fetching and executing instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
 
 \subsection{Memory Initialization}
 
-Now that the board's hardware has been initialized, it is necessary to dedicate a portion of the on-chip SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks and inserted into the global memory heap.
 
 \subsection{Process Initialization}
 
-Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
+Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
 
 \section{Memory Management}
 
