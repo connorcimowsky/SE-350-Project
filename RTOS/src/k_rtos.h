@@ -101,7 +101,7 @@ typedef struct k_msg_log_t {
 /* end address of the memory image */
 extern unsigned int Image$$RW_IRAM1$$ZI$$Limit;
 
-/* current bottom of (incrementing) heap */
+/* list of available memory blocks */
 extern list_t g_heap;
 
 /* current top of (decrementing) stack, 8-byte aligned */
@@ -125,14 +125,14 @@ extern queue_t g_blocked_on_memory_queue[NUM_PRIORITIES];
 /* array of queues for processes that are BLOCKED_ON_RECEIVE, one for each priority */
 extern queue_t g_blocked_on_receive_queue[NUM_PRIORITIES];
 
-/* registry of keyboard command entries */
-extern k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
-
 /* circular buffer of recently sent messages */
 extern k_msg_log_t g_sent_msg_log[MSG_LOG_SIZE];
 
 /* circular buffer of recently received messages */
 extern k_msg_log_t g_received_msg_log[MSG_LOG_SIZE];
+
+/* registry of keyboard command entries */
+extern k_kcd_reg_t g_kcd_reg[NUM_KCD_REG];
 
 
 #endif /* K_RTOS_H */

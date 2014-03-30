@@ -76,7 +76,7 @@ Our memory heap structure is implemented using a generic linked list. Each node 
 
 \subsection{Requesting Memory Blocks}
 
-When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if any blocks are available in the heap. If the heap is empty, the kernel enqueues the caller in the blocked-on-memory queue and invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} so that preemption may occur. Otherwise, a pointer to the next available memory block is popped from the heap. This pointer is then incremented by a predefined offset to compensate for message envelope headers and then returned to the caller.\\
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned.\\
 
 \begin{algorithm}
 \caption{Requesting Memory Blocks}
@@ -95,7 +95,7 @@ When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_mem
 
 \subsection{Releasing Memory Blocks}
 
-When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address corresponds to a valid memory block. If valid, the block is then pushed onto the heap. Next, if the blocked-on-memory queue is non-empty, the highest-priority process that is blocked on memory is moved to the ready queue. Finally, \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} is invoked so that the caller can be preempted if necessary.\\
+When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address points to a valid memory block. If so, the block is pushed onto the heap. If another process is blocked on memory, it will be unblocked and preemption will take place if necessary.\\
 
 \begin{algorithm}
 \caption{Releasing Memory Blocks}
@@ -121,19 +121,15 @@ When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memo
 
 \subsection{Process Control Structures}
 
-In order to fairly manage resource usage, each process in the operating system is modelled by a process control block. Each PCB contains the stack pointer, PID, priority, state, and message queue of the process it represents. Using PIDs as indices, a global array stores a pointer to each PCB for constant time access by process control primitives.\\
+Each process in the operating system is modelled by a process control block. This data structure contains the stack pointer, PID, priority, state, and message queue of a given process.\\
 
-Our operating system maintains three queues in which PCBs are stored according to their scheduling priority. The first is the ready queue, which contains processes in the \texttt{NEW} and \texttt{READY} states. The second is the blocked-on-memory queue, which contains processes that are waiting on a memory block and are thus in the \texttt{BLOCKED_ON_MEMORY} state. The third is the blocked-on-receive queue, which contains processes that are waiting to receive a message and are thus in the \texttt{BLOCKED_ON_RECEIVE} state.
+Depending on their state, processes can be placed in one of three process control queues. The first is the ready queue, which contains processes in the \texttt{NEW} and \texttt{READY} states. The second is the blocked-on-memory queue, which contains processes that are in the \texttt{BLOCKED_ON_MEMORY} state. The third is the blocked-on-receive queue, which contains processes that are in the \texttt{BLOCKED_ON_RECEIVE} state.
 
 \subsection{Releasing the Processor}
 
-Since our operating system does not employ time slicing, it is often necessary for a process to relinquish usage of the processor. This mechanism is provided by our operating system and can be employed by invoking the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
+Since time slicing is not employed by the operating system, it is frequently necessary for a process to relinquish its usage of the processor. This mechanism is provided by the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
 
-When invoked, this primitive uses the scheduler to determine which process should be executed next. To do this, the scheduler iterates through the ready queue in order of decreasing priority, exercising a first-in first-out (round-robin) scheduling policy for processes of the same priority.\\
-
-Once a process has been selected by the scheduler, a context switch will only occur if its priority is greater than or equal to that of the currently executing process. Otherwise, the caller will resume execution.\\
-
-In order to perform a \hyperref[alg:contextswitching]{context switch}, the context of the current process (i.e., the current stack pointer) must be saved to its process control block. Next, the context of the selected process is restored (i.e., its stack pointer is restored). When the saved registers are popped from the stack pointer of the selected process, execution will resume at the point where it left off.
+When invoked, this procedure uses the scheduler to select the next process for execution. If the priority of the selected process is greater than or equal to that of the currently executing process, a context switch will occur. Otherwise, the caller will resume execution.\\
 
 \begin{algorithm}
 \caption{Releasing the Processor}
@@ -156,7 +152,7 @@ In order to perform a \hyperref[alg:contextswitching]{context switch}, the conte
 \Statex
 
 \Procedure {k_dequeue_ready_process}{\null}
-    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_PRIORITIES}}
+    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_PRIORITIES}} \Comment{Start at highest priority}
         \If{$ready\_queue[i]$ is not empty}
             \State \Return $\Call{dequeue}{ready\_queue[i]}$
         \EndIf
@@ -191,9 +187,9 @@ In order to perform a \hyperref[alg:contextswitching]{context switch}, the conte
 
 \subsection{Process Priority}
 
-Each process has a priority which is stored in its PCB. This priority is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
+As mentioned in the previous section, each process has a priority which is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
-Our operating system allows processes to retrieve and modify the scheduling priority of themselves or other processes by providing two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
+Processes may retrieve and modify the scheduling priority of themselves or other processes using two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
 
 \begin{algorithm}
 \caption{Process Priority}
@@ -238,11 +234,11 @@ Our operating system allows processes to retrieve and modify the scheduling prio
 
 \subsection{Interprocess Communication}
 
-Messages are sent between processes using message envelopes. Each PCB has a `mailbox', implemented as a queue of message envelopes.\\
+Messages are sent between processes using message envelopes. Each process has a `mailbox', implemented as a queue of message envelopes.\\
 
-There are two structures used to represent messages: a kernel-facing message header containing the information required for communication, and a user-facing message envelope which contains only the data that is relevant to the sender and recipient. The header includes the PID of the sender, the PID of the recipient, and an expiry time. The user-facing envelope only contains the message type and the message data itself.\\
+Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
-When a process wishes to send a message, it will first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for the envelope. It then populates the message envelope fields and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}. This primitive populates the message header fields and enqueues the message in the recipient's message queue. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
+To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
@@ -278,7 +274,7 @@ When a process wishes to send a message, it will first invoke \hyperref[alg:requ
 \end{algorithmic}
 \end{algorithm}
 
-The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. Instead of directly enqueueing the message in the recipient's message queue, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} enqueues the message in the timer i-process's message queue. As described in Section~\ref{subsec:Timer I-Process}, the timer i-process will then take care of dispatching the message at the correct time.\\
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the timer i-process's message queue. As described in Section~\ref{subsec:Timer I-Process}, the timer i-process will dispatch the message at the correct time.\\
 
 \begin{algorithm}
 \caption{Sending Delayed Messages}
@@ -297,7 +293,7 @@ The procedure for delayed message sending is similar, with the added requirement
 \end{algorithmic}
 \end{algorithm}
 
-When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be dequeued from its message queue and returned, as long as there is at least one pending message in the queue. Otherwise, the process is placed in the blocked-on-receive queue and preempted using \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be removed from its message queue and returned. If its message queue is empty, the process is blocked and then preempted using \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
 
 \begin{algorithm}
 \caption{Receiving Messages}
