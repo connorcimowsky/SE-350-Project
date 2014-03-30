@@ -7,8 +7,11 @@
     listings,
     underscore,
     authblk,
-    hyperref
+    hyperref,
+    tikz
 }
+
+\usetikzlibrary{positioning}
 
 \setlength{\parindent}{0pt}
 
@@ -49,19 +52,21 @@ This document describes a real-time operating system for the Keil MCB1700 Evalua
 
 \listofalgorithms
 
+\listoffigures
+
 \chapter{Design Description}
 
 \section{Operating System Initialization}
 
-Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of our \texttt{main} function will then be loaded into the program counter and the CPU will begin fetching instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
+Once the operating system image has been copied to the LPC1768's on-chip ROM, execution can be initiated by pressing the \texttt{RESET} button on the MCB1700 board. The address of the \texttt{main} function is then loaded into the program counter and the CPU begins fetching and executing instructions. Subsequently, the board's hardware components (e.g., LEDs, timers, serial controllers) are initialized.
 
 \subsection{Memory Initialization}
 
-Now that the board's hardware has been initialized, it is necessary to dedicate a portion of the on-chip SRAM to various components of our operating system. Starting from the end address of our operating system's image, we reserve memory for structures such as process control blocks, process control queues, and the keyboard command registry. Most importantly, we divide a portion of memory into fixed-size blocks and insert them into our global memory heap.
+Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks and inserted into the global memory heap.
 
 \subsection{Process Initialization}
 
-Once our process control structures have been initialized by our memory initialization routine, we iterate through our process initialization table and perform three tasks. First, we populate the process control block (PCB) for each process with information such as process identifier (PID) and priority. Next, we enqueue each PCB in the ready queue (unless it is an i-process, since these processes are invoked using interrupt handlers). Finally, we allocate an exception stack frame for each process and store the resulting stack pointer in the appropriate PCB. At this point, our operating system is ready to begin executing the first process by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
+Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
 
 \section{Memory Management}
 
@@ -381,12 +386,21 @@ The purpose of the \hyperref[alg:crtprocess]{CRT process} is to print text to th
 
 \section{Interrupt Processes}
 
+Both the timer and UART i-processes are scheduled exclusively by their respective interrupt handlers; they are never placed in process control structures (e.g., the ready queue). When an interrupt is received, the following operations are performed:
+
+\begin{itemize}
+
+\item The context of the currently executing process is pushed onto the stack
+\item The appropriate i-process is invoked
+\item If necessary, the currently executing process is preempted
+\item The previously saved context is popped off of the stack
+
+\end{itemize}
+
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-The \hyperref[alg:timeriprocess]{timer i-process} provides timing services to our operating system and is primarily responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) to other processes. This is achieved through the use of message queues and a global counter, which is used for keeping track of the system time.\\
-
-When a timer interrupt occurs (once every millisecond), the timer i-process is invoked by the timer interrupt handler. First, it checks if there are any messages in its message queue. If there is a message, it is added to the timeout queue, which maintains sorted order with respect to the expiry times of contained messages. Next, it iterates through the timeout queue and places any expired messages in the message queues of the appropriate recipients. If a message was delivered to a process of equal or greater priority than the current process, the operating system will preempt to the recipient by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+In order to provide timing services to our operating system, we programmed one of the LPC1768's on-chip timers to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
 
 \begin{algorithm}
 \caption{Timer I-Process}
@@ -409,11 +423,16 @@ When a timer interrupt occurs (once every millisecond), the timer i-process is i
 \subsection{UART I-Process}
 \label{subsec:UART I-Process}
 
-The \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the system console and other processes in our operating system. It is triggered by two types of interrupts, each corresponding to one of the two tasks performed by this process.\\
+The UART i-process handles interrupts representing two scenarios:
 
-The first responsibility of the UART i-process is handling user input. To facilitate this, a global input buffer is used. When the user presses the return key, this buffer is copied into a message which is then sent to the KCD process for interpretation using a non-preemptive version of \hyperref[alg:sendingmessages]{\texttt{send_message}}.\\
+\begin{itemize}
 
-When an output interrupt occurs, the UART i-process retrieves the next message in its queue using a non-blocking version of \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It then uses repeated interrupts to sequentially print characters of the message until it reaches the end.\\
+\item A character has been entered (see Figure~\ref{fig:inputdataflow})
+\item A character is ready for display (see Figure~\ref{fig:outputdataflow})
+
+\end{itemize}
+
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in our operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see Appendix~\ref{app:uartglobals}).
 
 \begin{algorithm}
 \caption{UART I-Process}
@@ -444,6 +463,62 @@ When an output interrupt occurs, the UART i-process retrieves the next message i
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+\begin{figure}
+    
+    \centering
+    
+    \caption{Data Flow of Input Characters}
+    \label{fig:inputdataflow}
+    
+    \vspace{1em}
+    
+    \begin{tikzpicture}[node distance=1em, arrow/.style={->,shorten >=1pt,semithick}, roundedrect/.style={rectangle, draw, text width=5em, text centered, rounded corners, minimum height=3em}, line/.style={draw}, box/.style={draw, rectangle}]
+        
+        \node [roundedrect] (console) {Console};
+        \node [roundedrect, right = of console] (uart) {UART I-Process};
+        \node [roundedrect, above right = of uart] (crt) {CRT Process};
+        \node [box, below right = of uart] (input) {Input Buffer};
+        \node [roundedrect, above right = of input] (kcd) {KCD Process};
+        \node [roundedrect, right = of kcd, dashed] (user) {User Process};
+        
+        \draw[arrow] (console) to[bend left = 40] node[above left] {key pressed} (uart);
+        \draw[arrow] (uart) to[bend left] node[above left] {echo} (crt);
+        \draw[arrow] (uart) to[bend right] node[below left] {character} (input);
+        \draw[arrow] (input) to[bend right] node[below right] {carriage return} (kcd);
+        \draw[arrow] (kcd) to[bend left = 40] node[above] {dispatch} (user);
+        
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    
+\end{figure}
+
+\begin{figure}
+    
+    \centering
+    
+    \caption{Data Flow of Output Characters}
+    \label{fig:outputdataflow}
+    
+    \vspace{1em}
+    
+    \begin{tikzpicture}[node distance=1em, arrow/.style={->,shorten >=1pt,semithick}, roundedrect/.style={rectangle, draw, text width=5em, text centered, rounded corners, minimum height=3em}, line/.style={draw}, box/.style={draw, rectangle}]
+        
+        \node [roundedrect, dashed] (user) {User Process};
+        \node [roundedrect, right = of user] (crt) {CRT Process};
+        \node [roundedrect, right = of crt] (uart) {UART I-Process};
+        \node [roundedrect, right = of uart] (console) {Console};
+        
+        \draw[arrow] (user) to[bend left = 40] node[above] {message} (crt);
+        \draw[arrow] (crt) to[bend left = 40] node[above] {message} (uart);
+        \draw[arrow] (uart) to[bend left = 40] node[above] {character} (console);
+        
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    
+\end{figure}
 
 \section{User Processes}
 
@@ -487,8 +562,6 @@ Beginning with the first deliverable, we decided to write a portion of our docum
 
 During the memory initialization process, we allocate sections of SRAM into memory blocks. In order to efficiently serve the needs of processes, our operating system uses a linked list to manage these blocks.
 
-% TODO: Diagram.
-
 \subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
 
 These variables are set during the memory initialization process and are used for bounds checking in \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.
@@ -515,27 +588,23 @@ A pointer to the PCB of the currently executing process. Used mainly for process
 
 Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
 
-% TODO: Diagram.
-
 \subsection{\texttt{g_blocked_on_memory_queue}}
 
 An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
-
-% TODO: Diagram.
 
 \subsection{\texttt{g_blocked_on_receive_queue}}
 
 An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:sendingmessages]{\texttt{send_message}} and \hyperref[alg:receivingmessages]{\texttt{receive_message}} for blocking and unblocking processes.
 
-% TODO: Diagram.
-
 \section{Timer I-Process}
 
 \subsection{\texttt{g_timer_count}}
+\label{app:gtimercount}
 
 The current system time. Used for determining when delayed messages have expired. Incremented each time a timer interrupt is received (1 ms intervals).
 
 \subsection{\texttt{g_timeout_queue}}
+\label{app:gtimeoutqueue}
 
 A queue of messages that have not yet expired. Sorted by expiry time. Used for dispatching delayed messages at the correct time.
 
@@ -544,6 +613,7 @@ A queue of messages that have not yet expired. Sorted by expiry time. Used for d
 Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the timer i-process.
 
 \section{UART I-Process}
+\label{app:uartglobals}
 
 \subsection{\texttt{g_input_buffer}}
 
