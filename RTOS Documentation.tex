@@ -63,7 +63,7 @@ Once the operating system image has been copied to the LPC1768's on-chip ROM, ex
 
 \subsection{Memory Initialization}
 
-Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks (see Appendix~\ref{app:configuration}) and inserted into the global memory heap.
+Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}) and inserted into the global memory heap.
 
 \subsection{Process Initialization}
 
@@ -73,7 +73,7 @@ Upon completion of memory initialization, this procedure iterates through the pr
 
 \subsection{Heap Data Structure}
 
-Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see Appendix~\ref{app:configuration}).
+Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
 
 \subsection{Requesting Memory Blocks}
 
@@ -275,7 +275,7 @@ To send a message, a process must first invoke \hyperref[alg:requestingmemoryblo
 \end{algorithmic}
 \end{algorithm}
 
-The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the timer i-process's message queue. As described in Section~\ref{subsec:Timer I-Process}, the timer i-process will dispatch the message at the correct time.\\
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the timer i-process's message queue. As described in \hyperref[subsec:Timer I-Process]{Section~\ref*{subsec:Timer I-Process}}, the timer i-process will dispatch the message at the correct time.\\
 
 \begin{algorithm}
 \caption{Sending Delayed Messages}
@@ -362,7 +362,7 @@ The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a
 
 \subsection{CRT Process}
 
-The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in Section~\ref{subsec:UART I-Process}.\\
+The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in \hyperref[subsec:UART I-Process]{Section~\ref*{subsec:UART I-Process}}.\\
 
 \begin{algorithm}
 \caption{CRT Process}
@@ -424,12 +424,12 @@ The UART i-process handles interrupts representing two scenarios:
 
 \begin{itemize}
 
-\item A character has been entered (see Figure~\ref{fig:inputdataflow})
-\item A character is ready for display (see Figure~\ref{fig:outputdataflow})
+\item A character has been entered (see \hyperref[fig:inputdataflow]{Figure~\ref*{fig:inputdataflow}})
+\item A character is ready for display (see \hyperref[fig:outputdataflow]{Figure~\ref*{fig:outputdataflow}})
 
 \end{itemize}
 
-As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in our operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see Appendix~\ref{app:uartglobals}).
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in our operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
 
 \begin{algorithm}
 \caption{UART I-Process}
