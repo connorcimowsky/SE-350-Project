@@ -531,6 +531,10 @@ triggering ``tick" updates. Each time the clock ticks, a message is sent to the 
 
 Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
 
+\subsection{Stress Test Processes}
+
+When the \texttt{\%Z} command is entered, these processes test the behaviour of the operating system under severe memory constraints. If the operating system is implemented correctly, the message ``Process C" will be printed to the console every 10 seconds. In order to avoid a deadlock, the priority of process C must be greater than or equal to the priority of process A, as it is responsible for periodically releasing memory blocks.
+
 \chapter{Lessons Learned}
 
 \section{Version Control}
