@@ -129,7 +129,7 @@ Depending on their state, processes can be placed in one of three process contro
 
 Since time slicing is not employed by the operating system, it is frequently necessary for a process to relinquish its usage of the processor. This mechanism is provided by the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
 
-When invoked, this procedure uses the scheduler to select the next process for execution. If the selected process is of a sufficient scheduling priority, a context switch will occur. Otherwise, the caller will resume execution.\\
+When invoked, this procedure uses the scheduler to select the next process for execution. If the priority of the selected process is greater than or equal to that of the currently executing process, a context switch will occur. Otherwise, the caller will resume execution.\\
 
 \begin{algorithm}
 \caption{Releasing the Processor}
@@ -152,9 +152,9 @@ When invoked, this procedure uses the scheduler to select the next process for e
 \Statex
 
 \Procedure {k_dequeue_ready_process}{\null}
-    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_PRIORITIES}}
+    \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_PRIORITIES}} \Comment{Start at highest priority}
         \If{$ready\_queue[i]$ is not empty}
-            \State \Return $\Call{dequeue}{ready\_queue[i]}$
+            \State \Return $\Call{dequeue}{ready\_queue[i]}$ \Comment{Round-robin}
         \EndIf
     \EndFor
     \State \Return \texttt{NULL}
