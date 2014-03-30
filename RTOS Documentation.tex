@@ -8,7 +8,8 @@
     underscore,
     authblk,
     hyperref,
-    tikz
+    tikz,
+    tabularx
 }
 
 \usetikzlibrary{positioning}
@@ -62,7 +63,7 @@ Once the operating system image has been copied to the LPC1768's on-chip ROM, ex
 
 \subsection{Memory Initialization}
 
-Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks and inserted into the global memory heap.
+Now that the board's hardware is ready, it is necessary to initialize global data structures such as process control queues and the keyboard command registry. Most importantly, a portion of the on-chip SRAM is divided into fixed-size blocks (see Appendix~\ref{app:configuration}) and inserted into the global memory heap.
 
 \subsection{Process Initialization}
 
@@ -72,7 +73,7 @@ Upon completion of memory initialization, this procedure iterates through the pr
 
 \subsection{Heap Data Structure}
 
-Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size.
+Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see Appendix~\ref{app:configuration}).
 
 \subsection{Requesting Memory Blocks}
 
@@ -620,6 +621,53 @@ As a result, our data structures are less error-prone and our code is easier to 
 
 \addcontentsline{toc}{chapter}{Appendices}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+
+\chapter{Configuration}
+\label{app:configuration}
+
+\section{Parameters}
+
+The following parameters can be adjusted to tune the operating system:\\
+
+\begin{tabularx}{\textwidth}{| l | X |}
+    \hline
+    \texttt{NUM_BLOCKS} & Number of memory blocks to be placed in the heap.\\
+    \hline
+    \texttt{BLOCK_SIZE} & Size, in bytes, of each memory block in the heap.\\
+    \hline
+    \texttt{USR_SZ_STACK} & Size, in bytes, of the stack frame for each process.\\
+    \hline
+    \texttt{NUM_KCD_REG} & Maximum number of keyboard commands that can be registered using the KCD process.\\
+    \hline
+    \texttt{KCD_REG_LENGTH} & Maximum length of each command identifier.\\
+    \hline
+    \texttt{MSG_LOG_SIZE} & Number of recent messages to be logged.\\
+    \hline
+    \texttt{MSG_LOG_LEN} & Number of characters to be logged for each message.\\
+    \hline
+    \texttt{NUM_TEST_PROCS} & Number of user test processes.\\
+    \hline
+\end{tabularx}
+
+\section{Macros}
+
+The following macros can be defined to achieve additional behaviour:\\
+
+\begin{tabularx}{\textwidth}{| l | X |}
+    \hline
+    \texttt{DEBUG_0} & Allow user test processes to print to the console.\\
+    \hline
+    \texttt{DEBUG_1} & Enable verbose output for debugging purposes.\\
+    \hline
+    \texttt{DEBUG_LED} & Monitor the memory heap using the on-board LEDs.\\
+    \hline
+    \texttt{DEBUG_HOTKEYS} & Enable the debug hotkeys (defined in the README).\\
+    \hline
+    \texttt{DEBUG_TIMER} & Scale the timer for debugging in the simulator.\\
+    \hline
+    \texttt{DEBUG_DEMO} & Leave the user test processes in a blocked state.\\
+    \hline
+\end{tabularx}
 
 \chapter{Global Variables}
 
