@@ -312,75 +312,6 @@ When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}
 \end{algorithmic}
 \end{algorithm}
 
-\section{System Processes}
-
-\subsection{Null Process}
-
-The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
-
-\begin{algorithm}
-\caption{Null Process}
-\label{alg:nullprocess}
-\begin{algorithmic}[1]
-\Procedure {null_proc}{\null}
-    \While{true}
-        \State \Call{release_processor}{\null}
-    \EndWhile
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{KCD Process}
-
-The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a console-like interface to users of the operating system. Upon receipt of a command registration message, it uses a global registry to associate the specified command with the message sender. Each time a line of input is entered into the console, the KCD process determines if it is prefixed with a registered command. If so, the input is forwarded to the corresponding process.\\
-
-\begin{algorithm}
-\caption{KCD Process}
-\label{alg:kcdprocess}
-\begin{algorithmic}[1]
-\Procedure {kcd_proc}{\null}
-    \While{true}
-        \State $msg \leftarrow \Call{receive\_message}{sender}$
-        \If{$msg.type = \texttt{MSG_TYPE_KCD_REG}$}
-            \State $reg \leftarrow$ next unused $kcd\_reg$ entry
-            \State $reg.id \leftarrow msg.data$
-            \State $reg.pid \leftarrow sender$
-        \ElsIf{$msg.type = \texttt{MSG_TYPE_DEFAULT}$}
-            \State $id \leftarrow$ first token of $msg.data$
-            \If{$kcd\_reg$ contains $id$}
-                \State $dispatch\_msg \leftarrow \Call{request\_memory\_block}{\null}$
-                \State $dispatch\_msg.type \leftarrow \texttt{MSG_TYPE_KCD_DISPATCH}$
-                \State $dispatch\_msg.data \leftarrow msg.data$
-                \State \Call{send_message}{$kcd\_reg[id].pid$, $dispatch\_msg$}
-            \EndIf
-        \EndIf
-        \State \Call{release_memory_block}{$msg$}
-    \EndWhile
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{CRT Process}
-
-The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in \hyperref[subsec:UART I-Process]{Section~\ref*{subsec:UART I-Process}}.\\
-
-\begin{algorithm}
-\caption{CRT Process}
-\label{alg:crtprocess}
-\begin{algorithmic}[1]
-\Procedure {crt_proc}{\null}
-    \While{true}
-        \State $msg \leftarrow \Call{receive\_message}{\null}$
-        \If{$msg.type = \texttt{MSG_TYPE_CRT_DISP}$}
-            \State \Call{send_message}{$uart\_i\_proc$, $msg$}
-        \Else
-            \State \Call{release_memory_block}{$msg$}
-        \EndIf
-    \EndWhile
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
 \section{Interrupt Processes}
 
 Both the timer and UART i-processes are scheduled exclusively by their respective interrupt handlers; they are never placed in process control structures (e.g., the ready queue). When an interrupt is received, the following operations are performed:
@@ -516,6 +447,75 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
     \vspace{1em}
     
 \end{figure}
+
+\section{System Processes}
+
+\subsection{Null Process}
+
+The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
+
+\begin{algorithm}
+\caption{Null Process}
+\label{alg:nullprocess}
+\begin{algorithmic}[1]
+\Procedure {null_proc}{\null}
+    \While{true}
+        \State \Call{release_processor}{\null}
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{KCD Process}
+
+The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a console-like interface to users of the operating system. Upon receipt of a command registration message, it uses a global registry to associate the specified command with the message sender. Each time a line of input is entered into the console, the KCD process determines if it is prefixed with a registered command. If so, the input is forwarded to the corresponding process.\\
+
+\begin{algorithm}
+\caption{KCD Process}
+\label{alg:kcdprocess}
+\begin{algorithmic}[1]
+\Procedure {kcd_proc}{\null}
+    \While{true}
+        \State $msg \leftarrow \Call{receive\_message}{sender}$
+        \If{$msg.type = \texttt{MSG_TYPE_KCD_REG}$}
+            \State $reg \leftarrow$ next unused $kcd\_reg$ entry
+            \State $reg.id \leftarrow msg.data$
+            \State $reg.pid \leftarrow sender$
+        \ElsIf{$msg.type = \texttt{MSG_TYPE_DEFAULT}$}
+            \State $id \leftarrow$ first token of $msg.data$
+            \If{$kcd\_reg$ contains $id$}
+                \State $dispatch\_msg \leftarrow \Call{request\_memory\_block}{\null}$
+                \State $dispatch\_msg.type \leftarrow \texttt{MSG_TYPE_KCD_DISPATCH}$
+                \State $dispatch\_msg.data \leftarrow msg.data$
+                \State \Call{send_message}{$kcd\_reg[id].pid$, $dispatch\_msg$}
+            \EndIf
+        \EndIf
+        \State \Call{release_memory_block}{$msg$}
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{CRT Process}
+
+The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in \hyperref[subsec:UART I-Process]{Section~\ref*{subsec:UART I-Process}}.\\
+
+\begin{algorithm}
+\caption{CRT Process}
+\label{alg:crtprocess}
+\begin{algorithmic}[1]
+\Procedure {crt_proc}{\null}
+    \While{true}
+        \State $msg \leftarrow \Call{receive\_message}{\null}$
+        \If{$msg.type = \texttt{MSG_TYPE_CRT_DISP}$}
+            \State \Call{send_message}{$uart\_i\_proc$, $msg$}
+        \Else
+            \State \Call{release_memory_block}{$msg$}
+        \EndIf
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{User Processes}
 
