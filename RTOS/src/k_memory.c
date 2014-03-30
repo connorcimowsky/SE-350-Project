@@ -12,9 +12,17 @@
 
 
 /* global variables */
+
+/* list of available memory blocks */
 list_t g_heap;
+
+/* the beginning address of the heap, used for error checking */
 U8 *gp_heap_begin_addr;
+
+/* the end address of the heap, used for error checking */
 U8 *gp_heap_end_addr;
+
+/* current top of (decrementing) stack, 8-byte aligned */
 U32 *gp_stack;
 
 
@@ -59,7 +67,7 @@ void k_memory_init(void)
     /* initialize the memory heap */
     list_init(&g_heap);
     
-    /* save the beginning address of the heap for error-checking later on */
+    /* save the beginning address of the heap for error checking later on */
     gp_heap_begin_addr = p_end;
     
     for (i = 0; i < NUM_BLOCKS; i++) {
@@ -73,7 +81,7 @@ void k_memory_init(void)
         p_end += BLOCK_SIZE;
     }
     
-    /* save the end address of the heap for error-checking later on */
+    /* save the end address of the heap for error checking later on */
     gp_heap_end_addr = p_end;
     
     /* initialize the timeout queue for the timer i-process */

@@ -15,6 +15,7 @@ int g_previous_pid = -1;
 /* an array of flags indicating the result of each test case */
 int g_success_flags[6] = {1, 1, 1, 1, 1, 1};
 
+/* flag to indicate that the tests have completed */
 int g_tests_completed_flag = 0;
 
 
