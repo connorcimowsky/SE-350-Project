@@ -154,7 +154,7 @@ When invoked, this procedure uses the scheduler to select the next process for e
 \Procedure {k_dequeue_ready_process}{\null}
     \For{$i \leftarrow 0$ \textbf{to} \texttt{NUM_PRIORITIES}} \Comment{Start at highest priority}
         \If{$ready\_queue[i]$ is not empty}
-            \State \Return $\Call{dequeue}{ready\_queue[i]}$ \Comment{Round-robin}
+            \State \Return $\Call{dequeue}{ready\_queue[i]}$
         \EndIf
     \EndFor
     \State \Return \texttt{NULL}
