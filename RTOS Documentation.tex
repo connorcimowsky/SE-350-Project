@@ -16,10 +16,10 @@
 \setlength{\parindent}{0pt}
 
 \lstset{
-    basicstyle=\ttfamily,
+    basicstyle=\ttfamily\footnotesize,
     breaklines=true,
-    aboveskip=20pt,
-    belowskip=20pt,
+    aboveskip=15pt,
+    belowskip=15pt,
 }
 
 \begin{document}
@@ -539,15 +539,86 @@ In order to ensure the correct behaviour of our operating system, we use six use
 
 \section{Version Control}
 
-At the very beginning of our project, we decided to use \href{http://git-scm.com/}{Git} to manage the source code of our kernel. Paired with \href{http://github.com/}{GitHub}, it provided a robust system for ensuring code quality and minimizing bugs. Throughout the project, we obeyed a strict code review policy; all work was done in individual branches, submitted as a pull request, and then exhaustively reviewed by every member of the team before being merged into the \texttt{master} branch. This policy allowed us to catch several bugs that would have been incredibly difficult to catch in testing.
+At the very beginning of our project, we decided to use \href{http://git-scm.com/}{Git} to manage the source code of our operating system. Paired with \href{http://github.com/}{GitHub}, it provided a robust system for ensuring code quality and minimizing bugs. Throughout the project, we obeyed a strict code review policy; all work was done in individual branches, submitted as a pull request, and then exhaustively reviewed by every member of the team before being merged into the \texttt{master} branch. This policy allowed us to catch several bugs that would have been incredibly difficult to catch in testing.
 
 \section{Simulation}
 
-For the majority of our first deliverable, we tested our kernel exclusively in the debugger provided by the Keil $\mu$Vision IDE. Before submitting the deliverable, we tested our code on the MCB1700 board; everything worked correctly. This substantiated our assumption that the debugger provided a close approximation to the hardware. In reality, as we discovered during our work on the second deliverable, there is a major difference: the SRAM on the MCB1700 board is not initialized the way it is in the debugger. This led to a number of serious bugs that only surfaced when we tested our code on the board. One of the most common bugs involved dealing with strings. Since we relied on the null character to delimit strings, there were portions of code which would work perfectly in the simulator and not on the board. These types of bugs only appeared in the second deliverable, since message passing and console I/O both rely heavily on strings. After dealing with these bugs, we learned to write code more defensively and test our code primarily on the board instead of using the debugger.
+For the majority of our first deliverable, we tested our operating system exclusively in the debugger provided by the Keil $\mu$Vision IDE. Before submitting the deliverable, we tested our code on the MCB1700 board; everything worked correctly. This substantiated our assumption that the debugger provided a close approximation to the hardware. In reality, as we discovered during our work on the second deliverable, there is a major difference: the SRAM on the MCB1700 board is not initialized the way it is in the debugger. This led to a number of serious bugs that only surfaced when we tested our code on the board. One of the most common bugs involved dealing with strings. Since we relied on the null character to delimit strings, there were portions of code which would work perfectly in the simulator and not on the board. These types of bugs only appeared in the second deliverable, since message passing and console I/O both rely heavily on strings. After dealing with these bugs, we learned to write code more defensively and test our code primarily on the board instead of using the debugger.
 
 \section{Documentation}
 
-Beginning with the first deliverable, we decided to write a portion of our documentation alongside each submission. In the time between the first and third deliverables, we compiled a structural description of each part of our project, wrote pseudocode for each major kernel procedure, and completed the Lessons Learned section. This work greatly reduced the amount of time it took to complete our final report, as our documentation was nearly complete by the time we submitted the third deliverable.
+Beginning with the first deliverable, we decided to write a portion of our documentation alongside each submission. In the time between the first and third deliverables, we compiled a structural description of each part of our project, wrote pseudocode for each major procedure, and completed the Lessons Learned section. This work greatly reduced the amount of time it took to complete our final report, as our documentation was nearly complete by the time we submitted the third deliverable.
+
+\section{Linked Structures}
+
+Early on, we knew that we would need to store data in linked structures for different use cases. Since we wanted to avoid coupling these data structures with the type of data they were storing, we chose to make a generic node structure, \texttt{node_t}:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct node_t {
+    struct node_t *mp_next;
+    U32 m_val;
+} node_t;
+\end{lstlisting}
+\end{minipage}
+
+We then designed our linked structures to point to nodes of this type. For example, \texttt{queue_t}:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct queue_t {
+    node_t *mp_first;
+    node_t *mp_last;
+} queue_t;
+\end{lstlisting}
+\end{minipage}
+
+This way, we can declare new node types with additional members for different use cases. For example, here is a process control block:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+typedef struct k_pcb_t {
+    struct k_pcb_t *mp_next;
+    U32 *mp_sp;
+    U32 m_pid;
+    PRIORITY_E m_priority;
+    PROC_STATE_E m_state;
+    queue_t m_msg_queue;
+} k_pcb_t;
+\end{lstlisting}
+\end{minipage}
+
+As long as the first member is still a pointer to the next node, our linked structures will accommodate these nodes. Creating these generic linked structures saved us a great deal of time in later deliverables.
+
+\section{Data Structure Allocation}
+
+Until the last deliverable, we allocated data structures in the \texttt{memory_init} routine. For example, here is the ready queue:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+queue_t *gp_ready_queue[NUM_PRIORITIES];
+
+for (i = 0; i < NUM_PRIORITIES; i++) {
+    gp_ready_queue[i] = (queue_t *)p_end;
+    queue_init(gp_ready_queue[i]);
+    p_end += sizeof(queue_t);
+}
+\end{lstlisting}
+\end{minipage}
+
+This approach unnecessarily adds complexity to our code and also led to quite a few time-consuming bugs at the beginning of the project. To fix it, we began to statically allocate our data structures in the operating system image. Here is the same example using static allocation:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C]
+queue_t g_ready_queue[NUM_PRIORITIES];
+
+for (i = 0; i < NUM_PRIORITIES; i++) {
+    queue_init(&g_ready_queue[i]);
+}
+\end{lstlisting}
+\end{minipage}
+
+As a result, our data structures are less error-prone and our code is easier to read. This is the solution that we should have used at the beginning.
 
 \appendix
 
