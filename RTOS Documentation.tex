@@ -76,7 +76,7 @@ Our memory heap structure is implemented using a generic linked list. Each node 
 
 \subsection{Requesting Memory Blocks}
 
-When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if any blocks are available in the heap. If the heap is empty, the kernel enqueues the caller in the blocked-on-memory queue and invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} so that preemption may occur. Otherwise, a pointer to the next available memory block is popped from the heap. This pointer is then incremented by a predefined offset to compensate for message envelope headers and then returned to the caller.\\
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned.\\
 
 \begin{algorithm}
 \caption{Requesting Memory Blocks}
@@ -95,7 +95,7 @@ When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_mem
 
 \subsection{Releasing Memory Blocks}
 
-When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address corresponds to a valid memory block. If valid, the block is then pushed onto the heap. Next, if the blocked-on-memory queue is non-empty, the highest-priority process that is blocked on memory is moved to the ready queue. Finally, \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} is invoked so that the caller can be preempted if necessary.\\
+When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address points to a valid memory block. If so, the block is pushed onto the heap. If another process is blocked on memory, it will be unblocked and preemption will take place if necessary.\\
 
 \begin{algorithm}
 \caption{Releasing Memory Blocks}

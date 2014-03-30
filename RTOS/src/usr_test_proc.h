@@ -5,6 +5,8 @@
 
 
 /* external variables */
+
+/* test process initialization table */
 extern PROC_INIT g_test_procs[NUM_TEST_PROCS];
 
 
