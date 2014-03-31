@@ -519,6 +519,10 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
 
 \section{User Processes}
 
+\subsection{Test Processes}
+
+In order to ensure the correct behaviour of our operating system, we use six user-­level test processes to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that  our operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
+
 \subsection{Wall Clock Process}
 
 The wall clock process uses \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
@@ -528,9 +532,9 @@ triggering ``tick" updates. Each time the clock ticks, a message is sent to the 
 
 Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
 
-\subsection{Test Processes}
+\subsection{Stress Test Processes}
 
-In order to ensure the correct behaviour of our operating system, we use six user-­level test processes to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that  our operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
+When the \texttt{\%Z} command is entered, these processes test the behaviour of the operating system under severe memory constraints. If the operating system is implemented correctly, the message ``Process C" will be printed to the console every 10 seconds. In order to avoid a deadlock, the priority of process C must be greater than or equal to the priority of process A, as it is responsible for periodically releasing memory blocks.
 
 \chapter{Lessons Learned}
 
