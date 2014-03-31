@@ -208,7 +208,7 @@ int k_release_memory_block_helper(void *p_mem_blk)
 {
     node_t *p_node = NULL;
     
-    if (p_mem_blk == NULL ) {
+    if (p_mem_blk == NULL) {
         
 #ifdef DEBUG_1
         printf("k_release_memory_block: cannot release NULL\n\r");
