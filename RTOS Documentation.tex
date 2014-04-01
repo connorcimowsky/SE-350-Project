@@ -23,7 +23,7 @@
 \lstset{
     basicstyle=\ttfamily\footnotesize,
     breaklines=true,
-    aboveskip=15pt,
+    aboveskip=20pt,
     belowskip=15pt,
 }
 
@@ -542,51 +542,147 @@ When the \texttt{\%Z} command is entered, these processes test the behaviour of 
 
 \chapter{Timing Analysis}
 
+\section{Experimental Design}
+
+To analyze the performance of our operating system, we programmed the LPC1768's second timer at a frequency of 100 MHz to measure the execution time of three primitives. These primitives are invoked by the time profiler process, which can be initiated using the \texttt{\%P} command.\\
+
+The following code fragment demonstrates the procedure for profiling the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C, frame=single]
+LPC_TIM1->TCR = TIMER_RESET;
+LPC_TIM1->TCR = TIMER_START;
+
+for (i = 0; i < NUM_CALLS; i++) {
+    request_memory_block();
+}
+
+LPC_TIM1->TCR = TIMER_STOP;
+
+/* execution time = LPC_TIM1->TC / NUM_CALLS */
+
+\end{lstlisting}
+\end{minipage}
+
+To achieve a reasonable degree of precision, we set \texttt{NUM_CALLS} to 100 for each trial; this results in a resolution of 0.1 nanoseconds per function call. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
+
+\section{Time Measurements}
+
+The execution time of our trials was very consistent for each primitive, as the Cortex-M3 processor does not employ cache memory. In fact, the processor is described by ARM as ``highly deterministic". Any variance in execution time is most likely due to pipeline stalls (e.g., resulting from branch hazards).
+
+\subsection{\texttt{request_memory_block}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0536 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
+
 \begin{tikzpicture}
-\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
     \addplot+[
         boxplot prepared={
-            lower whisker=2031.5,
-            lower quartile=2031.5,
-            median=2031.5,
-            upper quartile=2031.5,
-            upper whisker=2053.6
+            lower whisker=2.0315,
+            lower quartile=2.0315,
+            median=2.0315,
+            upper quartile=2.0315,
+            upper whisker=2.0536
         },
     ] coordinates {};
 \end{axis}
 \end{tikzpicture}
 
-\vspace{3em}
+\end{figure}
+
+\subsection{\texttt{send_message}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    6.6908 $\mu s$ & 6.6908 $\mu s$ & 6.7115 $\mu s$ & 6.7117 $\mu s$ & 6.7128 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
 
 \begin{tikzpicture}
-\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
     \addplot+[
         boxplot prepared={
-            lower whisker=6690.8,
-            lower quartile=6690.8,
-            median=6711.5,
-            upper quartile=6711.7,
-            upper whisker=6712.8
+            lower whisker=6.6908,
+            lower quartile=6.6908,
+            median=6.7115,
+            upper quartile=6.7117,
+            upper whisker=6.7128
         },
     ] coordinates {};
 \end{axis}
 \end{tikzpicture}
 
-\vspace{3em}
+\end{figure}
+
+\subsection{\texttt{receive_message}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    6.3112 $\mu s$ & 6.3112 $\mu s$ & 6.33195 $\mu s$ & 6.3321 $\mu s$ & 6.3334 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
 
 \begin{tikzpicture}
-\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
     \addplot+[
         boxplot prepared={
-            lower whisker=6311.2,
-            lower quartile=6311.2,
-            median=6331.95,
-            upper quartile=6332.1,
-            upper whisker=6333.4
+            lower whisker=6.3112,
+            lower quartile=6.3112,
+            median=6.33195,
+            upper quartile=6.3321,
+            upper whisker=6.3334
         },
     ] coordinates {};
 \end{axis}
 \end{tikzpicture}
+
+\end{figure}
 
 \chapter{Lessons Learned}
 
