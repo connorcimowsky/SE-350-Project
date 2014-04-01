@@ -703,7 +703,7 @@ Beginning with the first deliverable, we decided to write a portion of our docum
 Early on, we knew that we would need to store data in linked structures for different use cases. Since we wanted to avoid coupling these data structures with the type of data they were storing, we chose to make a generic node structure, \texttt{node_t}:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct node_t {
     struct node_t *mp_next;
     U32 m_val;
@@ -714,7 +714,7 @@ typedef struct node_t {
 We then designed our linked structures to point to nodes of this type. For example, \texttt{queue_t}:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct queue_t {
     node_t *mp_first;
     node_t *mp_last;
@@ -725,7 +725,7 @@ typedef struct queue_t {
 This way, we can declare new node types with additional members for different use cases. For example, here is a process control block:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct k_pcb_t {
     struct k_pcb_t *mp_next;
     U32 *mp_sp;
@@ -744,7 +744,7 @@ As long as the first member is still a pointer to the next node, our linked stru
 Until the last deliverable, we allocated data structures in the \texttt{memory_init} routine. For example, here is the ready queue:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 queue_t *gp_ready_queue[NUM_PRIORITIES];
 
 for (i = 0; i < NUM_PRIORITIES; i++) {
@@ -758,7 +758,7 @@ for (i = 0; i < NUM_PRIORITIES; i++) {
 This approach unnecessarily adds complexity to our code and also led to quite a few time-consuming bugs at the beginning of the project. To fix it, we began to statically allocate our data structures in the operating system image. Here is the same example using static allocation:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 queue_t g_ready_queue[NUM_PRIORITIES];
 
 for (i = 0; i < NUM_PRIORITIES; i++) {
