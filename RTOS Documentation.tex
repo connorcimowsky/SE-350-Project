@@ -9,6 +9,7 @@
     authblk,
     hyperref,
     tikz,
+    pgfplots,
     tabularx,
     float
 }
@@ -20,12 +21,15 @@
     arrows
 }
 
+\pgfplotsset{compat=newest, width=\textwidth}
+\usepgfplotslibrary{statistics}
+
 \setlength{\parindent}{0pt}
 
 \lstset{
     basicstyle=\ttfamily\footnotesize,
     breaklines=true,
-    aboveskip=15pt,
+    aboveskip=20pt,
     belowskip=15pt,
 }
 
@@ -590,6 +594,150 @@ Upon startup, this process registers a keyboard command (\texttt{\%C}) with the 
 
 When the \texttt{\%Z} command is entered, these processes test the behaviour of the operating system under severe memory constraints. If the operating system is implemented correctly, the message ``Process C" will be printed to the console every 10 seconds. In order to avoid a deadlock, the priority of process C must be greater than or equal to the priority of process A, as it is responsible for periodically releasing memory blocks.
 
+\chapter{Timing Analysis}
+
+\section{Experimental Design}
+
+To analyze the performance of our operating system, we programmed the LPC1768's second timer at a frequency of 100 MHz to measure the execution time of three primitives. These primitives are invoked by the time profiler process, which can be initiated using the \texttt{\%P} command.\\
+
+The following code fragment demonstrates the procedure for profiling the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}:
+
+\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=C, frame=single]
+LPC_TIM1->TCR = TIMER_RESET;
+LPC_TIM1->TCR = TIMER_START;
+
+for (i = 0; i < NUM_CALLS; i++) {
+    request_memory_block();
+}
+
+LPC_TIM1->TCR = TIMER_STOP;
+
+/* execution time = LPC_TIM1->TC / NUM_CALLS */
+
+\end{lstlisting}
+\end{minipage}
+
+To achieve a reasonable degree of precision, we set \texttt{NUM_CALLS} to 100 for each trial; this results in a resolution of 0.1 nanoseconds per function call. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
+
+\section{Time Measurements}
+
+The execution time of our trials was very consistent for each primitive, as the Cortex-M3 processor does not employ cache memory. In fact, the processor is described by ARM as ``highly deterministic". Any variance in execution time is most likely due to pipeline stalls (e.g., resulting from branch hazards).
+
+\subsection{\texttt{request_memory_block}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0315 $\mu s$ & 2.0536 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=2.0315,
+            lower quartile=2.0315,
+            median=2.0315,
+            upper quartile=2.0315,
+            upper whisker=2.0536
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
+
+\end{figure}
+
+\subsection{\texttt{send_message}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    6.6908 $\mu s$ & 6.6908 $\mu s$ & 6.7115 $\mu s$ & 6.7117 $\mu s$ & 6.7128 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=6.6908,
+            lower quartile=6.6908,
+            median=6.7115,
+            upper quartile=6.7117,
+            upper whisker=6.7128
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
+
+\end{figure}
+
+\subsection{\texttt{receive_message}}
+
+\begin{figure}[H]
+
+\centering
+
+\begin{tabular}{| c | c | c | c | c |}
+    \hline
+    Minimum & First Quartile & Median & Third Quartile & Maximum\\
+    \hline
+    6.3112 $\mu s$ & 6.3112 $\mu s$ & 6.33195 $\mu s$ & 6.3321 $\mu s$ & 6.3334 $\mu s$\\
+    \hline
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($\mu s$), max space between ticks=50em, x tick label style={
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=3,
+        /tikz/.cd
+    }, ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=6.3112,
+            lower quartile=6.3112,
+            median=6.33195,
+            upper quartile=6.3321,
+            upper whisker=6.3334
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
+
+\end{figure}
+
 \chapter{Lessons Learned}
 
 \section{Version Control}
@@ -609,7 +757,7 @@ Beginning with the first deliverable, we decided to write a portion of our docum
 Early on, we knew that we would need to store data in linked structures for different use cases. Since we wanted to avoid coupling these data structures with the type of data they were storing, we chose to make a generic node structure, \texttt{node_t}:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct node_t {
     struct node_t *mp_next;
     U32 m_val;
@@ -620,7 +768,7 @@ typedef struct node_t {
 We then designed our linked structures to point to nodes of this type. For example, \texttt{queue_t}:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct queue_t {
     node_t *mp_first;
     node_t *mp_last;
@@ -631,7 +779,7 @@ typedef struct queue_t {
 This way, we can declare new node types with additional members for different use cases. For example, here is a process control block:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 typedef struct k_pcb_t {
     struct k_pcb_t *mp_next;
     U32 *mp_sp;
@@ -650,7 +798,7 @@ As long as the first member is still a pointer to the next node, our linked stru
 Until the last deliverable, we allocated data structures in the \texttt{memory_init} routine. For example, here is the ready queue:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 queue_t *gp_ready_queue[NUM_PRIORITIES];
 
 for (i = 0; i < NUM_PRIORITIES; i++) {
@@ -664,7 +812,7 @@ for (i = 0; i < NUM_PRIORITIES; i++) {
 This approach unnecessarily adds complexity to our code and also led to quite a few time-consuming bugs at the beginning of the project. To fix it, we began to statically allocate our data structures in the operating system image. Here is the same example using static allocation:
 
 \begin{minipage}{\textwidth}
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, frame=single]
 queue_t g_ready_queue[NUM_PRIORITIES];
 
 for (i = 0; i < NUM_PRIORITIES; i++) {
