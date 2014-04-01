@@ -10,13 +10,19 @@
     hyperref,
     tikz,
     pgfplots,
-    tabularx
+    tabularx,
+    float
 }
 
 \pgfplotsset{compat=newest, width=\textwidth}
 \usepgfplotslibrary{statistics}
 
-\usetikzlibrary{positioning}
+\usetikzlibrary{
+    positioning,
+    calc,
+    shapes.multipart,
+    arrows
+}
 
 \setlength{\parindent}{0pt}
 
@@ -79,6 +85,29 @@ Upon completion of memory initialization, this procedure iterates through the pr
 
 The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
 
+\begin{figure}[H]
+
+\centering
+
+\caption{The memory heap}
+
+\vspace{1em}
+
+\begin{tikzpicture}[>=stealth, arrow/.style={*->,shorten >=1pt,semithick}, mem/.style={rectangle split, rectangle split parts=2, draw, rectangle split horizontal, minimum size=0.7cm}]
+    
+    \node[draw, minimum size=0.7cm] (A) {first};
+    \node[mem, right  = 12pt of A] (B) {\texttt{0x100008d4}};
+    \node[mem, right = 12pt of B] (C) {\texttt{0x10000954}};
+    \node[mem, right = 12pt of C] (D) {\texttt{0x100009d4}};
+    
+    \draw[->] (A.east) -- (B);
+    \draw[*->] let \p1 = (B.two), \p2 = (A.center) in (\x1,\y2) -- (C);
+    \draw[*->] let \p1 = (C.two), \p2 = (B.center) in (\x1,\y2) -- (D);
+    
+\end{tikzpicture}
+
+\end{figure}
+
 \subsection{Requesting Memory Blocks}
 
 When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned.\\
@@ -129,6 +158,31 @@ When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memo
 Each process in the operating system is modelled by a process control block. This data structure contains the stack pointer, PID, priority, state, and message queue of a given process.\\
 
 Depending on their state, processes can be placed in one of three process control queues. The first is the ready queue, which contains processes in the \texttt{NEW} and \texttt{READY} states. The second is the blocked-on-memory queue, which contains processes that are in the \texttt{BLOCKED_ON_MEMORY} state. The third is the blocked-on-receive queue, which contains processes that are in the \texttt{BLOCKED_ON_RECEIVE} state.
+
+\begin{figure}
+
+\centering
+
+\caption{A process control queue (lower priorities omitted)}
+
+\vspace{1em}
+
+\begin{tikzpicture}[list/.style={rectangle split, rectangle split parts=10, draw, rectangle split horizontal, minimum size = 0.8cm}, >=stealth, arrow/.style={->,shorten >=1pt,semithick}, pcb/.style={rectangle split, rectangle split parts=5, draw}]
+    
+    \node[list] (A) {first \nodepart{two} last \nodepart{three} first \nodepart{four} last \nodepart{five} first \nodepart{six} last \nodepart{seven} first \nodepart{eight} last \nodepart{nine} first \nodepart{ten} last};
+    \node[pcb, below left = 2em and 1em of A] (B) {next \nodepart{two} \texttt{0x100071e0} \nodepart{three} \texttt{7} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \node[pcb, right = 4em of B] (C) {next \nodepart{two} \texttt{0x100069e0} \nodepart{three} \texttt{13} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \node[pcb, right = 4em of C] (D) {next \nodepart{two} \texttt{0x100065e0} \nodepart{three} \texttt{11} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \draw[arrow] (A.one west) to[bend right = 30] node[right] {} (B.north);
+    \draw[arrow] (A.two south) to[bend right = 10] node[right] {} (D.north west);
+    \draw[arrow] (B.one east) to[bend left = 0] node[right] {} (C.one west);
+    \draw[arrow] (C.one east) to[bend left = 0] node[right] {} (D.one west);
+    
+\end{tikzpicture}
+
+\vspace{1em}
+
+\end{figure}
 
 \subsection{Releasing the Processor}
 
