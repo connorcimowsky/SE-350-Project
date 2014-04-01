@@ -102,7 +102,7 @@ void uart_i_process(void)
         char input_char = pUart->RBR;
         
 #ifdef DEBUG_1
-        printf("UART i-process: read %c\n\r", g_char_in);
+        printf("UART i-process: read %c\n\r", input_char);
 #endif
         
         /* echo the entered character to the CRT process; only request memory if we will not block */
@@ -152,7 +152,7 @@ void uart_i_process(void)
             
 #else
             
-            g_input_buffer[g_input_buffer_index++] = g_char_in;
+            g_input_buffer[g_input_buffer_index++] = input_char;
             
 #endif
             

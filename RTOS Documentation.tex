@@ -77,7 +77,7 @@ Upon completion of memory initialization, this procedure iterates through the pr
 
 \subsection{Heap Data Structure}
 
-Our memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
+The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
 
 \subsection{Requesting Memory Blocks}
 
@@ -332,7 +332,7 @@ Both the timer and UART i-processes are scheduled exclusively by their respectiv
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-In order to provide timing services to our operating system, we programmed one of the LPC1768's on-chip timers to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
+In order to provide timing services to the operating system, one of the LPC1768's on-chip timers was programmed to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
 
 \begin{algorithm}
 \caption{Timer I-Process}
@@ -364,7 +364,7 @@ The UART i-process handles interrupts representing two scenarios:
 
 \end{itemize}
 
-As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in our operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in the operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
 
 \begin{algorithm}
 \caption{UART I-Process}
@@ -525,7 +525,7 @@ The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. 
 
 \subsection{Test Processes}
 
-In order to ensure the correct behaviour of our operating system, we use six user-­level test processes to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that  our operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
+In order to ensure correct behaviour of the operating system, six user-­level test processes are used to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that the operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
 
 \subsection{Wall Clock Process}
 
@@ -731,7 +731,7 @@ The following macros can be defined to achieve additional behaviour:\\
 
 \subsection{\texttt{g_heap}}
 
-During the memory initialization process, we allocate sections of SRAM into memory blocks. In order to efficiently serve the needs of processes, our operating system uses a linked list to manage these blocks.
+During the memory initialization process, part the LPC1768's on-chip SRAM is divided into memory blocks. In order to efficiently serve the needs of processes, the operating system uses a linked list to manage these blocks.
 
 \subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
 

@@ -142,7 +142,7 @@ void k_process_init(void)
     g_proc_table[PID_PROFILER].m_priority = HIGHEST;
     g_proc_table[PID_PROFILER].m_stack_size = USR_SZ_STACK;
     g_proc_table[PID_PROFILER].mpf_start_pc = &profiler_proc;
-    enqueue((node_t *)gp_pcbs[PID_PROFILER], gp_ready_queue[HIGHEST]);
+    enqueue((node_t *)g_pcbs[PID_PROFILER], &g_ready_queue[HIGHEST]);
     
     /* initialize the exception stack frame (i.e. initial context) for each process */
     for (i = 0; i < NUM_PROCS; i++) {

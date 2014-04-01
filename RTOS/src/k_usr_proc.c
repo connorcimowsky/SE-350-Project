@@ -7,6 +7,7 @@
 #define NUM_TRIALS 10
 #define TIMER_RESET (1 << 1) | (1 << 0);
 #define TIMER_START (0 << 1) | (1 << 0);
+#define TIMER_STOP (0 << 0);
 
 
 /* global variables */
@@ -361,6 +362,8 @@ void profiler_proc(void)
             mem_blks[i] = request_memory_block();
         }
         
+        LPC_TIM1->TCR = TIMER_STOP;
+        
         finish_time_ns = 10 * LPC_TIM1->TC;
         printf("request_memory_block:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
         
@@ -371,6 +374,8 @@ void profiler_proc(void)
             send_message(PID_PROFILER, mem_blks[i]);
         }
         
+        LPC_TIM1->TCR = TIMER_STOP;
+        
         finish_time_ns = 10 * LPC_TIM1->TC;
         printf("send_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
         
@@ -380,6 +385,8 @@ void profiler_proc(void)
         for (i = 0; i < NUM_TRIALS; i++) {
             receive_message(&sender_pid);
         }
+        
+        LPC_TIM1->TCR = TIMER_STOP;
         
         finish_time_ns = 10 * LPC_TIM1->TC;
         printf("receive_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
