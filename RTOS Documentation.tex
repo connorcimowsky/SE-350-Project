@@ -564,7 +564,7 @@ LPC_TIM1->TCR = TIMER_STOP;
 \end{lstlisting}
 \end{minipage}
 
-To achieve a reasonable degree of precision, we set \texttt{NUM_CALLS} to 100 for each trial; this results in a resolution of 0.1 nanoseconds per function call. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
+For our analysis, we set \texttt{NUM_CALLS} to 100 for each trial; this results in per-call averages with 0.1 nanoseconds of precision. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
 
 \section{Time Measurements}
 
