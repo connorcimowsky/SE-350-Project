@@ -91,7 +91,7 @@ The memory heap structure is implemented using a generic linked list. Each node 
 
 \begin{tikzpicture}[>=stealth, arrow/.style={*->,shorten >=1pt,semithick}, mem/.style={rectangle split, rectangle split parts=2, draw, rectangle split horizontal, minimum size=0.7cm}]
     
-    \node[draw, minimum size=0.7cm] (A) {\texttt{mp_first}};
+    \node[draw, minimum size=0.7cm] (A) {first};
     \node[mem, right  = 12pt of A] (B) {\texttt{0x100008d4}};
     \node[mem, right = 12pt of B] (C) {\texttt{0x10000954}};
     \node[mem, right = 12pt of C] (D) {\texttt{0x100009d4}};
@@ -165,10 +165,10 @@ Depending on their state, processes can be placed in one of three process contro
 
 \begin{tikzpicture}[list/.style={rectangle split, rectangle split parts=10, draw, rectangle split horizontal, minimum size = 0.8cm}, >=stealth, arrow/.style={->,shorten >=1pt,semithick}, pcb/.style={rectangle split, rectangle split parts=5, draw}]
     
-    \node[list] (A) {\texttt{mp_first} \nodepart{two} \texttt{mp_last} \nodepart{three} \nodepart{four} \nodepart{five} \nodepart{six} \nodepart{seven} \nodepart{eight} \nodepart{nine} \nodepart{ten}};
-    \node[pcb, below left = 2em and 1em of A] (B) {\texttt{mp_next} \nodepart{two} \texttt{0x100071e0} \nodepart{three} \texttt{7} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
-    \node[pcb, right = 4em of B] (C) {\texttt{mp_next} \nodepart{two} \texttt{0x100069e0} \nodepart{three} \texttt{13} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
-    \node[pcb, right = 4em of C] (D) {\texttt{mp_next} \nodepart{two} \texttt{0x100065e0} \nodepart{three} \texttt{11} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \node[list] (A) {first \nodepart{two} last \nodepart{three} first \nodepart{four} last \nodepart{five} first \nodepart{six} last \nodepart{seven} first \nodepart{eight} last \nodepart{nine} first \nodepart{ten} last};
+    \node[pcb, below left = 2em and 1em of A] (B) {next \nodepart{two} \texttt{0x100071e0} \nodepart{three} \texttt{7} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \node[pcb, right = 4em of B] (C) {next \nodepart{two} \texttt{0x100069e0} \nodepart{three} \texttt{13} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
+    \node[pcb, right = 4em of C] (D) {next \nodepart{two} \texttt{0x100065e0} \nodepart{three} \texttt{11} \nodepart{four} \texttt{HIGHEST} \nodepart{five} \texttt{READY}};
     \draw[arrow] (A.one west) to[bend right = 30] node[right] {} (B.north);
     \draw[arrow] (A.two south) to[bend right = 10] node[right] {} (D.north west);
     \draw[arrow] (B.one east) to[bend left = 0] node[right] {} (C.one west);
