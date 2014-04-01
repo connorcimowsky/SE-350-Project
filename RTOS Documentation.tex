@@ -9,8 +9,12 @@
     authblk,
     hyperref,
     tikz,
+    pgfplots,
     tabularx
 }
+
+\pgfplotsset{compat=newest, width=\textwidth}
+\usepgfplotslibrary{statistics}
 
 \usetikzlibrary{positioning}
 
@@ -535,6 +539,54 @@ Upon startup, this process registers a keyboard command (\texttt{\%C}) with the 
 \subsection{Stress Test Processes}
 
 When the \texttt{\%Z} command is entered, these processes test the behaviour of the operating system under severe memory constraints. If the operating system is implemented correctly, the message ``Process C" will be printed to the console every 10 seconds. In order to avoid a deadlock, the priority of process C must be greater than or equal to the priority of process A, as it is responsible for periodically releasing memory blocks.
+
+\chapter{Timing Analysis}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=2031.5,
+            lower quartile=2031.5,
+            median=2031.5,
+            upper quartile=2031.5,
+            upper whisker=2053.6
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
+
+\vspace{3em}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=6690.8,
+            lower quartile=6690.8,
+            median=6711.5,
+            upper quartile=6711.7,
+            upper whisker=6712.8
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
+
+\vspace{3em}
+
+\begin{tikzpicture}
+\begin{axis}[height=6em,xlabel=Execution Time ($ns$), max space between ticks=50em,ytick={0}]
+    \addplot+[
+        boxplot prepared={
+            lower whisker=6311.2,
+            lower quartile=6311.2,
+            median=6331.95,
+            upper quartile=6332.1,
+            upper whisker=6333.4
+        },
+    ] coordinates {};
+\end{axis}
+\end{tikzpicture}
 
 \chapter{Lessons Learned}
 
