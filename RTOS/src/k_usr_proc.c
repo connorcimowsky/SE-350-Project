@@ -4,7 +4,7 @@
 #include "printf.h"
 #include "string.h"
 
-#define NUM_TRIALS 10
+#define NUM_CALLS 10
 #define TIMER_RESET (1 << 1) | (1 << 0);
 #define TIMER_START (0 << 1) | (1 << 0);
 #define TIMER_STOP (0 << 0);
@@ -347,7 +347,7 @@ void profiler_proc(void)
     
     while (1) {
         int i;
-        void *mem_blks[NUM_TRIALS];
+        void *mem_blks[NUM_CALLS];
         U32 finish_time_ns = 0;
         int sender_pid;
         
@@ -358,40 +358,40 @@ void profiler_proc(void)
         LPC_TIM1->TCR = TIMER_RESET;
         LPC_TIM1->TCR = TIMER_START;
         
-        for (i = 0; i < NUM_TRIALS; i++) {
+        for (i = 0; i < NUM_CALLS; i++) {
             mem_blks[i] = request_memory_block();
         }
         
         LPC_TIM1->TCR = TIMER_STOP;
         
         finish_time_ns = 10 * LPC_TIM1->TC;
-        printf("request_memory_block:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        printf("request_memory_block:\n\r\tnumber of calls: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_CALLS, finish_time_ns, (finish_time_ns / NUM_CALLS));
         
         LPC_TIM1->TCR = TIMER_RESET;
         LPC_TIM1->TCR = TIMER_START;
         
-        for (i = 0; i < NUM_TRIALS; i++) {
+        for (i = 0; i < NUM_CALLS; i++) {
             send_message(PID_PROFILER, mem_blks[i]);
         }
         
         LPC_TIM1->TCR = TIMER_STOP;
         
         finish_time_ns = 10 * LPC_TIM1->TC;
-        printf("send_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        printf("send_message:\n\r\tnumber of calls: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_CALLS, finish_time_ns, (finish_time_ns / NUM_CALLS));
         
         LPC_TIM1->TCR = TIMER_RESET;
         LPC_TIM1->TCR = TIMER_START;
         
-        for (i = 0; i < NUM_TRIALS; i++) {
+        for (i = 0; i < NUM_CALLS; i++) {
             receive_message(&sender_pid);
         }
         
         LPC_TIM1->TCR = TIMER_STOP;
         
         finish_time_ns = 10 * LPC_TIM1->TC;
-        printf("receive_message:\n\r\tnumber of trials: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_TRIALS, finish_time_ns, (finish_time_ns / NUM_TRIALS));
+        printf("receive_message:\n\r\tnumber of calls: %d\n\r\ttotal time (ns): %d\n\r\tapproximate time per trial (ns): %d\n\r", NUM_CALLS, finish_time_ns, (finish_time_ns / NUM_CALLS));
         
-        for (i = 0; i < NUM_TRIALS; i++) {
+        for (i = 0; i < NUM_CALLS; i++) {
             release_memory_block(mem_blks[i]);
         }
     }
