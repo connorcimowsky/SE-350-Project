@@ -594,9 +594,14 @@ Upon startup, this process registers a keyboard command (\texttt{\%C}) with the 
 
 When the \texttt{\%Z} command is entered, these processes test the behaviour of the operating system under severe memory constraints. If the operating system is implemented correctly, the message ``Process C" will be printed to the console every 10 seconds. In order to avoid a deadlock, the priority of process C must be greater than or equal to the priority of process A, as it is responsible for periodically releasing memory blocks.
 
+\subsection{Time Profiler Process}
+
+As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[alg:sendingmessages]{\texttt{send_message}}, and \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
+
 \chapter{Timing Analysis}
 
 \section{Experimental Design}
+\label{sec:timing}
 
 To analyze the performance of our operating system, we programmed the LPC1768's second timer at a frequency of 100 MHz to measure the execution time of three primitives. These primitives are invoked by the time profiler process, which can be initiated using the \texttt{\%P} command.\\
 
