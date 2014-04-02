@@ -418,7 +418,7 @@ The UART i-process handles interrupts representing two scenarios:
 
 \end{itemize}
 
-As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in the operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in the operating system. To handle input and output, the \hyperref[alg:uartiprocess]{UART i-process} maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
 
 \begin{algorithm}
 \caption{UART I-Process}
@@ -556,7 +556,7 @@ The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a
 
 \subsection{CRT Process}
 
-The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute.\\
+The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the \hyperref[subsec:UART I-Process]{UART i-process}. It then triggers a UART output interrupt so that the \hyperref[subsec:UART I-Process]{UART i-process} may execute.\\
 
 \begin{algorithm}
 \caption{CRT Process}
@@ -968,7 +968,7 @@ The index of the next character of \texttt{gp_cur_msg} to be printed to the cons
 
 \subsection{\texttt{g_uart_preemption_flag}}
 
-Used to indicate whether the UART interrupt handler should preempt the currently executing process on completion of the UART i-process.
+Used to indicate whether the UART interrupt handler should preempt the currently executing process on completion of the \hyperref[subsec:UART I-Process]{UART i-process}.
 
 \section{KCD Process}
 
