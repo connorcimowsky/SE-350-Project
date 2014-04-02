@@ -295,7 +295,7 @@ Processes may retrieve and modify the scheduling priority of themselves or other
 
 Messages are sent between processes using message envelopes. Each process has a `mailbox', implemented as a queue of message envelopes.\\
 
-Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
+Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient of the message. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
 To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
@@ -556,7 +556,7 @@ The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a
 
 \subsection{CRT Process}
 
-The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in \hyperref[subsec:UART I-Process]{Section~\ref*{subsec:UART I-Process}}.\\
+The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute.\\
 
 \begin{algorithm}
 \caption{CRT Process}
