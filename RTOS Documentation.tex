@@ -110,7 +110,7 @@ The memory heap structure is implemented using a generic linked list. Each node 
 
 \subsection{Requesting Memory Blocks}
 
-When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned.\\
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned. When the process is finished with the memory block, it must release it by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Requesting Memory Blocks}
@@ -297,7 +297,7 @@ Messages are sent between processes using message envelopes. Each process has a 
 
 Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
-To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller.\\
+To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
