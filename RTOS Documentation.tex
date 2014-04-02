@@ -333,7 +333,7 @@ To send a message, a process must first invoke \hyperref[alg:requestingmemoryblo
 \end{algorithmic}
 \end{algorithm}
 
-The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the timer i-process's message queue. As described in \hyperref[subsec:Timer I-Process]{Section~\ref*{subsec:Timer I-Process}}, the timer i-process will dispatch the message at the correct time.\\
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the \hyperref[subsec:Timer I-Process]{timer i-process}'s message queue. As described in \hyperref[subsec:Timer I-Process]{Section~\ref*{subsec:Timer I-Process}}, the \hyperref[subsec:Timer I-Process]{timer i-process} will dispatch the message at the correct time.\\
 
 \begin{algorithm}
 \caption{Sending Delayed Messages}
@@ -945,7 +945,7 @@ A queue of messages that have not yet expired. Sorted by expiry time. Used for d
 
 \subsection{\texttt{g_timer_preemption_flag}}
 
-Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the timer i-process.
+Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the \hyperref[subsec:Timer I-Process]{timer i-process}.
 
 \section{UART I-Process}
 \label{app:uartglobals}
