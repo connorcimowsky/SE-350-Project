@@ -14,15 +14,15 @@
     float
 }
 
-\pgfplotsset{compat=newest, width=\textwidth}
-\usepgfplotslibrary{statistics}
-
 \usetikzlibrary{
     positioning,
     calc,
     shapes.multipart,
     arrows
 }
+
+\pgfplotsset{compat=newest, width=\textwidth}
+\usepgfplotslibrary{statistics}
 
 \setlength{\parindent}{0pt}
 
@@ -578,6 +578,7 @@ The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. 
 \section{User Processes}
 
 \subsection{Test Processes}
+\label{subsec:testprocesses}
 
 In order to ensure correct behaviour of the operating system, six user-­level test processes are used to invoke kernel primitives and check for any incorrect results. These test processes use global variables to coordinate with each other and ensure that the operating system works as expected. Some of the key mechanisms that are tested include preemption, modification of process priority, memory block assignment, interprocess communication, and system processes such as the KCD and CRT processes.
 
@@ -597,6 +598,12 @@ When the \texttt{\%Z} command is entered, these processes test the behaviour of 
 \subsection{Time Profiler Process}
 
 As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[alg:sendingmessages]{\texttt{send_message}}, and \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
+
+\section{Testing}
+
+Alongside each deliverable, we implemented a series of automated test processes to evaluate the correctness of our operating system. As described in \hyperref[subsec:testprocesses]{Section~\ref*{subsec:testprocesses}}, they test user-facing primitives, system processes, and interrupt processes. Although these tests are very thorough, they are unable to fully assess the interactive components of our operating system, such as the wall clock and debug hotkeys. Therefore, a small portion of our testing was done manually.\\
+
+When our tests exposed bugs in our operating system, we used the $\mu$Vision debugger to step through our code and track down programming errors. This procedure played a significant role in almost every bug fix, especially those for memory-related bugs (see \hyperref[sec:simulation]{Section~\ref*{sec:simulation}} for more on this topic).
 
 \chapter{Timing Analysis}
 
@@ -750,8 +757,9 @@ The execution time of our trials was very consistent for each primitive, as the 
 At the very beginning of our project, we decided to use \href{http://git-scm.com/}{Git} to manage the source code of our operating system. Paired with \href{http://github.com/}{GitHub}, it provided a robust system for ensuring code quality and minimizing bugs. Throughout the project, we obeyed a strict code review policy; all work was done in individual branches, submitted as a pull request, and then exhaustively reviewed by every member of the team before being merged into the \texttt{master} branch. This policy allowed us to catch several bugs that would have been incredibly difficult to catch in testing.
 
 \section{Simulation}
+\label{sec:simulation}
 
-For the majority of our first deliverable, we tested our operating system exclusively in the debugger provided by the Keil $\mu$Vision IDE. Before submitting the deliverable, we tested our code on the MCB1700 board; everything worked correctly. This substantiated our assumption that the debugger provided a close approximation to the hardware. In reality, as we discovered during our work on the second deliverable, there is a major difference: the SRAM on the MCB1700 board is not initialized the way it is in the debugger. This led to a number of serious bugs that only surfaced when we tested our code on the board. One of the most common bugs involved dealing with strings. Since we relied on the null character to delimit strings, there were portions of code which would work perfectly in the simulator and not on the board. These types of bugs only appeared in the second deliverable, since message passing and console I/O both rely heavily on strings. After dealing with these bugs, we learned to write code more defensively and test our code primarily on the board instead of using the debugger.
+For the majority of our first deliverable, we tested our operating system exclusively in the simulator provided by the Keil $\mu$Vision IDE. Before submitting the deliverable, we tested our code on the MCB1700 board; everything worked correctly. This substantiated our assumption that the simulator provided a close approximation to the hardware. In reality, as we discovered during our work on the second deliverable, there is a major difference: the SRAM on the MCB1700 board is not initialized the way it is in the simulator. This led to a number of serious bugs that only surfaced when we tested our code on the board. One of the most common bugs involved dealing with strings. Since we relied on the null character to delimit strings, there were portions of code which would work perfectly in the simulator and not on the board. These types of bugs only appeared in the second deliverable, since message passing and console I/O both rely heavily on strings. After dealing with these bugs, we learned to write code more defensively and test our code primarily on the board instead of using the simulator.
 
 \section{Documentation}
 
