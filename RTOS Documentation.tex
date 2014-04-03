@@ -77,13 +77,13 @@ Now that the board's hardware is ready, it is necessary to initialize global dat
 
 \subsection{Process Initialization}
 
-Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
+Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}.
 
 \section{Memory Management}
 
 \subsection{Heap Data Structure}
 
-The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
+The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
 
 \begin{figure}[H]
 
@@ -109,8 +109,9 @@ The memory heap structure is implemented using a generic linked list. Each node 
 \end{figure}
 
 \subsection{Requesting Memory Blocks}
+\label{subsec:requestingmemoryblocks}
 
-When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned. When the process is finished with the memory block, it must release it by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned. When the process is finished with the memory block, it must release it by invoking \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Requesting Memory Blocks}
@@ -128,6 +129,7 @@ When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_mem
 \end{algorithm}
 
 \subsection{Releasing Memory Blocks}
+\label{subsec:releasingmemoryblocks}
 
 When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address points to a valid memory block. If so, the block is pushed onto the heap. If another process is blocked on memory, it will be unblocked and preemption will take place if necessary.\\
 
@@ -185,6 +187,7 @@ Depending on their state, processes can be placed in one of three process contro
 \end{figure}
 
 \subsection{Releasing the Processor}
+\label{subsec:releasingtheprocessor}
 
 Since time slicing is not employed by the operating system, it is frequently necessary for a process to relinquish its usage of the processor. This mechanism is provided by the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
 
@@ -223,7 +226,6 @@ When invoked, this procedure uses the scheduler to select the next process for e
 
 \begin{algorithm}
 \caption{Context Switching}
-\label{alg:contextswitching}
 \begin{algorithmic}[1]
 \Procedure {k_context_switch}{$prev\_proc$, $next\_proc$}
     \State $next\_state \leftarrow next\_proc.state$
@@ -245,10 +247,11 @@ When invoked, this procedure uses the scheduler to select the next process for e
 \end{algorithm}
 
 \subsection{Process Priority}
+\label{subsec:processpriority}
 
 As mentioned in the previous section, each process has a priority which is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
-Processes may retrieve and modify the scheduling priority of themselves or other processes using two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
+Processes may retrieve and modify the scheduling priority of themselves or other processes using two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
 
 \begin{algorithm}
 \caption{Process Priority}
@@ -292,12 +295,13 @@ Processes may retrieve and modify the scheduling priority of themselves or other
 \end{algorithm}
 
 \subsection{Interprocess Communication}
+\label{subsec:ipc}
 
 Messages are sent between processes using message envelopes. Each process has a `mailbox', implemented as a queue of message envelopes.\\
 
 Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient of the message. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
-To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
+To send a message, a process must first invoke \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
@@ -352,7 +356,7 @@ The procedure for delayed message sending is similar, with the added requirement
 \end{algorithmic}
 \end{algorithm}
 
-When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be removed from its message queue and returned. If its message queue is empty, the process is blocked and then preempted using \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be removed from its message queue and returned. If its message queue is empty, the process is blocked and then preempted using \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}.\\
 
 \begin{algorithm}
 \caption{Receiving Messages}
@@ -386,7 +390,7 @@ Both the timer and UART i-processes are scheduled exclusively by their respectiv
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-In order to provide timing services to the operating system, one of the LPC1768's on-chip timers was programmed to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
+In order to provide timing services to the operating system, one of the LPC1768's on-chip timers was programmed to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[subsec:ipc]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
 
 \begin{algorithm}
 \caption{Timer I-Process}
@@ -510,7 +514,7 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
 
 \subsection{Null Process}
 
-The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
+The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
 
 \begin{algorithm}
 \caption{Null Process}
@@ -584,12 +588,12 @@ In order to ensure correct behaviour of the operating system, six user-­level t
 
 \subsection{Wall Clock Process}
 
-The wall clock process uses \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
-triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[alg:sendingmessages]{\texttt{send_message}} to display the current wall clock time. Upon startup, the wall clock process registers three keyboard commands (\texttt{\%WR}, \texttt{\%WS}, \texttt{\%WT}) with the KCD process which allow the time to be set, reset, and stopped.
+The wall clock process uses \hyperref[subsec:ipc]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
+triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[subsec:ipc]{\texttt{send_message}} to display the current wall clock time. Upon startup, the wall clock process registers three keyboard commands (\texttt{\%WR}, \texttt{\%WS}, \texttt{\%WT}) with the KCD process which allow the time to be set, reset, and stopped.
 
 \subsection{Set Priority Command Process}
 
-Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
+Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[subsec:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
 
 \subsection{Stress Test Processes}
 
@@ -597,7 +601,7 @@ When the \texttt{\%Z} command is entered, these processes test the behaviour of 
 
 \subsection{Time Profiler Process}
 
-As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[alg:sendingmessages]{\texttt{send_message}}, and \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
+As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[subsec:ipc]{\texttt{send_message}}, and \hyperref[subsec:ipc]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
 
 \section{Testing}
 
@@ -614,7 +618,7 @@ When our tests exposed bugs in our operating system, we used the $\mu$Vision deb
 
 To analyze the performance of our operating system, we programmed the LPC1768's second timer at a frequency of 100 MHz to measure the execution time of three primitives. These primitives are invoked by the time profiler process, which can be initiated using the \texttt{\%P} command.\\
 
-The following code fragment demonstrates the procedure for profiling the execution time of \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}:
+The following code fragment demonstrates the procedure for profiling the execution time of \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}}:
 
 \begin{minipage}{\textwidth}
 \begin{lstlisting}[language=C, frame=single]
@@ -632,7 +636,7 @@ LPC_TIM1->TCR = TIMER_STOP;
 \end{lstlisting}
 \end{minipage}
 
-For our analysis, we set \texttt{NUM_CALLS} to 100 for each trial; this results in per-call averages with 0.1 nanoseconds of precision. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
+For our analysis, we set \texttt{NUM_CALLS} to 100 for each trial; this results in per-call averages with 0.1 nanoseconds of precision. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[subsec:ipc]{\texttt{send_message}} before \hyperref[subsec:ipc]{\texttt{receive_message}}.
 
 \section{Time Measurements}
 
@@ -899,7 +903,7 @@ During the memory initialization process, part the LPC1768's on-chip SRAM is div
 
 \subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
 
-These variables are set during the memory initialization process and are used for bounds checking in \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.
+These variables are set during the memory initialization process and are used for bounds checking in \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.
 
 \subsection{\texttt{gp_stack}}
 
@@ -909,7 +913,7 @@ A pointer to the top of the stack. Used during initialization to provide a stack
 
 \subsection{\texttt{g_pcbs}}
 
-An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[alg:sendingmessages]{\texttt{send_message}}).
+An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[subsec:ipc]{\texttt{send_message}}).
 
 \subsection{\texttt{g_proc_table}}
 
@@ -917,19 +921,19 @@ An array containing the information required (e.g., PID, priority, entry point) 
 
 \subsection{\texttt{gp_current_process}}
 
-A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}).
+A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}).
 
 \subsection{\texttt{g_ready_queue}}
 
-Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
+Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
 
 \subsection{\texttt{g_blocked_on_memory_queue}}
 
-An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
 
 \subsection{\texttt{g_blocked_on_receive_queue}}
 
-An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:sendingmessages]{\texttt{send_message}} and \hyperref[alg:receivingmessages]{\texttt{receive_message}} for blocking and unblocking processes.
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:ipc]{\texttt{send_message}} and \hyperref[subsec:ipc]{\texttt{receive_message}} for blocking and unblocking processes.
 
 \section{Timer I-Process}
 
