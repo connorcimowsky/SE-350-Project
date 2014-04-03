@@ -77,7 +77,7 @@ Now that the board's hardware is ready, it is necessary to initialize global dat
 
 \subsection{Process Initialization}
 
-Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.
+Upon completion of memory initialization, this procedure iterates through the process initialization table and performs three tasks. First, it populates the process control block (PCB) for each process. Next, each PCB is placed in the ready queue (unless it is an i-process, since these processes are invoked by interrupt handlers). Finally, a stack frame is allocated for each process and the resulting stack pointer is stored in its PCB. At this point, the first process can be scheduled by invoking \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}.
 
 \section{Memory Management}
 
@@ -185,6 +185,7 @@ Depending on their state, processes can be placed in one of three process contro
 \end{figure}
 
 \subsection{Releasing the Processor}
+\label{subsec:releasingtheprocessor}
 
 Since time slicing is not employed by the operating system, it is frequently necessary for a process to relinquish its usage of the processor. This mechanism is provided by the \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive.\\
 
@@ -248,7 +249,7 @@ When invoked, this procedure uses the scheduler to select the next process for e
 
 As mentioned in the previous section, each process has a priority which is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
-Processes may retrieve and modify the scheduling priority of themselves or other processes using two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
+Processes may retrieve and modify the scheduling priority of themselves or other processes using two primitives: \hyperref[alg:processpriority]{\texttt{get_process_priority}} and \hyperref[alg:processpriority]{\texttt{set_process_priority}}. If a process's priority is changed while it resides in a process control queue, it is removed and then reinserted into the queue corresponding to its new priority. The \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} primitive is then invoked to ensure that preemption will occur if necessary.
 
 \begin{algorithm}
 \caption{Process Priority}
@@ -297,7 +298,7 @@ Messages are sent between processes using message envelopes. Each process has a 
 
 Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient of the message. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
-To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
+To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
@@ -352,7 +353,7 @@ The procedure for delayed message sending is similar, with the added requirement
 \end{algorithmic}
 \end{algorithm}
 
-When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be removed from its message queue and returned. If its message queue is empty, the process is blocked and then preempted using \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}.\\
+When a process invokes \hyperref[alg:receivingmessages]{\texttt{receive_message}}, the next message will be removed from its message queue and returned. If its message queue is empty, the process is blocked and then preempted using \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}.\\
 
 \begin{algorithm}
 \caption{Receiving Messages}
@@ -510,7 +511,7 @@ As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface be
 
 \subsection{Null Process}
 
-The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
+The \hyperref[alg:nullprocess]{null process} has the lowest priority of any process in the operating system. Since the processor must always be busy, the null process acts as a fail­-safe for situations when no other process can be executed. As such, the null process simply invokes \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} in an infinite loop.\\
 
 \begin{algorithm}
 \caption{Null Process}
@@ -917,11 +918,11 @@ An array containing the information required (e.g., PID, priority, entry point) 
 
 \subsection{\texttt{gp_current_process}}
 
-A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}}).
+A pointer to the PCB of the currently executing process. Used mainly for process control purposes (e.g., \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}}).
 
 \subsection{\texttt{g_ready_queue}}
 
-Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
+Implemented as an array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} for scheduling processes.
 
 \subsection{\texttt{g_blocked_on_memory_queue}}
 
