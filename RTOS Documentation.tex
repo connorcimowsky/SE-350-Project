@@ -295,7 +295,7 @@ Processes may retrieve and modify the scheduling priority of themselves or other
 
 Messages are sent between processes using message envelopes. Each process has a `mailbox', implemented as a queue of message envelopes.\\
 
-Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
+Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient of the message. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
 To send a message, a process must first invoke \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[alg:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
@@ -333,7 +333,7 @@ To send a message, a process must first invoke \hyperref[alg:requestingmemoryblo
 \end{algorithmic}
 \end{algorithm}
 
-The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the timer i-process's message queue. As described in \hyperref[subsec:Timer I-Process]{Section~\ref*{subsec:Timer I-Process}}, the timer i-process will dispatch the message at the correct time.\\
+The procedure for delayed message sending is similar, with the added requirement that an expiration time is included in the header. When invoked, \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} places the specified message in the \hyperref[subsec:Timer I-Process]{timer i-process}'s message queue. As described in \hyperref[subsec:Timer I-Process]{Section~\ref*{subsec:Timer I-Process}}, the \hyperref[subsec:Timer I-Process]{timer i-process} will dispatch the message at the correct time.\\
 
 \begin{algorithm}
 \caption{Sending Delayed Messages}
@@ -418,7 +418,7 @@ The UART i-process handles interrupts representing two scenarios:
 
 \end{itemize}
 
-As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in the operating system. To handle input and output, the UART i-process maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
+As such, the \hyperref[alg:uartiprocess]{UART i-process} acts as an interface between the user-facing console and processes in the operating system. To handle input and output, the \hyperref[alg:uartiprocess]{UART i-process} maintains its state between interrupts using global variables (see \hyperref[app:uartglobals]{Appendix~\ref*{app:uartglobals}}).
 
 \begin{algorithm}
 \caption{UART I-Process}
@@ -556,7 +556,7 @@ The \hyperref[alg:kcdprocess]{Keyboard Command Decoder (KCD) process} provides a
 
 \subsection{CRT Process}
 
-The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the UART i-process. It then triggers a UART output interrupt so that the UART i-process may execute. The mechanism by which the UART i-process achieves interrupt-driven output is outlined in \hyperref[subsec:UART I-Process]{Section~\ref*{subsec:UART I-Process}}.\\
+The \hyperref[alg:crtprocess]{CRT process} forwards text to the system console. In order to achieve this, it repeatedly forwards received messages to the \hyperref[subsec:UART I-Process]{UART i-process}. It then triggers a UART output interrupt so that the \hyperref[subsec:UART I-Process]{UART i-process} may execute.\\
 
 \begin{algorithm}
 \caption{CRT Process}
@@ -945,7 +945,7 @@ A queue of messages that have not yet expired. Sorted by expiry time. Used for d
 
 \subsection{\texttt{g_timer_preemption_flag}}
 
-Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the timer i-process.
+Used to indicate whether the timer interrupt handler should preempt the currently executing process on completion of the \hyperref[subsec:Timer I-Process]{timer i-process}.
 
 \section{UART I-Process}
 \label{app:uartglobals}
@@ -968,7 +968,7 @@ The index of the next character of \texttt{gp_cur_msg} to be printed to the cons
 
 \subsection{\texttt{g_uart_preemption_flag}}
 
-Used to indicate whether the UART interrupt handler should preempt the currently executing process on completion of the UART i-process.
+Used to indicate whether the UART interrupt handler should preempt the currently executing process on completion of the \hyperref[subsec:UART I-Process]{UART i-process}.
 
 \section{KCD Process}
 
