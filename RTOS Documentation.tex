@@ -83,7 +83,7 @@ Upon completion of memory initialization, this procedure iterates through the pr
 
 \subsection{Heap Data Structure}
 
-The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
+The memory heap structure is implemented using a generic linked list. Each node in the list represents a single memory block that can be requested by invoking the \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} primitive and released by invoking the \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}} primitive. Nodes in the memory heap are spaced apart using a predefined block size (see \hyperref[app:configuration]{Appendix~\ref*{app:configuration}}).
 
 \begin{figure}[H]
 
@@ -111,7 +111,7 @@ The memory heap structure is implemented using a generic linked list. Each node 
 \subsection{Requesting Memory Blocks}
 \label{subsec:requestingmemoryblocks}
 
-When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned. When the process is finished with the memory block, it must release it by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
+When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_memory_block}}, the operating system first checks if the heap is empty. If so, it will block and then preempt the caller. Otherwise, the next available memory block is popped from the heap and returned. When the process is finished with the memory block, it must release it by invoking \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Requesting Memory Blocks}
@@ -129,6 +129,7 @@ When a process invokes \hyperref[alg:requestingmemoryblocks]{\texttt{request_mem
 \end{algorithm}
 
 \subsection{Releasing Memory Blocks}
+\label{subsec:releasingmemoryblocks}
 
 When a process invokes \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}, the operating system first ensures that the provided address points to a valid memory block. If so, the block is pushed onto the heap. If another process is blocked on memory, it will be unblocked and preemption will take place if necessary.\\
 
@@ -300,7 +301,7 @@ Messages are sent between processes using message envelopes. Each process has a 
 
 Each message is modelled by two parts: a header used by the operating system, and an envelope used by the sender and recipient of the message. The header contains the PID of the sender and recipient, as well as an expiry time for delayed messages. The envelope contains the message type and the data to be sent.\\
 
-To send a message, a process must first invoke \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
+To send a message, a process must first invoke \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} for an envelope. It then populates the envelope and invokes \hyperref[alg:sendingmessages]{\texttt{send_message}}, which populates the header and dispatches the message to the recipient. If necessary, the recipient will be unblocked and \hyperref[subsec:releasingtheprocessor]{\texttt{release_processor}} will be invoked so that preemption may occur; otherwise, control will be returned to the caller. Note that the recipient of the message is responsible for releasing the message envelope by invoking \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.\\
 
 \begin{algorithm}
 \caption{Sending Messages}
@@ -902,7 +903,7 @@ During the memory initialization process, part the LPC1768's on-chip SRAM is div
 
 \subsection{\texttt{gp_heap_begin_addr}, \texttt{gp_heap_end_addr}}
 
-These variables are set during the memory initialization process and are used for bounds checking in \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}}.
+These variables are set during the memory initialization process and are used for bounds checking in \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}}.
 
 \subsection{\texttt{gp_stack}}
 
@@ -928,7 +929,7 @@ Implemented as an array of queues (one queue for each priority) containing point
 
 \subsection{\texttt{g_blocked_on_memory_queue}}
 
-An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[alg:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}} and \hyperref[subsec:releasingmemoryblocks]{\texttt{release_memory_block}} for blocking and unblocking processes.
 
 \subsection{\texttt{g_blocked_on_receive_queue}}
 
