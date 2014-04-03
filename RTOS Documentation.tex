@@ -295,6 +295,7 @@ Processes may retrieve and modify the scheduling priority of themselves or other
 \end{algorithm}
 
 \subsection{Interprocess Communication}
+\label{subsec:ipc}
 
 Messages are sent between processes using message envelopes. Each process has a `mailbox', implemented as a queue of message envelopes.\\
 
@@ -389,7 +390,7 @@ Both the timer and UART i-processes are scheduled exclusively by their respectiv
 \subsection{Timer I-Process}
 \label{subsec:Timer I-Process}
 
-In order to provide timing services to the operating system, one of the LPC1768's on-chip timers was programmed to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
+In order to provide timing services to the operating system, one of the LPC1768's on-chip timers was programmed to signal an interrupt once every millisecond. As described above, this means that the \hyperref[alg:timeriprocess]{timer i-process} will be scheduled at the same interval. The \hyperref[alg:timeriprocess]{timer i-process} is responsible for dispatching delayed messages (sent using \hyperref[subsec:ipc]{\texttt{delayed_send}}) at the correct time. This is achieved through the use of a time counter and message queues (see appendices \ref{app:gtimercount} and \ref{app:gtimeoutqueue}).\\
 
 \begin{algorithm}
 \caption{Timer I-Process}
@@ -587,8 +588,8 @@ In order to ensure correct behaviour of the operating system, six user-­level t
 
 \subsection{Wall Clock Process}
 
-The wall clock process uses \hyperref[alg:sendingdelayedmessages]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
-triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[alg:sendingmessages]{\texttt{send_message}} to display the current wall clock time. Upon startup, the wall clock process registers three keyboard commands (\texttt{\%WR}, \texttt{\%WS}, \texttt{\%WT}) with the KCD process which allow the time to be set, reset, and stopped.
+The wall clock process uses \hyperref[subsec:ipc]{\texttt{delayed_send}} to display a digital clock that updates every second. The process sends itself messages with a delay of one second,
+triggering ``tick" updates. Each time the clock ticks, a message is sent to the CRT process using \hyperref[subsec:ipc]{\texttt{send_message}} to display the current wall clock time. Upon startup, the wall clock process registers three keyboard commands (\texttt{\%WR}, \texttt{\%WS}, \texttt{\%WT}) with the KCD process which allow the time to be set, reset, and stopped.
 
 \subsection{Set Priority Command Process}
 
@@ -600,7 +601,7 @@ When the \texttt{\%Z} command is entered, these processes test the behaviour of 
 
 \subsection{Time Profiler Process}
 
-As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[alg:sendingmessages]{\texttt{send_message}}, and \hyperref[alg:receivingmessages]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
+As described in \hyperref[sec:timing]{Section~\ref*{sec:timing}}, this process measures the execution time of \hyperref[subsec:requestingmemoryblocks]{\texttt{request_memory_block}}, \hyperref[subsec:ipc]{\texttt{send_message}}, and \hyperref[subsec:ipc]{\texttt{receive_message}}. It can be invoked by entering the \texttt{\%P} command.
 
 \section{Testing}
 
@@ -635,7 +636,7 @@ LPC_TIM1->TCR = TIMER_STOP;
 \end{lstlisting}
 \end{minipage}
 
-For our analysis, we set \texttt{NUM_CALLS} to 100 for each trial; this results in per-call averages with 0.1 nanoseconds of precision. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[alg:sendingmessages]{\texttt{send_message}} before \hyperref[alg:receivingmessages]{\texttt{receive_message}}.
+For our analysis, we set \texttt{NUM_CALLS} to 100 for each trial; this results in per-call averages with 0.1 nanoseconds of precision. To eliminate the possibility of blocking (and thus preemption), we ensure that \texttt{NUM_CALLS} memory blocks are available at the time of execution. For the same reason, we always invoke \hyperref[subsec:ipc]{\texttt{send_message}} before \hyperref[subsec:ipc]{\texttt{receive_message}}.
 
 \section{Time Measurements}
 
@@ -912,7 +913,7 @@ A pointer to the top of the stack. Used during initialization to provide a stack
 
 \subsection{\texttt{g_pcbs}}
 
-An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[alg:sendingmessages]{\texttt{send_message}}).
+An array of process control blocks for each process in the system. Indexed by PID for constant time access (e.g., from \hyperref[subsec:ipc]{\texttt{send_message}}).
 
 \subsection{\texttt{g_proc_table}}
 
@@ -932,7 +933,7 @@ An array of queues (one queue for each priority) containing pointers to process 
 
 \subsection{\texttt{g_blocked_on_receive_queue}}
 
-An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[alg:sendingmessages]{\texttt{send_message}} and \hyperref[alg:receivingmessages]{\texttt{receive_message}} for blocking and unblocking processes.
+An array of queues (one queue for each priority) containing pointers to process control blocks. Used by \hyperref[subsec:ipc]{\texttt{send_message}} and \hyperref[subsec:ipc]{\texttt{receive_message}} for blocking and unblocking processes.
 
 \section{Timer I-Process}
 
