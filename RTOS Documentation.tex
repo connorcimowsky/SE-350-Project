@@ -246,6 +246,7 @@ When invoked, this procedure uses the scheduler to select the next process for e
 \end{algorithm}
 
 \subsection{Process Priority}
+\label{subsec:processpriority}
 
 As mentioned in the previous section, each process has a priority which is used to enforce correct precedence during scheduling, blocking, and preemption operations.\\
 
@@ -590,7 +591,7 @@ triggering ``tick" updates. Each time the clock ticks, a message is sent to the 
 
 \subsection{Set Priority Command Process}
 
-Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[alg:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
+Upon startup, this process registers a keyboard command (\texttt{\%C}) with the KCD process. This command is handled by invoking \hyperref[subsec:processpriority]{\texttt{set_process_priority}} using the specified process identifier and priority.
 
 \subsection{Stress Test Processes}
 
