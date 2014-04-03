@@ -348,7 +348,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_0 DEBUG_HOTKEYS DEBUG_DEMO</Define>
+              <Define>DEBUG_0 DEBUG_HOTKEYS DEBUG_LED</Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -927,7 +927,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>DEBUG_0</Define>
+              <Define>DEBUG_0 DEBUG_HOTKEYS DEBUG_LED</Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
